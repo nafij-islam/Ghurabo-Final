@@ -5,6 +5,9 @@ import { ShieldCheck, CheckCircle, XCircle, Clock, Users, Compass, Eye, AlertCir
 import { ITrip } from '@/types';
 
 export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState('');
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [stats, setStats] = useState({
@@ -17,8 +20,25 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAdminData();
+    const saved = localStorage.getItem('ghurabo_admin_auth');
+    if (saved === 'true') {
+      setIsAuthenticated(true);
+      fetchAdminData();
+    }
   }, []);
+
+  const handlePasscodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validPasscodes = ['ghurabo2026', 'admin2026', '123456', 'admin'];
+    if (validPasscodes.includes(passcode.trim())) {
+      setIsAuthenticated(true);
+      localStorage.setItem('ghurabo_admin_auth', 'true');
+      setPasscodeError('');
+      fetchAdminData();
+    } else {
+      setPasscodeError('Invalid Admin Passcode! Try: ghurabo2026 or 123456');
+    }
+  };
 
   const fetchAdminData = () => {
     setLoading(true);
@@ -47,6 +67,54 @@ export default function AdminPage() {
       }
     } catch (err) {}
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/40 via-slate-950 to-purple-950/40 opacity-70 pointer-events-none" />
+        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-indigo-500/30 text-white relative z-10 space-y-6">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 bg-gradient-to-tr from-brand-500 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-brand-400/40">
+              <ShieldCheck className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-white">Admin Lock Screen</h1>
+            <p className="text-xs text-slate-400 font-light">Enter system passcode to access Moderation Desk</p>
+          </div>
+
+          {passcodeError && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs font-semibold text-center">
+              {passcodeError}
+            </div>
+          )}
+
+          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-300 uppercase block mb-1">Enter Admin Passcode</label>
+              <input
+                type="password"
+                required
+                placeholder="Passcode (e.g. ghurabo2026)"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                className="w-full p-3.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
+            >
+              Unlock Admin Desk
+            </button>
+          </form>
+
+          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50 text-[11px] text-slate-400 text-center">
+            💡 Default Passcode: <span className="text-brand-400 font-bold">ghurabo2026</span> or <span className="text-brand-400 font-bold">123456</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">

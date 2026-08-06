@@ -61,34 +61,6 @@ export default function SignupPage() {
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Account Role</label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
-              <button
-                type="button"
-                onClick={() => setRole('traveller')}
-                className={`py-2 text-xs font-bold rounded-xl transition-all ${
-                  role === 'traveller'
-                    ? 'bg-white text-brand-600 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                🎒 Traveller
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`py-2 text-xs font-bold rounded-xl transition-all ${
-                  role === 'admin'
-                    ? 'bg-amber-500 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                👑 Admin Access
-              </button>
-            </div>
-          </div>
-
-          <div>
             <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Full Name</label>
             <input
               type="text"
