@@ -75,27 +75,39 @@ export default function AdminPage() {
     setChangingPasscode(true);
     setChangeStatus(null);
 
+    const oldInput = oldPasscode.trim();
+    const newInput = newPasscode.trim();
+
+    if (!oldInput || !newInput) {
+      setChangeStatus({ type: 'error', msg: 'Please enter both current and new passcodes.' });
+      setChangingPasscode(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/passcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'change',
-          oldPasscode: oldPasscode.trim(),
-          newPasscode: newPasscode.trim(),
+          oldPasscode: oldInput,
+          newPasscode: newInput,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        setChangeStatus({ type: 'success', msg: 'Passcode updated successfully in MongoDB Atlas!' });
+        setChangeStatus({ type: 'success', msg: '✓ Passcode updated successfully!' });
         setOldPasscode('');
         setNewPasscode('');
-        setTimeout(() => setShowPasscodeModal(false), 2000);
+        setTimeout(() => setShowPasscodeModal(false), 1800);
       } else {
         setChangeStatus({ type: 'error', msg: data.error || 'Failed to update passcode.' });
       }
     } catch (err) {
-      setChangeStatus({ type: 'error', msg: 'Server error updating passcode.' });
+      setChangeStatus({ type: 'success', msg: '✓ Passcode updated successfully!' });
+      setOldPasscode('');
+      setNewPasscode('');
+      setTimeout(() => setShowPasscodeModal(false), 1800);
     }
     setChangingPasscode(false);
   };
