@@ -225,16 +225,16 @@ export default function AdminPage() {
 
                   <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
                     <button
-                      onClick={() => handleAction(trip.id, 'approve')}
-                      className="flex items-center space-x-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-full shadow transition-all"
+                      onClick={() => handleAction(trip.id || (trip as any)._id, 'approve')}
+                      className="flex items-center space-x-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-full shadow transition-all cursor-pointer"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>Approve</span>
                     </button>
 
                     <button
-                      onClick={() => handleAction(trip.id, 'reject')}
-                      className="flex items-center space-x-1.5 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase rounded-full shadow transition-all"
+                      onClick={() => handleAction(trip.id || (trip as any)._id, 'reject')}
+                      className="flex items-center space-x-1.5 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase rounded-full shadow transition-all cursor-pointer"
                     >
                       <XCircle className="w-4 h-4" />
                       <span>Reject</span>

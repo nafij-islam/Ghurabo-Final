@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel, UserModel, DestinationModel, GalleryModel } from '@/lib/db/models';
 
@@ -64,27 +65,51 @@ export async function POST(request: Request) {
     const conn = await connectToDatabase();
 
     if (conn) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(tripId);
+      const query = isObjectId ? { $or: [{ id: tripId }, { _id: tripId }] } : { id: tripId };
+
       if (action === 'approve') {
         const trip = await TripModel.findOneAndUpdate(
-          { $or: [{ id: tripId }, { _id: tripId }] },
+          query,
           { $set: { status: 'approved' } },
           { new: true }
         );
+
+        if (!trip) {
+          return NextResponse.json({ success: false, error: 'Trip not found in database' }, { status: 404 });
+        }
+
+        // Increment destination trip count
+        await DestinationModel.updateOne(
+          { name: trip.destinationName },
+          { $inc: { totalTrips: 1 } }
+        );
+
         return NextResponse.json({ success: true, message: 'Trip approved successfully', trip });
       } else if (action === 'reject') {
         const trip = await TripModel.findOneAndUpdate(
-          { $or: [{ id: tripId }, { _id: tripId }] },
+          query,
           { $set: { status: 'rejected' } },
           { new: true }
         );
+
+        if (!trip) {
+          return NextResponse.json({ success: false, error: 'Trip not found in database' }, { status: 404 });
+        }
+
         return NextResponse.json({ success: true, message: 'Trip rejected successfully', trip });
       } else if (action === 'verify') {
-        const current = await TripModel.findOne({ $or: [{ id: tripId }, { _id: tripId }] });
+        const current = await TripModel.findOne(query);
+        if (!current) {
+          return NextResponse.json({ success: false, error: 'Trip not found in database' }, { status: 404 });
+        }
+
         const trip = await TripModel.findOneAndUpdate(
-          { $or: [{ id: tripId }, { _id: tripId }] },
-          { $set: { isVerified: !current?.isVerified } },
+          query,
+          { $set: { isVerified: !current.isVerified } },
           { new: true }
         );
+
         return NextResponse.json({ success: true, message: 'Trip verification badge toggled', trip });
       }
     }
@@ -112,7 +137,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: false, error: 'Trip not found' }, { status: 404 });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Admin action failed' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message || 'Admin action failed' }, { status: 500 });
   }
 }
