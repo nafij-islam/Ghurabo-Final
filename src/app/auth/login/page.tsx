@@ -36,14 +36,7 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const handleQuickDemo = (demoType: 'user' | 'admin') => {
-    if (demoType === 'admin') {
-      setEmail('admin@ghurabo.com');
-    } else {
-      setEmail('aria@ghurabo.com');
-    }
-    setPassword('demo1234');
-  };
+
 
   return (
     <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center px-4">
@@ -104,24 +97,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Quick Demo Login Preset Buttons */}
-        <div className="pt-4 border-t border-slate-100 text-center space-y-2">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase">Quick Demo Login Presets</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleQuickDemo('user')}
-              className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
-            >
-              Demo Traveller
-            </button>
-            <button
-              onClick={() => handleQuickDemo('admin')}
-              className="flex-1 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-bold rounded-xl"
-            >
-              Demo Admin
-            </button>
-          </div>
-        </div>
+
 
         <div className="text-center text-xs text-slate-500 pt-2">
           Don't have an account?{' '}

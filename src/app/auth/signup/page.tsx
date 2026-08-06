@@ -8,27 +8,35 @@ import { Compass, Mail, Lock, User, MapPin } from 'lucide-react';
 export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'traveller' | 'admin'>('traveller');
   const [preferredStyle, setPreferredStyle] = useState('Solo');
   const [location, setLocation] = useState('Dhaka, Bangladesh');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, preferredStyle, location }),
+        body: JSON.stringify({ name, email, password, role, preferredStyle, location }),
       });
       const data = await res.json();
       if (data.success) {
-        router.push('/dashboard');
+        router.push(data.user?.role === 'admin' ? '/admin' : '/dashboard');
         router.refresh();
+      } else {
+        setError(data.error || 'Registration failed');
       }
-    } catch (err) {}
+    } catch (err) {
+      setError('An error occurred during signup');
+    }
     setLoading(false);
   };
 
@@ -45,13 +53,47 @@ export default function SignupPage() {
           <p className="text-xs text-slate-500 font-light mt-1">Create your Ghurabo explorer account</p>
         </div>
 
+        {error && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Account Role</label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setRole('traveller')}
+                className={`py-2 text-xs font-bold rounded-xl transition-all ${
+                  role === 'traveller'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                🎒 Traveller
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('admin')}
+                className={`py-2 text-xs font-bold rounded-xl transition-all ${
+                  role === 'admin'
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                👑 Admin Access
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Full Name</label>
             <input
               type="text"
               required
-              placeholder="e.g. Aria Montgomery"
+              placeholder="e.g. Nafij Islam"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -63,9 +105,21 @@ export default function SignupPage() {
             <input
               type="email"
               required
-              placeholder="aria@ghurabo.com"
+              placeholder="yourname@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Password</label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
