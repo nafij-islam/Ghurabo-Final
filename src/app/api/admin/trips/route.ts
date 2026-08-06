@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel, UserModel, DestinationModel, GalleryModel } from '@/lib/db/models';
+import { getAdminUser } from '@/lib/auth/serverAuth';
 
 export async function GET() {
   try {
+    const adminUser = await getAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required' }, { status: 403 });
+    }
+
     const conn = await connectToDatabase();
 
     if (conn) {
@@ -22,8 +28,8 @@ export async function GET() {
         UserModel.countDocuments(),
         DestinationModel.countDocuments(),
         GalleryModel.countDocuments(),
-        TripModel.find({ status: 'pending' }).sort({ createdAt: -1 }),
-        TripModel.find({ status: 'approved' }).sort({ createdAt: -1 }),
+        TripModel.find({ status: 'pending' }).sort({ createdAt: -1 }).lean(),
+        TripModel.find({ status: 'approved' }).sort({ createdAt: -1 }).lean(),
       ]);
 
       return NextResponse.json({
@@ -61,7 +67,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const adminUser = await getAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required' }, { status: 403 });
+    }
+
     const { tripId, action } = await request.json();
+    if (!tripId || !action) {
+      return NextResponse.json({ success: false, error: 'tripId and action are required' }, { status: 400 });
+    }
+
     const conn = await connectToDatabase();
 
     if (conn) {
@@ -123,7 +138,7 @@ export async function POST(request: Request) {
           { new: true }
         );
 
-        return NextResponse.json({ success: true, message: 'Trip popular badge toggled', trip });
+        return NextResponse.json({ success: true, message: 'Trip popular status toggled', trip });
       }
     }
 
@@ -146,6 +161,7 @@ export async function POST(request: Request) {
     const activeTrip = db.trips.find((t) => t.id === tripId);
     if (activeTrip) {
       if (action === 'verify') activeTrip.isVerified = !activeTrip.isVerified;
+      if (action === 'togglePopular') activeTrip.isPopular = !activeTrip.isPopular;
       return NextResponse.json({ success: true, trip: activeTrip });
     }
 

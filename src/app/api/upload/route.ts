@@ -1,31 +1,47 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { getVerifiedUser } from '@/lib/auth/serverAuth';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 
 export async function POST(request: Request) {
   try {
+    const user = await getVerifiedUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized. Please sign in to upload images.' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const caption = formData.get('caption') as string | undefined;
 
     if (!file) {
-      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'No file provided for upload' }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ success: false, error: 'File size exceeds 10MB limit' }, { status: 400 });
+    }
+
+    const mimeType = file.type || 'image/jpeg';
+    if (!ALLOWED_MIME_TYPES.includes(mimeType.toLowerCase())) {
+      return NextResponse.json({ success: false, error: 'Invalid file format. Only JPEG, PNG, WebP, AVIF, and GIF are allowed.' }, { status: 400 });
     }
 
     // Convert file to base64 data URL
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const mimeType = file.type || 'image/jpeg';
     const base64Data = `data:${mimeType};base64,${buffer.toString('base64')}`;
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'ghurabo-projects';
-    const apiKey = process.env.CLOUDINARY_API_KEY || '491113329615225';
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'RmUj7FKSvlupdz2nJ2NfptZmVUQ';
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ghurabo-projects';
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
     if (cloudName && apiKey && apiSecret) {
       try {
         const timestamp = Math.floor(Date.now() / 1000);
-        // Signed upload signature calculation
         const stringToSign = `timestamp=${timestamp}${apiSecret}`;
         const signature = crypto.createHash('sha1').update(stringToSign).digest('hex');
 
@@ -51,8 +67,8 @@ export async function POST(request: Request) {
             publicId: data.public_id,
             caption: caption || file.name,
           });
-        } else {
-          // Try unsigned upload preset as secondary attempt
+        } else if (uploadPreset) {
+          // Secondary unsigned upload preset attempt
           const unsignedRes = await fetch(
             `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
             {
@@ -75,11 +91,11 @@ export async function POST(request: Request) {
           }
         }
       } catch (err) {
-        console.warn('Cloudinary API upload error:', err);
+        console.warn('Cloudinary upload error:', err);
       }
     }
 
-    // Fallback: Return data URL directly for instant client-side preview
+    // Secure fallback: Return base64 preview for authorized user
     return NextResponse.json({
       success: true,
       url: base64Data,
@@ -87,6 +103,6 @@ export async function POST(request: Request) {
       caption: caption || file.name,
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Upload process failed' }, { status: 500 });
   }
 }

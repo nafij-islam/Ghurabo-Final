@@ -4,28 +4,36 @@ import { UserModel } from '@/lib/db/models';
 import { signToken } from '@/lib/auth/session';
 import { IUser } from '@/types';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: Request) {
   try {
-    const { name, email, password, role, preferredStyle, bio, location } = await request.json();
+    const { name, email, preferredStyle, bio, location } = await request.json();
 
-    if (!email || !name) {
-      return NextResponse.json({ success: false, error: 'Name and email are required' }, { status: 400 });
+    if (!name || !name.trim()) {
+      return NextResponse.json({ success: false, error: 'Full name is required' }, { status: 400 });
     }
 
+    if (!email || !EMAIL_REGEX.test(email.toLowerCase().trim())) {
+      return NextResponse.json({ success: false, error: 'A valid email address is required' }, { status: 400 });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = name.trim();
+    const userRole = 'traveller'; // Default signups to traveller role
+
     const conn = await connectToDatabase();
-    const userRole = role === 'admin' ? 'admin' : 'traveller';
 
     if (conn) {
-      // Real-time MongoDB Atlas signup
-      const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
+      const existingUser = await UserModel.findOne({ email: cleanEmail });
       if (existingUser) {
-        return NextResponse.json({ success: false, error: 'User with this email already exists' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'An account with this email already exists' }, { status: 400 });
       }
 
       const newUser = await UserModel.create({
         id: `user_${Date.now()}`,
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
+        name: cleanName,
+        email: cleanEmail,
         role: userRole,
         avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
         coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
@@ -36,7 +44,7 @@ export async function POST(request: Request) {
         followersCount: 0,
         followingCount: 0,
         totalHelpfulVotes: 0,
-        badges: userRole === 'admin' ? ['Admin Explorer', 'Community Guide'] : ['New Explorer'],
+        badges: ['New Explorer'],
       });
 
       const token = signToken({
@@ -63,17 +71,17 @@ export async function POST(request: Request) {
       return response;
     }
 
-    // In-memory fallback if database not connected
+    // In-memory fallback
     const db = getMemoryDb();
-    const existingMemoryUser = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const existingMemoryUser = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existingMemoryUser) {
-      return NextResponse.json({ success: false, error: 'User with this email already exists' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'An account with this email already exists' }, { status: 400 });
     }
 
     const newUser: IUser = {
       id: `user_${Date.now()}`,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
+      name: cleanName,
+      email: cleanEmail,
       role: userRole,
       avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
       coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
@@ -84,7 +92,7 @@ export async function POST(request: Request) {
       followersCount: 0,
       followingCount: 0,
       totalHelpfulVotes: 0,
-      badges: userRole === 'admin' ? ['Admin Explorer', 'Community Guide'] : ['New Explorer'],
+      badges: ['New Explorer'],
       createdAt: new Date().toISOString(),
     };
 

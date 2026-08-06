@@ -3,12 +3,12 @@ import mongoose, { Schema, model, models } from 'mongoose';
 // User Schema
 const UserSchema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, index: true },
     avatar: { type: String },
     coverImage: { type: String },
-    role: { type: String, enum: ['traveller', 'admin'], default: 'traveller' },
+    role: { type: String, enum: ['traveller', 'admin'], default: 'traveller', index: true },
     bio: { type: String },
     location: { type: String },
     preferredStyle: { type: String, default: 'Solo' },
@@ -21,15 +21,17 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
+UserSchema.index({ email: 1, role: 1 });
+
 // Destination Schema
 const DestinationSchema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true, index: true },
     country: { type: String, required: true },
     division: { type: String },
-    category: { type: String, required: true },
+    category: { type: String, required: true, index: true },
     image: { type: String, required: true },
     heroImage: { type: String },
     description: { type: String, required: true },
@@ -43,24 +45,26 @@ const DestinationSchema = new Schema(
     safetyTips: { type: String },
     totalTrips: { type: Number, default: 0 },
     avgRating: { type: Number, default: 4.8 },
-    isPopular: { type: Boolean, default: false },
+    isPopular: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );
 
+DestinationSchema.index({ isPopular: -1, createdAt: -1 });
+
 // Trip Schema
 const TripSchema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, index: true },
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    userId: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    userId: { type: String, required: true, index: true },
     userName: { type: String, required: true },
     userAvatar: { type: String },
-    destinationId: { type: String, required: true },
-    destinationName: { type: String, required: true },
+    destinationId: { type: String, required: true, index: true },
+    destinationName: { type: String, required: true, index: true },
     travelDate: { type: String },
-    travelType: { type: String, enum: ['Solo', 'Couple', 'Family', 'Group'], default: 'Solo' },
+    travelType: { type: String, enum: ['Solo', 'Couple', 'Family', 'Group'], default: 'Solo', index: true },
     travellersCount: { type: Number, default: 1 },
     durationDays: { type: Number, default: 3 },
     summary: { type: String, required: true },
@@ -98,9 +102,9 @@ const TripSchema = new Schema(
         estimatedCost: { type: Number },
       },
     ],
-    status: { type: String, enum: ['draft', 'pending', 'approved', 'rejected'], default: 'pending' },
-    isVerified: { type: Boolean, default: false },
-    isPopular: { type: Boolean, default: false },
+    status: { type: String, enum: ['draft', 'pending', 'approved', 'rejected'], default: 'pending', index: true },
+    isVerified: { type: Boolean, default: false, index: true },
+    isPopular: { type: Boolean, default: false, index: true },
     likesCount: { type: Number, default: 0 },
     savesCount: { type: Number, default: 0 },
     helpfulVotesCount: { type: Number, default: 0 },
@@ -118,13 +122,18 @@ const TripSchema = new Schema(
   { timestamps: true }
 );
 
+TripSchema.index({ status: 1, createdAt: -1 });
+TripSchema.index({ status: 1, isPopular: -1 });
+TripSchema.index({ userId: 1, status: 1 });
+TripSchema.index({ destinationName: 1, status: 1 });
+
 // Review Schema
 const ReviewSchema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
-    tripId: { type: String, required: true },
-    destinationId: { type: String, required: true },
-    userId: { type: String, required: true },
+    id: { type: String, required: true, unique: true, index: true },
+    tripId: { type: String, required: true, index: true },
+    destinationId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
     userName: { type: String, required: true },
     userAvatar: { type: String },
     overallRating: { type: Number, required: true },
@@ -144,26 +153,28 @@ const ReviewSchema = new Schema(
 // Gallery Schema
 const GallerySchema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, index: true },
     url: { type: String, required: true },
     caption: { type: String },
-    tripId: { type: String, required: true },
+    tripId: { type: String, required: true, index: true },
     tripTitle: { type: String, required: true },
     tripSlug: { type: String, required: true },
-    destinationName: { type: String, required: true },
-    travelType: { type: String, required: true },
+    destinationName: { type: String, required: true, index: true },
+    travelType: { type: String, required: true, index: true },
     photographerName: { type: String, required: true },
     photographerAvatar: { type: String },
-    photographerId: { type: String, required: true },
+    photographerId: { type: String, required: true, index: true },
     likesCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
+GallerySchema.index({ createdAt: -1 });
+
 // System Config Schema
 const SystemConfigSchema = new Schema(
   {
-    key: { type: String, required: true, unique: true },
+    key: { type: String, required: true, unique: true, index: true },
     adminPasscode: { type: String, default: 'ghurabo123' },
   },
   { timestamps: true }

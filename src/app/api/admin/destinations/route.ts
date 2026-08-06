@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { DestinationModel } from '@/lib/db/models';
+import { getAdminUser } from '@/lib/auth/serverAuth';
 
 export async function GET() {
   try {
+    const adminUser = await getAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required' }, { status: 403 });
+    }
+
     const conn = await connectToDatabase();
     if (conn) {
-      const destinations = await DestinationModel.find().sort({ createdAt: -1 });
+      const destinations = await DestinationModel.find().sort({ createdAt: -1 }).lean();
       return NextResponse.json({ success: true, destinations });
     }
 
@@ -20,7 +26,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const adminUser = await getAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin privileges required' }, { status: 403 });
+    }
+
     const { destinationId, isPopular } = await request.json();
+    if (!destinationId) {
+      return NextResponse.json({ success: false, error: 'destinationId is required' }, { status: 400 });
+    }
+
     const conn = await connectToDatabase();
 
     if (conn) {
