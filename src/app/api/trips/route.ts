@@ -178,7 +178,7 @@ export async function POST(request: Request) {
         perPersonCost: 230,
       },
       itinerary: body.itinerary || [],
-      status: body.isDraft ? 'draft' : 'approved', // Auto-approve shared trips so they appear immediately!
+      status: body.isDraft ? 'draft' : 'pending', // Submit trips for admin moderation review
       isVerified: false,
       likesCount: 0,
       savesCount: 0,
