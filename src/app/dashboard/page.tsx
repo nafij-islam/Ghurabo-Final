@@ -21,20 +21,31 @@ export default function DashboardPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.user) {
-          setCurrentUser(data.user);
-        }
-      });
+          const user = data.user as IUser;
+          setCurrentUser(user);
 
-    fetch('/api/trips?status=all')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          const all = (data.trips || []) as ITrip[];
-          setPublishedTrips(all.filter((t) => t.status === 'approved'));
-          setPendingTrips(all.filter((t) => t.status === 'pending'));
-          setDrafts(all.filter((t) => t.status === 'draft'));
+          // Fetch trips belonging to this specific user from MongoDB Atlas
+          fetch(`/api/trips?status=all&userId=${encodeURIComponent(user.id)}`)
+            .then((res) => res.json())
+            .then((tripData) => {
+              if (tripData.success) {
+                const all = (tripData.trips || []) as ITrip[];
+                const myTrips = all.filter(
+                  (t) =>
+                    t.userId === user.id ||
+                    t.userName.toLowerCase() === user.name.toLowerCase() ||
+                    t.userName.toLowerCase() === user.email.toLowerCase()
+                );
+
+                setPublishedTrips(myTrips.filter((t) => t.status === 'approved'));
+                setPendingTrips(myTrips.filter((t) => t.status === 'pending'));
+                setDrafts(myTrips.filter((t) => t.status === 'draft'));
+              }
+              setLoading(false);
+            });
+        } else {
+          setLoading(false);
         }
-        setLoading(false);
       });
   }, []);
 

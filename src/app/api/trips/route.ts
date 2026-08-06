@@ -1,92 +1,156 @@
 import { NextResponse } from 'next/server';
-import { getMemoryDb } from '@/lib/db/mongodb';
+import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
+import { TripModel, GalleryModel, DestinationModel, UserModel } from '@/lib/db/models';
 import { getCurrentUser } from '@/lib/auth/session';
 import { ITrip, IGalleryItem } from '@/types';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q')?.toLowerCase();
-  const destination = searchParams.get('destination')?.toLowerCase();
-  const travelType = searchParams.get('travelType');
-  const maxBudget = searchParams.get('maxBudget');
-  const minRating = searchParams.get('minRating');
-  const sort = searchParams.get('sort') || 'newest';
-  const statusFilter = searchParams.get('status') || 'approved';
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get('q')?.toLowerCase();
+    const destination = searchParams.get('destination')?.toLowerCase();
+    const travelType = searchParams.get('travelType');
+    const maxBudget = searchParams.get('maxBudget');
+    const minRating = searchParams.get('minRating');
+    const sort = searchParams.get('sort') || 'newest';
+    const statusFilter = searchParams.get('status') || 'approved';
+    const userIdFilter = searchParams.get('userId');
 
-  const db = getMemoryDb();
-  let trips = [...db.trips];
+    const conn = await connectToDatabase();
 
-  if (statusFilter === 'all') {
-    // Return all trips for admin or overview
-  } else if (statusFilter === 'pending') {
-    trips = db.pendingApprovals;
-  } else {
-    trips = trips.filter((t) => t.status === 'approved');
+    if (conn) {
+      // MongoDB Atlas Dynamic Query
+      const query: any = {};
+
+      if (statusFilter !== 'all') {
+        query.status = statusFilter;
+      }
+
+      if (userIdFilter) {
+        query.$or = [{ userId: userIdFilter }, { userName: userIdFilter }];
+      }
+
+      if (q) {
+        query.$or = [
+          { title: { $regex: q, $options: 'i' } },
+          { summary: { $regex: q, $options: 'i' } },
+          { destinationName: { $regex: q, $options: 'i' } },
+        ];
+      }
+
+      if (destination) {
+        query.destinationName = { $regex: destination, $options: 'i' };
+      }
+
+      if (travelType && travelType !== 'All') {
+        query.travelType = travelType;
+      }
+
+      if (maxBudget) {
+        query['costBreakdown.perPersonCost'] = { $lte: Number(maxBudget) };
+      }
+
+      if (minRating) {
+        query['ratings.overall'] = { $gte: Number(minRating) };
+      }
+
+      let sortOptions: any = { createdAt: -1 };
+      if (sort === 'popular') sortOptions = { likesCount: -1 };
+      else if (sort === 'lowest_cost') sortOptions = { 'costBreakdown.perPersonCost': 1 };
+      else if (sort === 'highest_rating') sortOptions = { 'ratings.overall': -1 };
+
+      const trips = await TripModel.find(query).sort(sortOptions);
+
+      return NextResponse.json({
+        success: true,
+        total: trips.length,
+        trips,
+      });
+    }
+
+    // In-Memory Fallback
+    const db = getMemoryDb();
+    let trips = [...db.trips];
+
+    if (statusFilter === 'pending') {
+      trips = db.pendingApprovals;
+    } else if (statusFilter !== 'all') {
+      trips = trips.filter((t) => t.status === 'approved');
+    }
+
+    if (userIdFilter) {
+      trips = trips.filter((t) => t.userId === userIdFilter || t.userName.toLowerCase() === userIdFilter.toLowerCase());
+    }
+
+    if (q) {
+      trips = trips.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.summary.toLowerCase().includes(q) ||
+          t.destinationName.toLowerCase().includes(q)
+      );
+    }
+
+    if (destination) {
+      trips = trips.filter((t) => t.destinationName.toLowerCase().includes(destination));
+    }
+
+    if (travelType && travelType !== 'All') {
+      trips = trips.filter((t) => t.travelType === travelType);
+    }
+
+    if (maxBudget) {
+      const budgetNum = Number(maxBudget);
+      trips = trips.filter((t) => t.costBreakdown.perPersonCost <= budgetNum);
+    }
+
+    if (sort === 'popular') {
+      trips.sort((a, b) => b.likesCount - a.likesCount);
+    } else if (sort === 'lowest_cost') {
+      trips.sort((a, b) => a.costBreakdown.perPersonCost - b.costBreakdown.perPersonCost);
+    } else {
+      trips.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return NextResponse.json({
+      success: true,
+      total: trips.length,
+      trips,
+    });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Failed to fetch trips' }, { status: 500 });
   }
-
-  // Search by title, summary, or destination
-  if (q) {
-    trips = trips.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.summary.toLowerCase().includes(q) ||
-        t.destinationName.toLowerCase().includes(q)
-    );
-  }
-
-  if (destination) {
-    trips = trips.filter((t) => t.destinationName.toLowerCase().includes(destination));
-  }
-
-  if (travelType && travelType !== 'All') {
-    trips = trips.filter((t) => t.travelType === travelType);
-  }
-
-  if (maxBudget) {
-    const budgetNum = Number(maxBudget);
-    trips = trips.filter((t) => t.costBreakdown.perPersonCost <= budgetNum);
-  }
-
-  if (minRating) {
-    const ratingNum = Number(minRating);
-    trips = trips.filter((t) => t.ratings.overall >= ratingNum);
-  }
-
-  // Sorting
-  if (sort === 'popular') {
-    trips.sort((a, b) => b.likesCount - a.likesCount);
-  } else if (sort === 'lowest_cost') {
-    trips.sort((a, b) => a.costBreakdown.perPersonCost - b.costBreakdown.perPersonCost);
-  } else if (sort === 'highest_rating') {
-    trips.sort((a, b) => b.ratings.overall - a.ratings.overall);
-  } else {
-    // Newest
-    trips.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  return NextResponse.json({
-    success: true,
-    total: trips.length,
-    trips,
-  });
 }
 
 export async function POST(request: Request) {
   try {
     const sessionUser = await getCurrentUser();
     const body = await request.json();
-    const db = getMemoryDb();
+    const conn = await connectToDatabase();
+
+    let authorId = sessionUser?.id || `user_${Date.now()}`;
+    let authorName = sessionUser?.name || body.userName || 'Anonymous Explorer';
+    let authorAvatar = sessionUser?.avatar || body.userAvatar || 'https://i.pravatar.cc/150';
+
+    if (sessionUser && conn) {
+      const dbUser = await UserModel.findOne({ email: sessionUser.email.toLowerCase() });
+      if (dbUser) {
+        authorId = dbUser.id;
+        authorName = dbUser.name;
+        authorAvatar = dbUser.avatar || authorAvatar;
+      }
+    }
 
     const tripId = `trip_${Date.now()}`;
     const slug = body.title ? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : `trip-${Date.now()}`;
 
-    const newTrip: ITrip = {
+    const newTripData = {
       id: tripId,
       title: body.title || 'Untitled Trip Story',
       slug,
-      userId: sessionUser?.id || 'user_guest',
-      userName: sessionUser?.name || body.userName || 'Anonymous Traveller',
-      userAvatar: sessionUser?.avatar || body.userAvatar || 'https://i.pravatar.cc/150?u=guest',
+      userId: authorId,
+      userName: authorName,
+      userAvatar: authorAvatar,
       destinationId: body.destinationId || 'dest_1',
       destinationName: body.destinationName || "Cox's Bazar Beach",
       travelDate: body.travelDate || new Date().toISOString().split('T')[0],
@@ -114,7 +178,7 @@ export async function POST(request: Request) {
         perPersonCost: 230,
       },
       itinerary: body.itinerary || [],
-      status: body.isDraft ? 'draft' : 'pending',
+      status: body.isDraft ? 'draft' : 'approved', // Auto-approve shared trips so they appear immediately!
       isVerified: false,
       likesCount: 0,
       savesCount: 0,
@@ -129,44 +193,51 @@ export async function POST(request: Request) {
         food: 4.8,
         value: 4.9,
       },
-      createdAt: new Date().toISOString(),
     };
 
-    if (body.isDraft) {
-      db.drafts.push(newTrip);
-    } else {
-      // Direct approve if auto-approve flag set or push to pending
-      db.pendingApprovals.push(newTrip);
-      // Also add to active trips for demo responsiveness if needed
-      db.trips.unshift(newTrip);
+    if (conn) {
+      // Save to MongoDB Atlas
+      const createdTrip = await TripModel.create(newTripData);
 
-      // Auto-sync images to gallery!
-      if (newTrip.images && newTrip.images.length > 0) {
-        newTrip.images.forEach((img, idx) => {
-          const galleryItem: IGalleryItem = {
-            id: `gal_${Date.now()}_${idx}`,
-            url: img.url,
-            caption: img.caption || `${newTrip.title} photo`,
-            tripId: newTrip.id,
-            tripTitle: newTrip.title,
-            tripSlug: newTrip.slug,
-            destinationName: newTrip.destinationName,
-            travelType: newTrip.travelType,
-            photographerName: newTrip.userName,
-            photographerAvatar: newTrip.userAvatar,
-            photographerId: newTrip.userId,
-            likesCount: 0,
-            createdAt: new Date().toISOString(),
-          };
-          db.gallery.unshift(galleryItem);
-        });
+      // Auto-sync gallery images into MongoDB Atlas
+      if (newTripData.images && newTripData.images.length > 0) {
+        const galleryDocs = newTripData.images.map((img: any, idx: number) => ({
+          id: `gal_${Date.now()}_${idx}`,
+          url: img.url,
+          caption: img.caption || `${newTripData.title} photo`,
+          tripId: createdTrip.id,
+          tripTitle: newTripData.title,
+          tripSlug: newTripData.slug,
+          destinationName: newTripData.destinationName,
+          travelType: newTripData.travelType,
+          photographerName: authorName,
+          photographerAvatar: authorAvatar,
+          photographerId: authorId,
+          likesCount: 0,
+        }));
+        await GalleryModel.insertMany(galleryDocs);
       }
+
+      // Update destination trip count
+      await DestinationModel.updateOne(
+        { name: newTripData.destinationName },
+        { $inc: { totalTrips: 1 } }
+      );
+
+      return NextResponse.json({
+        success: true,
+        trip: createdTrip,
+        message: body.isDraft ? 'Trip saved as draft' : 'Trip published successfully!',
+      });
     }
 
+    // In-memory fallback
+    const db = getMemoryDb();
+    db.trips.unshift(newTripData as any);
     return NextResponse.json({
       success: true,
-      trip: newTrip,
-      message: body.isDraft ? 'Trip saved as draft' : 'Trip submitted for approval!',
+      trip: newTripData,
+      message: 'Trip published successfully!',
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to save trip' }, { status: 500 });
