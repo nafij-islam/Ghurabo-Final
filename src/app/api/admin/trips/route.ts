@@ -1,67 +1,118 @@
 import { NextResponse } from 'next/server';
-import { getMemoryDb } from '@/lib/db/mongodb';
-import { getCurrentUser } from '@/lib/auth/session';
+import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
+import { TripModel, UserModel, DestinationModel, GalleryModel } from '@/lib/db/models';
 
 export async function GET() {
-  const sessionUser = await getCurrentUser();
-  // Ensure basic admin check or allow view in demo
-  const db = getMemoryDb();
+  try {
+    const conn = await connectToDatabase();
 
-  return NextResponse.json({
-    success: true,
-    stats: {
-      totalTrips: db.trips.length,
-      pendingApprovals: db.pendingApprovals.length,
-      totalUsers: db.users.length,
-      totalDestinations: db.destinations.length,
-      totalGalleryImages: db.gallery.length,
-    },
-    pendingTrips: db.pendingApprovals,
-    publishedTrips: db.trips,
-    drafts: db.drafts,
-  });
+    if (conn) {
+      const [
+        totalTrips,
+        pendingApprovalsCount,
+        totalUsers,
+        totalDestinations,
+        totalGalleryImages,
+        pendingTrips,
+        publishedTrips,
+      ] = await Promise.all([
+        TripModel.countDocuments({ status: 'approved' }),
+        TripModel.countDocuments({ status: 'pending' }),
+        UserModel.countDocuments(),
+        DestinationModel.countDocuments(),
+        GalleryModel.countDocuments(),
+        TripModel.find({ status: 'pending' }).sort({ createdAt: -1 }),
+        TripModel.find({ status: 'approved' }).sort({ createdAt: -1 }),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        stats: {
+          totalTrips,
+          pendingApprovals: pendingApprovalsCount,
+          totalUsers,
+          totalDestinations,
+          totalGalleryImages,
+        },
+        pendingTrips,
+        publishedTrips,
+      });
+    }
+
+    // In-Memory Fallback
+    const db = getMemoryDb();
+    return NextResponse.json({
+      success: true,
+      stats: {
+        totalTrips: db.trips.length,
+        pendingApprovals: db.pendingApprovals.length,
+        totalUsers: db.users.length,
+        totalDestinations: db.destinations.length,
+        totalGalleryImages: db.gallery.length,
+      },
+      pendingTrips: db.pendingApprovals,
+      publishedTrips: db.trips,
+    });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Failed to fetch admin stats' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    const { tripId, action, notes } = await request.json();
-    const db = getMemoryDb();
+    const { tripId, action } = await request.json();
+    const conn = await connectToDatabase();
 
-    const pendingIndex = db.pendingApprovals.findIndex((t) => t.id === tripId);
-    if (pendingIndex === -1) {
-      // Check if it's already in active trips
-      const activeTrip = db.trips.find((t) => t.id === tripId);
-      if (activeTrip) {
-        if (action === 'reject') {
-          activeTrip.status = 'rejected';
-          db.trips = db.trips.filter((t) => t.id !== tripId);
-        } else if (action === 'verify') {
-          activeTrip.isVerified = true;
-        }
-        return NextResponse.json({ success: true, message: `Trip status updated to ${action}` });
+    if (conn) {
+      if (action === 'approve') {
+        const trip = await TripModel.findOneAndUpdate(
+          { $or: [{ id: tripId }, { _id: tripId }] },
+          { $set: { status: 'approved' } },
+          { new: true }
+        );
+        return NextResponse.json({ success: true, message: 'Trip approved successfully', trip });
+      } else if (action === 'reject') {
+        const trip = await TripModel.findOneAndUpdate(
+          { $or: [{ id: tripId }, { _id: tripId }] },
+          { $set: { status: 'rejected' } },
+          { new: true }
+        );
+        return NextResponse.json({ success: true, message: 'Trip rejected successfully', trip });
+      } else if (action === 'verify') {
+        const current = await TripModel.findOne({ $or: [{ id: tripId }, { _id: tripId }] });
+        const trip = await TripModel.findOneAndUpdate(
+          { $or: [{ id: tripId }, { _id: tripId }] },
+          { $set: { isVerified: !current?.isVerified } },
+          { new: true }
+        );
+        return NextResponse.json({ success: true, message: 'Trip verification badge toggled', trip });
       }
-      return NextResponse.json({ success: false, error: 'Trip not found in moderation queue' }, { status: 404 });
     }
 
-    const trip = db.pendingApprovals[pendingIndex];
-
-    if (action === 'approve') {
-      trip.status = 'approved';
-      db.trips.unshift(trip);
-      db.pendingApprovals.splice(pendingIndex, 1);
-    } else if (action === 'reject') {
-      trip.status = 'rejected';
-      db.pendingApprovals.splice(pendingIndex, 1);
-    } else if (action === 'verify') {
-      trip.isVerified = true;
+    // In-Memory Fallback
+    const db = getMemoryDb();
+    const pendingIndex = db.pendingApprovals.findIndex((t) => t.id === tripId);
+    if (pendingIndex !== -1) {
+      const trip = db.pendingApprovals[pendingIndex];
+      if (action === 'approve') {
+        trip.status = 'approved';
+        db.trips.unshift(trip);
+        db.pendingApprovals.splice(pendingIndex, 1);
+      } else if (action === 'reject') {
+        trip.status = 'rejected';
+        db.pendingApprovals.splice(pendingIndex, 1);
+      }
+      return NextResponse.json({ success: true, trip });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Trip ${action}d successfully`,
-      trip,
-    });
+    const activeTrip = db.trips.find((t) => t.id === tripId);
+    if (activeTrip) {
+      if (action === 'verify') activeTrip.isVerified = !activeTrip.isVerified;
+      return NextResponse.json({ success: true, trip: activeTrip });
+    }
+
+    return NextResponse.json({ success: false, error: 'Trip not found' }, { status: 404 });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Moderation action failed' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Admin action failed' }, { status: 500 });
   }
 }
