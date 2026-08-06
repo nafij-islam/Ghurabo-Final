@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TripCard from '@/components/cards/TripCard';
+import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser } from '@/types';
-import { Compass, User, Clock, FileText, Bookmark, Heart, ShieldCheck, PlusCircle } from 'lucide-react';
+import { Compass, User, Clock, FileText, Bookmark, Heart, ShieldCheck, PlusCircle, Edit3 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [drafts, setDrafts] = useState<ITrip[]>([]);
   const [activeTab, setActiveTab] = useState<'published' | 'pending' | 'drafts'>('published');
+  const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,33 +45,47 @@ export default function DashboardPage() {
         <div className="bg-darkslate-900 text-white p-8 rounded-3xl shadow-xl mb-10 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-6">
             <img
-              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
+              src={currentUser?.avatar || 'https://i.pravatar.cc/150'}
               alt={currentUser?.name || 'User'}
-              className="w-20 h-20 rounded-full object-cover border-4 border-brand-500 shadow-lg"
+              className="w-20 h-20 rounded-full object-cover border-4 border-brand-500 shadow-lg bg-slate-800"
             />
             <div>
               <div className="flex items-center space-x-3">
-                <h1 className="font-display text-3xl font-bold uppercase text-white">{currentUser?.name || 'Aria Montgomery'}</h1>
+                <h1 className="font-display text-3xl font-bold uppercase text-white">{currentUser?.name || 'Explorer'}</h1>
                 <span className="px-3 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase">
                   {currentUser?.role || 'Traveller'}
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-1 font-light">{currentUser?.bio || 'Full-time backpacker & community story author.'}</p>
               <div className="flex items-center space-x-4 text-xs text-cyan-300 mt-3 font-semibold">
-                <span>{currentUser?.followersCount || 3420} Followers</span>
+                <span>{currentUser?.location || 'Dhaka, Bangladesh'}</span>
                 <span>•</span>
-                <span>{currentUser?.totalHelpfulVotes || 489} Helpful Votes</span>
+                <span>{(currentUser?.followersCount || 3420).toLocaleString()} Followers</span>
+                <span>•</span>
+                <span>{(currentUser?.totalHelpfulVotes || 489).toLocaleString()} Helpful Votes</span>
               </div>
             </div>
           </div>
 
-          <Link
-            href="/trips/share"
-            className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Share New Trip</span>
-          </Link>
+          <div className="flex items-center space-x-3">
+            {currentUser && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase px-5 py-3 rounded-full border border-slate-700 shadow transition-all"
+              >
+                <Edit3 className="w-4 h-4 text-brand-400" />
+                <span>Edit Profile</span>
+              </button>
+            )}
+
+            <Link
+              href="/trips/share"
+              className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ Share New Trip</span>
+            </Link>
+          </div>
         </div>
 
         {/* Dashboard Statistics */}
@@ -171,6 +187,17 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      {showEditModal && currentUser && (
+        <EditProfileModal
+          user={currentUser}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={(updated) => {
+            setCurrentUser(updated);
+          }}
+        />
+      )}
     </div>
   );
 }
