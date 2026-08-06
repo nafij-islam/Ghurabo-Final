@@ -158,8 +158,18 @@ const GallerySchema = new Schema(
   { timestamps: true }
 );
 
+// System Config Schema
+const SystemConfigSchema = new Schema(
+  {
+    key: { type: String, required: true, unique: true },
+    adminPasscode: { type: String, default: 'ghurabo123' },
+  },
+  { timestamps: true }
+);
+
 export const UserModel = models.User || model('User', UserSchema);
 export const DestinationModel = models.Destination || model('Destination', DestinationSchema);
 export const TripModel = models.Trip || model('Trip', TripSchema);
 export const ReviewModel = models.Review || model('Review', ReviewSchema);
 export const GalleryModel = models.Gallery || model('Gallery', GallerySchema);
+export const SystemConfigModel = models.SystemConfig || model('SystemConfig', SystemConfigSchema);

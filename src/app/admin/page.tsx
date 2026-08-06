@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle, XCircle, Clock, Users, Compass, Eye, AlertCircle } from 'lucide-react';
+import { ShieldCheck, CheckCircle, XCircle, Clock, Users, Compass, Eye, Key, Lock, Check } from 'lucide-react';
 import { ITrip } from '@/types';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+
+  // Change Passcode Modal State
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [oldPasscode, setOldPasscode] = useState('');
+  const [newPasscode, setNewPasscode] = useState('');
+  const [changeStatus, setChangeStatus] = useState<{ type: 'error' | 'success'; msg: string } | null>(null);
+  const [changingPasscode, setChangingPasscode] = useState(false);
+
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [stats, setStats] = useState({
@@ -27,17 +36,59 @@ export default function AdminPage() {
     }
   }, []);
 
-  const handlePasscodeSubmit = (e: React.FormEvent) => {
+  const handlePasscodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validPasscodes = ['ghurabo2026', 'admin2026', '123456', 'admin'];
-    if (validPasscodes.includes(passcode.trim())) {
-      setIsAuthenticated(true);
-      localStorage.setItem('ghurabo_admin_auth', 'true');
-      setPasscodeError('');
-      fetchAdminData();
-    } else {
-      setPasscodeError('Invalid Admin Passcode! Try: ghurabo2026 or 123456');
+    setVerifying(true);
+    setPasscodeError('');
+
+    try {
+      const res = await fetch('/api/admin/passcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', passcode: passcode.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('ghurabo_admin_auth', 'true');
+        fetchAdminData();
+      } else {
+        setPasscodeError(data.error || 'Invalid Admin Passcode!');
+      }
+    } catch (err) {
+      setPasscodeError('Error verifying passcode.');
     }
+    setVerifying(false);
+  };
+
+  const handleChangePasscodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangingPasscode(true);
+    setChangeStatus(null);
+
+    try {
+      const res = await fetch('/api/admin/passcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'change',
+          oldPasscode: oldPasscode.trim(),
+          newPasscode: newPasscode.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChangeStatus({ type: 'success', msg: 'Passcode updated successfully in MongoDB Atlas!' });
+        setOldPasscode('');
+        setNewPasscode('');
+        setTimeout(() => setShowPasscodeModal(false), 2000);
+      } else {
+        setChangeStatus({ type: 'error', msg: data.error || 'Failed to update passcode.' });
+      }
+    } catch (err) {
+      setChangeStatus({ type: 'error', msg: 'Server error updating passcode.' });
+    }
+    setChangingPasscode(false);
   };
 
   const fetchAdminData = () => {
@@ -93,7 +144,7 @@ export default function AdminPage() {
               <input
                 type="password"
                 required
-                placeholder="Passcode (e.g. ghurabo2026)"
+                placeholder="••••••••"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 className="w-full p-3.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
@@ -102,15 +153,12 @@ export default function AdminPage() {
 
             <button
               type="submit"
+              disabled={verifying}
               className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
             >
-              Unlock Admin Desk
+              {verifying ? 'Verifying...' : 'Unlock Admin Desk'}
             </button>
           </form>
-
-          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50 text-[11px] text-slate-400 text-center">
-            💡 Default Passcode: <span className="text-brand-400 font-bold">ghurabo2026</span> or <span className="text-brand-400 font-bold">123456</span>
-          </div>
         </div>
       </div>
     );
@@ -120,7 +168,7 @@ export default function AdminPage() {
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Banner */}
-        <div className="bg-darkslate-900 text-white p-8 rounded-3xl shadow-xl mb-10 border border-white/10 flex items-center justify-between">
+        <div className="bg-darkslate-900 text-white p-8 rounded-3xl shadow-xl mb-10 border border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 rounded-2xl bg-brand-500 flex items-center justify-center text-white shadow-lg">
               <ShieldCheck className="w-8 h-8" />
@@ -130,9 +178,20 @@ export default function AdminPage() {
               <p className="text-xs text-slate-300 font-light mt-1">Review community trip submissions, manage verification requests, and maintain platform standards.</p>
             </div>
           </div>
-          <span className="px-3.5 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-full uppercase">
-            System Admin Active
-          </span>
+
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowPasscodeModal(true)}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-all flex items-center space-x-1.5 shadow"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>Change Passcode</span>
+            </button>
+
+            <span className="px-3.5 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-full uppercase">
+              System Admin Active
+            </span>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -211,58 +270,116 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Published Trips Management */}
+        {/* Published Trips Directory */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
           <h2 className="font-display text-2xl font-bold text-slate-900 uppercase mb-6 flex items-center space-x-2">
             <Compass className="w-6 h-6 text-brand-500" />
             <span>Published Trips Directory ({publishedTrips.length})</span>
           </h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-100 text-slate-900 uppercase font-bold text-[11px]">
-                <tr>
-                  <th className="p-3.5 rounded-l-xl">Trip Title</th>
-                  <th className="p-3.5">Author</th>
-                  <th className="p-3.5">Destination</th>
-                  <th className="p-3.5">Status</th>
-                  <th className="p-3.5 text-right rounded-r-xl">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {publishedTrips.map((t) => (
-                  <tr key={t.id}>
-                    <td className="p-3.5 font-bold text-slate-900">{t.title}</td>
-                    <td className="p-3.5">{t.userName}</td>
-                    <td className="p-3.5">{t.destinationName}</td>
-                    <td className="p-3.5">
-                      {t.isVerified ? (
-                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[10px]">
-                          ✓ Verified
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 font-medium rounded-full text-[10px]">
-                          Standard
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-right space-x-2">
-                      {!t.isVerified && (
-                        <button
-                          onClick={() => handleAction(t.id, 'verify')}
-                          className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] font-bold uppercase"
-                        >
-                          Verify Badge
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {publishedTrips.map((trip) => (
+              <div key={trip.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-brand-600">{trip.destinationName}</span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded-full">Approved</span>
+                </div>
+                <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{trip.title}</h4>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
+                  <span>{trip.userName}</span>
+                  <button
+                    onClick={() => handleAction(trip.id, 'verify')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-full ${
+                      trip.isVerified ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700 hover:bg-amber-100'
+                    }`}
+                  >
+                    {trip.isVerified ? '✓ Badge Verified' : '+ Verify Badge'}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Change Passcode Modal */}
+      {showPasscodeModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-white space-y-5 relative shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-2xl font-bold uppercase flex items-center space-x-2">
+                <Key className="w-6 h-6 text-brand-400" />
+                <span>Change Admin Passcode</span>
+              </h3>
+              <button
+                onClick={() => setShowPasscodeModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-full text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Update the passcode required to access the Admin Moderation Desk. The new passcode is saved directly into MongoDB Atlas.
+            </p>
+
+            {changeStatus && (
+              <div
+                className={`p-3 rounded-2xl text-xs font-semibold text-center border ${
+                  changeStatus.type === 'success'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                }`}
+              >
+                {changeStatus.msg}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePasscodeSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-300 uppercase block mb-1">Current Passcode</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter current passcode"
+                  value={oldPasscode}
+                  onChange={(e) => setOldPasscode(e.target.value)}
+                  className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-300 uppercase block mb-1">New Passcode</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter new passcode"
+                  value={newPasscode}
+                  onChange={(e) => setNewPasscode(e.target.value)}
+                  className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasscodeModal(false)}
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-full transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={changingPasscode}
+                  className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase rounded-full shadow transition-all"
+                >
+                  {changingPasscode ? 'Updating...' : 'Save New Passcode'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
