@@ -1,22 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle, XCircle, Clock, Users, Compass, Eye, Key, Lock, Check } from 'lucide-react';
-import { ITrip } from '@/types';
+import Link from 'next/link';
+import { ShieldCheck, CheckCircle, XCircle, Clock, Compass, AlertTriangle, UserCheck, ShieldAlert } from 'lucide-react';
+import { ITrip, IUser } from '@/types';
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
-  const [verifying, setVerifying] = useState(false);
-
-  // Change Passcode Modal State
-  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
-  const [oldPasscode, setOldPasscode] = useState('');
-  const [newPasscode, setNewPasscode] = useState('');
-  const [changeStatus, setChangeStatus] = useState<{ type: 'error' | 'success'; msg: string } | null>(null);
-  const [changingPasscode, setChangingPasscode] = useState(false);
-
+  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [stats, setStats] = useState({
@@ -29,88 +20,20 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('ghurabo_admin_auth');
-    if (saved === 'true') {
-      setIsAuthenticated(true);
-      fetchAdminData();
-    }
+    // Check logged in user from /api/auth/me (MongoDB Atlas real-time check)
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setCurrentUser(data.user);
+          if (data.user.role === 'admin') {
+            fetchAdminData();
+          }
+        }
+        setCheckingAuth(false);
+      })
+      .catch(() => setCheckingAuth(false));
   }, []);
-
-  const handlePasscodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setVerifying(true);
-    setPasscodeError('');
-
-    const input = passcode.trim();
-    const defaults = ['ghurabo123', 'ghurabo2026', '123456', 'admin'];
-
-    try {
-      const res = await fetch('/api/admin/passcode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', passcode: input }),
-      });
-      const data = await res.json();
-      if (data.success || defaults.includes(input)) {
-        setIsAuthenticated(true);
-        localStorage.setItem('ghurabo_admin_auth', 'true');
-        fetchAdminData();
-      } else {
-        setPasscodeError(data.error || 'Invalid Admin Passcode!');
-      }
-    } catch (err) {
-      if (defaults.includes(input)) {
-        setIsAuthenticated(true);
-        localStorage.setItem('ghurabo_admin_auth', 'true');
-        fetchAdminData();
-      } else {
-        setPasscodeError('Invalid Admin Passcode!');
-      }
-    }
-    setVerifying(false);
-  };
-
-  const handleChangePasscodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setChangingPasscode(true);
-    setChangeStatus(null);
-
-    const oldInput = oldPasscode.trim();
-    const newInput = newPasscode.trim();
-
-    if (!oldInput || !newInput) {
-      setChangeStatus({ type: 'error', msg: 'Please enter both current and new passcodes.' });
-      setChangingPasscode(false);
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/admin/passcode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'change',
-          oldPasscode: oldInput,
-          newPasscode: newInput,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setChangeStatus({ type: 'success', msg: '✓ Passcode updated successfully!' });
-        setOldPasscode('');
-        setNewPasscode('');
-        setTimeout(() => setShowPasscodeModal(false), 1800);
-      } else {
-        setChangeStatus({ type: 'error', msg: data.error || 'Failed to update passcode.' });
-      }
-    } catch (err) {
-      setChangeStatus({ type: 'success', msg: '✓ Passcode updated successfully!' });
-      setOldPasscode('');
-      setNewPasscode('');
-      setTimeout(() => setShowPasscodeModal(false), 1800);
-    }
-    setChangingPasscode(false);
-  };
 
   const fetchAdminData = () => {
     setLoading(true);
@@ -140,51 +63,90 @@ export default function AdminPage() {
     } catch (err) {}
   };
 
-  if (!isAuthenticated) {
+  if (checkingAuth) {
     return (
-      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/40 via-slate-950 to-purple-950/40 opacity-70 pointer-events-none" />
-        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-indigo-500/30 text-white relative z-10 space-y-6">
-          <div className="text-center space-y-3">
-            <div className="w-16 h-16 bg-gradient-to-tr from-brand-500 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-brand-400/40">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-white">Admin Lock Screen</h1>
-            <p className="text-xs text-slate-400 font-light">Enter system passcode to access Moderation Desk</p>
-          </div>
-
-          {passcodeError && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs font-semibold text-center">
-              {passcodeError}
-            </div>
-          )}
-
-          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-slate-300 uppercase block mb-1">Enter Admin Passcode</label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full p-3.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={verifying}
-              className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
-            >
-              {verifying ? 'Verifying...' : 'Unlock Admin Desk'}
-            </button>
-          </form>
+      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Verifying Admin Role in MongoDB Atlas...</p>
         </div>
       </div>
     );
   }
 
+  // Case 1: User Not Logged In
+  if (!currentUser) {
+    return (
+      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/40 via-slate-950 to-purple-950/40 opacity-70 pointer-events-none" />
+        <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-indigo-500/30 text-white relative z-10 text-center space-y-6">
+          <div className="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl mx-auto flex items-center justify-center border border-amber-500/30">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-white">Authentication Required</h1>
+            <p className="text-xs text-slate-400 font-light leading-relaxed">
+              Please sign in to your account first to access the Admin Moderation Desk.
+            </p>
+          </div>
+
+          <Link
+            href="/auth/login"
+            className="inline-block w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
+          >
+            Sign In Now
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: Logged in user does not have role: 'admin'
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/40 via-slate-950 to-purple-950/40 opacity-70 pointer-events-none" />
+        <div className="max-w-lg w-full bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-rose-500/30 text-white relative z-10 space-y-6 text-center">
+          <div className="w-16 h-16 bg-rose-500/20 text-rose-400 rounded-2xl mx-auto flex items-center justify-center border border-rose-500/30">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-white">Access Denied</h1>
+            <p className="text-xs text-slate-300 font-light leading-relaxed">
+              Logged in as <span className="font-bold text-brand-400">{currentUser.email}</span> (Role: <span className="font-bold uppercase text-amber-400">{currentUser.role || 'traveller'}</span>).
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 text-left text-xs space-y-2 text-slate-300">
+            <div className="font-bold uppercase text-amber-400 flex items-center space-x-1.5">
+              <span>💡 How to get Admin Access:</span>
+            </div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              In your <b>MongoDB Atlas Database</b>, go to the <code>users</code> collection, find your user account (<code>{currentUser.email}</code>), and change the <code>role</code> field value from <code>"traveller"</code> to <code>"admin"</code>. Refresh this page to get instant full Admin access!
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Link
+              href="/dashboard"
+              className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-all"
+            >
+              Go to Dashboard
+            </Link>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-all shadow-lg"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 3: Logged in user has role === 'admin'
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -201,16 +163,13 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowPasscodeModal(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-all flex items-center space-x-1.5 shadow"
-            >
-              <Key className="w-3.5 h-3.5" />
-              <span>Change Passcode</span>
-            </button>
+            <div className="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-full border border-slate-700 flex items-center space-x-2">
+              <UserCheck className="w-3.5 h-3.5 text-brand-400" />
+              <span>{currentUser.name} ({currentUser.email})</span>
+            </div>
 
             <span className="px-3.5 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-full uppercase">
-              System Admin Active
+              Role: Admin
             </span>
           </div>
         </div>
@@ -322,85 +281,6 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-
-      {/* Change Passcode Modal */}
-      {showPasscodeModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-white space-y-5 relative shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-2xl font-bold uppercase flex items-center space-x-2">
-                <Key className="w-6 h-6 text-brand-400" />
-                <span>Change Admin Passcode</span>
-              </h3>
-              <button
-                onClick={() => setShowPasscodeModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-full text-lg"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-400">
-              Update the passcode required to access the Admin Moderation Desk. The new passcode is saved directly into MongoDB Atlas.
-            </p>
-
-            {changeStatus && (
-              <div
-                className={`p-3 rounded-2xl text-xs font-semibold text-center border ${
-                  changeStatus.type === 'success'
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-                }`}
-              >
-                {changeStatus.msg}
-              </div>
-            )}
-
-            <form onSubmit={handleChangePasscodeSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-300 uppercase block mb-1">Current Passcode</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter current passcode"
-                  value={oldPasscode}
-                  onChange={(e) => setOldPasscode(e.target.value)}
-                  className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300 uppercase block mb-1">New Passcode</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter new passcode"
-                  value={newPasscode}
-                  onChange={(e) => setNewPasscode(e.target.value)}
-                  className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPasscodeModal(false)}
-                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-full transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={changingPasscode}
-                  className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase rounded-full shadow transition-all"
-                >
-                  {changingPasscode ? 'Updating...' : 'Save New Passcode'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
