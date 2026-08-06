@@ -1,0 +1,176 @@
+================================================================================
+                    GHURABO (ঘোড়াবো) - FULL PLATFORM DOCUMENTATION (A TO Z)
+================================================================================
+Project Name: Ghurabo Travel Community
+Version: 1.0.0 (Production Ready)
+Tech Stack: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, MongoDB Atlas, Cloudinary CDN
+Live Repository: https://github.com/nafij-islam/Ghurabo-Final.git
+Deployment Platform: Vercel Cloud Platform
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS:
+1. System Overview & Philosophy
+2. User Roles & Authentication Architecture
+3. Traveler (User) Core Features & Workflows
+4. Admin Moderation Desk (/admin) & Platform Governance
+5. Database Architecture & MongoDB Atlas Collections
+6. Cloud Media Integration (Cloudinary API)
+7. Page Directory & Route Mapping
+8. API Endpoints Reference
+--------------------------------------------------------------------------------
+
+1. SYSTEM OVERVIEW & PHILOSOPHY
+-------------------------------
+Ghurabo is a modern, high-performance travel community web platform designed for explorers 
+to document, discover, and budget travel expeditions. Unlike generic travel blogs, Ghurabo 
+provides authentic, community-verified cost breakdowns, day-by-day itineraries, and safety 
+guidelines rooted in real traveler experiences.
+
+2. USER ROLES & AUTHENTICATION ARCHITECTURE
+-------------------------------------------
+- Authentication Model: JWT Session Cookie (`ghurabo_session`) + MongoDB Atlas Real-Time Role Lookup.
+- Role Types:
+  a) 'traveller': Standard registered user. Can create, edit, save, and manage personal trip stories and profile details.
+  b) 'admin': System administrator. Identified directly via `role: "admin"` in MongoDB Atlas `users` collection.
+- Access Control on /admin:
+  * Automatically checks logged-in user via `/api/auth/me`.
+  * If `role === 'admin'`, grants immediate full access to Moderation Desk & Popular Destination controls.
+  * If `role !== 'admin'`, blocks access with a informative "Access Denied" screen and guidance on setting `role: "admin"` in MongoDB Atlas.
+
+3. TRAVELER (USER) CORE FEATURES & WORKFLOWS
+--------------------------------------------
+- Dynamic Profile Page (/profile/[username] & /dashboard):
+  * Profile Photo (Avatar) & Cover Banner customizing with Cloudinary file upload or direct image URL.
+  * Editable Full Name, Bio, Home Location (City/Country), and Preferred Travel Style (Solo, Couple, Family, Group).
+  * Real-time metrics: Followers count, Helpful Votes, Published Trips count, and Badges.
+
+- Trip Sharing Flow (/trips/share):
+  * Multi-step or structured form capturing Trip Title, Destination, Travel Date, Duration, and Per-Person Budget.
+  * Itemized Cost Breakdown: Transport, Hotel, Food, Local Transport, Tickets, Shopping, and Misc expenses.
+  * Day-by-Day Itinerary: Specific daily activities, visited spots, and estimated daily costs.
+  * Highlights & Local Safety Tips.
+  * Image Upload: Integrated Cloudinary photo uploader. Automatically syncs uploaded trip photos into the Community Photo Gallery (/gallery).
+  * Submission Status: Newly submitted trips are marked `status: 'pending'` for Admin moderation review.
+
+- Community Exploration (/destinations, /trips, /gallery):
+  * Filter community trip stories by budget, travel style, destination, and ratings.
+  * Interactive Trip Details Page (/trips/[slug]) showing complete travel story, itemized cost breakdown tables, day-by-day itinerary cards, and interactive community discussion/commenting.
+  * Photo Gallery (/gallery) featuring a responsive masonry layout populated dynamically from MongoDB Atlas.
+
+4. ADMIN MODERATION DESK (/admin) & PLATFORM GOVERNANCE
+-------------------------------------------------------
+- Real-Time Analytics Dashboard:
+  * Displays live counters for Pending Approvals, Published Trips, Total Registered Explorers, and Destinations.
+
+- Pending Approvals Queue:
+  * Shows all user-submitted trips with status `pending`.
+  * One-click 'Approve' action changes trip status to `approved` and publishes it site-wide.
+  * 'Reject' action removes or declines unverified submissions.
+
+- Homepage Popular Destinations Controls:
+  * Allows Admin to toggle `isPopular` on any destination.
+  * Destinations marked as 'Popular' dynamically populate the "POPULAR DESTINATIONS" section on the Homepage.
+
+- Verification Badging:
+  * Admin can award `✓ Verified Badge` to high-quality, authentic trip reports.
+
+5. DATABASE ARCHITECTURE & MONGODB ATLAS COLLECTIONS
+----------------------------------------------------
+Database Name: ghurabo
+Connection URI: mongodb+srv://ghurabofinal:nJMXwm3IwoXa8TV8@cluster0.57pbeou.mongodb.net/ghurabo
+
+Collections Schema:
+1. `users`:
+   - id (String, Unique)
+   - name (String)
+   - email (String, Unique)
+   - avatar (String)
+   - coverImage (String)
+   - role (Enum: 'traveller' | 'admin')
+   - bio (String)
+   - location (String)
+   - preferredStyle (Enum: 'Solo' | 'Couple' | 'Family' | 'Group')
+   - followersCount (Number)
+   - totalHelpfulVotes (Number)
+
+2. `trips`:
+   - id (String, Unique)
+   - title (String)
+   - slug (String, Unique)
+   - userId (String)
+   - userName (String)
+   - userAvatar (String)
+   - destinationName (String)
+   - travelType (Enum: 'Solo' | 'Couple' | 'Family' | 'Group')
+   - durationDays (Number)
+   - costBreakdown (Object: transport, hotel, food, perPersonCost, totalCost)
+   - itinerary (Array of Day objects)
+   - status (Enum: 'draft' | 'pending' | 'approved' | 'rejected')
+   - isVerified (Boolean)
+   - isPopular (Boolean)
+
+3. `destinations`:
+   - id (String, Unique)
+   - name (String)
+   - slug (String)
+   - country (String)
+   - category (String)
+   - image (String)
+   - isPopular (Boolean)
+   - totalTrips (Number)
+
+4. `gallery`:
+   - id (String)
+   - url (String)
+   - tripId (String)
+   - photographerName (String)
+   - photographerId (String)
+
+6. CLOUDINARY CDN INTEGRATION
+-----------------------------
+Cloud Name: dndsq5vms
+API Key: 462744315264639
+API Secret: tNIL9uU-y1t63K49GzU3pBwD9Xo
+Endpoint: /api/upload (Handles Server-side Cloudinary Uploads)
+
+7. PAGE DIRECTORY & ROUTE MAPPING
+---------------------------------
+/                       -> Homepage (Hero, Popular Destinations, Community Feed)
+/destinations          -> All Destinations Directory with Filters
+/destinations/[slug]   -> Single Destination Guide & Related Trips
+/trips                 -> All Trips Explorer & Search
+/trips/[slug]          -> Single Trip Story, Cost Breakdown & Itinerary Details
+/trips/share           -> Share New Trip Submission Form
+/gallery               -> Masonry Photo Gallery
+/dashboard             -> User Dashboard (My Trips, Drafts, Pending Reviews, Edit Profile)
+/profile/[username]    -> Traveler Profile Page & Edit Modal
+/admin                 -> Admin Moderation Desk & Popular Controls
+/auth/login            -> Explorer Sign In Page
+/auth/signup           -> Explorer Registration Page
+
+8. API ENDPOINTS REFERENCE
+--------------------------
+GET  /api/auth/me                -> Returns current logged-in user profile & MongoDB Atlas role
+POST /api/auth/login             -> Login user & set JWT session cookie
+POST /api/auth/signup            -> Register user & create MongoDB Atlas user doc
+POST /api/auth/logout            -> Logout user & clear session cookie
+
+GET  /api/trips                  -> List published trips (filter by budget, travelType, search, status)
+POST /api/trips                  -> Create new trip story (sets status: 'pending' for admin review)
+GET  /api/trips/[id]             -> Fetch single trip by id or slug from MongoDB Atlas
+PUT  /api/trips/[id]             -> Update trip, like, save, or helpful vote
+DELETE /api/trips/[id]          -> Delete trip story
+
+GET  /api/admin/trips            -> Admin stats, pending queue, & published list
+POST /api/admin/trips            -> Admin actions (approve, reject, verify, togglePopular)
+GET  /api/admin/destinations     -> List destinations for admin management
+POST /api/admin/destinations     -> Toggle destination isPopular status
+
+GET  /api/users/profile          -> Fetch user profile by id/username
+PUT  /api/users/profile          -> Update user profile details in MongoDB Atlas
+
+POST /api/upload                 -> Upload image to Cloudinary CDN and return secure URL
+
+================================================================================
+DOCUMENT END - GHURABO TRAVEL COMMUNITY PLATFORM (2026)
+================================================================================
