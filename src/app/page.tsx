@@ -69,9 +69,14 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {destinations.slice(0, 6).map((dest) => (
-            <DestinationCard key={dest.id} destination={dest} />
-          ))}
+          {(destinations.filter((d) => d.isPopular).length > 0
+            ? destinations.filter((d) => d.isPopular)
+            : destinations
+          )
+            .slice(0, 6)
+            .map((dest) => (
+              <DestinationCard key={dest.id} destination={dest} />
+            ))}
         </div>
       </section>
 

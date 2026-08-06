@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, CheckCircle, XCircle, Clock, Compass, AlertTriangle, UserCheck, ShieldAlert } from 'lucide-react';
-import { ITrip, IUser } from '@/types';
+import { ShieldCheck, CheckCircle, XCircle, Clock, Compass, AlertTriangle, UserCheck, ShieldAlert, Star, MapPin } from 'lucide-react';
+import { ITrip, IUser, IDestination } from '@/types';
 
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
+  const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [stats, setStats] = useState({
     totalTrips: 0,
     pendingApprovals: 0,
@@ -47,14 +48,36 @@ export default function AdminPage() {
         }
         setLoading(false);
       });
+
+    fetch('/api/admin/destinations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setDestinations(data.destinations || []);
+        }
+      });
   };
 
-  const handleAction = async (tripId: string, action: 'approve' | 'reject' | 'verify') => {
+  const handleAction = async (tripId: string, action: 'approve' | 'reject' | 'verify' | 'togglePopular') => {
     try {
       const res = await fetch('/api/admin/trips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tripId, action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchAdminData();
+      }
+    } catch (err) {}
+  };
+
+  const togglePopularDestination = async (destinationId: string, currentPopular: boolean) => {
+    try {
+      const res = await fetch('/api/admin/destinations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destinationId, isPopular: !currentPopular }),
       });
       const data = await res.json();
       if (data.success) {
@@ -158,7 +181,7 @@ export default function AdminPage() {
             </div>
             <div>
               <h1 className="font-display text-3xl font-bold uppercase text-white">Admin Moderation Desk</h1>
-              <p className="text-xs text-slate-300 font-light mt-1">Review community trip submissions, manage verification requests, and maintain platform standards.</p>
+              <p className="text-xs text-slate-300 font-light mt-1">Review community trip submissions, mark Popular Destinations for homepage, and verify badges.</p>
             </div>
           </div>
 
@@ -197,6 +220,61 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Popular Destinations Controls for Homepage */}
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-slate-900 uppercase flex items-center space-x-2">
+                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+                <span>Homepage Popular Destinations Controls</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Select destinations to feature under "POPULAR DESTINATIONS" section on the Homepage.
+              </p>
+            </div>
+            <span className="px-3.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full uppercase">
+              {destinations.filter((d) => d.isPopular).length} Popular Selected
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {destinations.map((dest) => (
+              <div
+                key={dest.id || (dest as any)._id}
+                className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                  dest.isPopular
+                    ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-400/40'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center space-x-3 truncate">
+                  <img
+                    src={dest.image}
+                    alt={dest.name}
+                    className="w-12 h-12 rounded-xl object-cover border border-white shadow-sm flex-shrink-0"
+                  />
+                  <div className="truncate">
+                    <h4 className="font-bold text-xs text-slate-900 truncate">{dest.name}</h4>
+                    <span className="text-[10px] text-slate-500">{dest.country}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => togglePopularDestination(dest.id || (dest as any)._id, Boolean(dest.isPopular))}
+                  className={`px-3 py-1.5 text-[11px] font-bold rounded-full transition-all flex items-center space-x-1 flex-shrink-0 cursor-pointer ${
+                    dest.isPopular
+                      ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
+                      : 'bg-white hover:bg-amber-100 text-slate-700 border border-slate-300'
+                  }`}
+                >
+                  <Star className={`w-3 h-3 ${dest.isPopular ? 'fill-white' : ''}`} />
+                  <span>{dest.isPopular ? 'Popular' : 'Mark Popular'}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Pending Approvals Queue */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-10">
           <h2 className="font-display text-2xl font-bold text-slate-900 uppercase mb-6 flex items-center space-x-2">
@@ -207,7 +285,7 @@ export default function AdminPage() {
           {pendingTrips.length > 0 ? (
             <div className="space-y-6">
               {pendingTrips.map((trip) => (
-                <div key={trip.id} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div key={trip.id || (trip as any)._id} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="space-y-1 max-w-2xl">
                     <div className="flex items-center space-x-2 text-xs">
                       <span className="px-2.5 py-0.5 bg-brand-500 text-white font-bold rounded-full uppercase">
@@ -259,7 +337,7 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {publishedTrips.map((trip) => (
-              <div key={trip.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+              <div key={trip.id || (trip as any)._id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-brand-600">{trip.destinationName}</span>
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded-full">Approved</span>
@@ -267,14 +345,25 @@ export default function AdminPage() {
                 <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{trip.title}</h4>
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
                   <span>{trip.userName}</span>
-                  <button
-                    onClick={() => handleAction(trip.id, 'verify')}
-                    className={`px-3 py-1 text-[11px] font-bold rounded-full ${
-                      trip.isVerified ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700 hover:bg-amber-100'
-                    }`}
-                  >
-                    {trip.isVerified ? '✓ Badge Verified' : '+ Verify Badge'}
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleAction(trip.id || (trip as any)._id, 'verify')}
+                      className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer ${
+                        trip.isVerified ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700 hover:bg-amber-100'
+                      }`}
+                    >
+                      {trip.isVerified ? '✓ Verified' : '+ Verify'}
+                    </button>
+
+                    <button
+                      onClick={() => handleAction(trip.id || (trip as any)._id, 'togglePopular')}
+                      className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer ${
+                        trip.isPopular ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-purple-100'
+                      }`}
+                    >
+                      {trip.isPopular ? '★ Popular' : '+ Popular'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

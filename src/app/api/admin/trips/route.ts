@@ -111,6 +111,19 @@ export async function POST(request: Request) {
         );
 
         return NextResponse.json({ success: true, message: 'Trip verification badge toggled', trip });
+      } else if (action === 'togglePopular') {
+        const current = await TripModel.findOne(query);
+        if (!current) {
+          return NextResponse.json({ success: false, error: 'Trip not found in database' }, { status: 404 });
+        }
+
+        const trip = await TripModel.findOneAndUpdate(
+          query,
+          { $set: { isPopular: !current.isPopular } },
+          { new: true }
+        );
+
+        return NextResponse.json({ success: true, message: 'Trip popular badge toggled', trip });
       }
     }
 

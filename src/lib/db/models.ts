@@ -43,6 +43,7 @@ const DestinationSchema = new Schema(
     safetyTips: { type: String },
     totalTrips: { type: Number, default: 0 },
     avgRating: { type: Number, default: 4.8 },
+    isPopular: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -99,6 +100,7 @@ const TripSchema = new Schema(
     ],
     status: { type: String, enum: ['draft', 'pending', 'approved', 'rejected'], default: 'pending' },
     isVerified: { type: Boolean, default: false },
+    isPopular: { type: Boolean, default: false },
     likesCount: { type: Number, default: 0 },
     savesCount: { type: Number, default: 0 },
     helpfulVotesCount: { type: Number, default: 0 },

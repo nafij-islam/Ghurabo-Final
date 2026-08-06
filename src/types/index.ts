@@ -43,6 +43,7 @@ export interface IDestination {
   safetyTips: string;
   totalTrips: number;
   avgRating: number;
+  isPopular?: boolean;
 }
 
 export interface IItineraryDay {
@@ -98,6 +99,7 @@ export interface ITrip {
   itinerary: IItineraryDay[];
   status: TripStatus;
   isVerified: boolean;
+  isPopular?: boolean;
   likesCount: number;
   savesCount: number;
   helpfulVotesCount: number;
