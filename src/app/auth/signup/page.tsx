@@ -1,0 +1,116 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Compass, Mail, Lock, User, MapPin } from 'lucide-react';
+
+export default function SignupPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [preferredStyle, setPreferredStyle] = useState('Solo');
+  const [location, setLocation] = useState('Dhaka, Bangladesh');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, preferredStyle, location }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push('/dashboard');
+        router.refresh();
+      }
+    } catch (err) {}
+    setLoading(false);
+  };
+
+  return (
+    <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-100 space-y-6">
+        <div className="text-center">
+          <img
+            src="/logo-ghurabo.png"
+            alt="Ghurabo Logo"
+            className="h-16 sm:h-20 w-auto object-contain mx-auto mb-3"
+          />
+          <h1 className="font-display text-3xl font-bold uppercase text-slate-900">Join Community</h1>
+          <p className="text-xs text-slate-500 font-light mt-1">Create your Ghurabo explorer account</p>
+        </div>
+
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Full Name</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Aria Montgomery"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Email Address</label>
+            <input
+              type="email"
+              required
+              placeholder="aria@ghurabo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Travel Style</label>
+              <select
+                value={preferredStyle}
+                onChange={(e) => setPreferredStyle(e.target.value)}
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+              >
+                <option value="Solo">Solo</option>
+                <option value="Couple">Couple</option>
+                <option value="Family">Family</option>
+                <option value="Group">Group</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Home City</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
+
+        <div className="text-center text-xs text-slate-500 pt-2">
+          Already have an account?{' '}
+          <Link href="/auth/login" className="text-brand-600 font-bold hover:underline">
+            Sign In
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
