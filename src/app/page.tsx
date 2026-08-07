@@ -17,31 +17,20 @@ export default function HomePage() {
   const [maxBudget, setMaxBudget] = useState<number>(500);
 
   useEffect(() => {
-    // Load initial data
-    fetch('/api/destinations')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setDestinations(data.destinations || []);
-      });
-
-    // Fetch Admin-Selected Popular Approved Trips
-    fetch('/api/trips?popular=true')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setPopularTrips(data.trips || []);
-      });
-
-    fetch('/api/trips')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setTrips(data.trips || []);
-      });
-
-    fetch('/api/gallery')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setGalleryItems(data.gallery || []);
-      });
+    // Parallelize all initial homepage data requests
+    Promise.all([
+      fetch('/api/destinations').then((res) => res.json()),
+      fetch('/api/trips?popular=true').then((res) => res.json()),
+      fetch('/api/trips').then((res) => res.json()),
+      fetch('/api/gallery').then((res) => res.json()),
+    ])
+      .then(([destData, popData, tripData, galData]) => {
+        if (destData.success) setDestinations(destData.destinations || []);
+        if (popData.success) setPopularTrips(popData.trips || []);
+        if (tripData.success) setTrips(tripData.trips || []);
+        if (galData.success) setGalleryItems(galData.gallery || []);
+      })
+      .catch((err) => console.warn('Homepage data load error:', err));
   }, []);
 
   const filteredTrips = trips.filter((t) => {

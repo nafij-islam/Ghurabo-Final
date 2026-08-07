@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import DestinationCard from '@/components/cards/DestinationCard';
+import { DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination } from '@/types';
-import { Search, MapPin, Filter, Compass } from 'lucide-react';
+import { Search, MapPin, Compass } from 'lucide-react';
 
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<IDestination[]>([]);
@@ -71,7 +72,7 @@ export default function DestinationsPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase transition-all cursor-pointer ${
                     selectedCategory === cat
                       ? 'bg-brand-500 text-white shadow-md'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -88,13 +89,13 @@ export default function DestinationsPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-80 bg-slate-200 animate-pulse rounded-3xl" />
+              <DestinationCardSkeleton key={i} />
             ))}
           </div>
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filtered.map((dest) => (
-              <DestinationCard key={dest.id} destination={dest} />
+              <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />
             ))}
           </div>
         ) : (

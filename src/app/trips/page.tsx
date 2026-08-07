@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import TripCard from '@/components/cards/TripCard';
+import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip } from '@/types';
-import { Search, Filter, Compass, SlidersHorizontal, DollarSign, Star } from 'lucide-react';
+import { Search, Compass, SlidersHorizontal } from 'lucide-react';
 
 export default function AllTripsPage() {
   const [trips, setTrips] = useState<ITrip[]>([]);
@@ -72,7 +73,7 @@ export default function AllTripsPage() {
             </div>
             <button
               type="submit"
-              className="px-7 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm uppercase rounded-full shadow-md transition-all"
+              className="px-7 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm uppercase rounded-full shadow-md transition-all cursor-pointer"
             >
               Search Trips
             </button>
@@ -138,13 +139,13 @@ export default function AllTripsPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-96 bg-slate-200 animate-pulse rounded-3xl" />
+              <TripCardSkeleton key={i} />
             ))}
           </div>
         ) : trips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <TripCard key={trip.id || (trip as any)._id} trip={trip} />
             ))}
           </div>
         ) : (

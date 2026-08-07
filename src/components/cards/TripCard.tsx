@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bookmark, Star, ShieldCheck, MapPin, Clock, Heart } from 'lucide-react';
 import { ITrip } from '@/types';
+import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 
 interface TripCardProps {
   trip: ITrip;
@@ -71,7 +72,7 @@ export default function TripCard({ trip }: TripCardProps) {
       {/* Top Image Section */}
       <div className="relative h-60 w-full overflow-hidden bg-slate-100">
         <img
-          src={trip.coverImage}
+          src={getOptimizedImageUrl(trip.coverImage, { width: 600, height: 400 })}
           alt={trip.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -130,8 +131,9 @@ export default function TripCard({ trip }: TripCardProps) {
           <div className="flex items-center justify-between mb-3 text-xs text-slate-500">
             <div className="flex items-center space-x-2">
               <img
-                src={trip.userAvatar}
+                src={getOptimizedImageUrl(trip.userAvatar, { width: 100, height: 100 })}
                 alt={trip.userName}
+                loading="lazy"
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
               />
               <span className="font-medium text-slate-700 truncate max-w-[120px]">{trip.userName}</span>

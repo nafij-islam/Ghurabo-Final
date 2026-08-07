@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { GalleryModel, TripModel } from '@/lib/db/models';
 
+const GALLERY_FIELDS = 'id url caption tripId tripTitle tripSlug destinationName travelType photographerName photographerAvatar photographerId likesCount createdAt';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.toLowerCase();
     const travelType = searchParams.get('travelType');
     const destination = searchParams.get('destination')?.toLowerCase();
+
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const limit = Math.min(60, Math.max(1, Number(searchParams.get('limit')) || 24));
+    const skip = (page - 1) * limit;
 
     const conn = await connectToDatabase();
 
@@ -36,13 +42,27 @@ export async function GET(request: Request) {
         query.destinationName = { $regex: destination, $options: 'i' };
       }
 
-      const gallery = await GalleryModel.find(query).sort({ createdAt: -1 }).lean();
+      const [gallery, total] = await Promise.all([
+        GalleryModel.find(query)
+          .select(GALLERY_FIELDS)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        GalleryModel.countDocuments(query),
+      ]);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
-        total: gallery.length,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
         gallery,
       });
+
+      response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+      return response;
     }
 
     // In-Memory Fallback
@@ -68,10 +88,15 @@ export async function GET(request: Request) {
       gallery = gallery.filter((item) => item.destinationName.toLowerCase().includes(destination));
     }
 
+    const paginatedGallery = gallery.slice(skip, skip + limit);
+
     return NextResponse.json({
       success: true,
       total: gallery.length,
-      gallery,
+      page,
+      limit,
+      totalPages: Math.ceil(gallery.length / limit),
+      gallery: paginatedGallery,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch gallery photos' }, { status: 500 });

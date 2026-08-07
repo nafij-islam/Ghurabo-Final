@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { DestinationModel, TripModel } from '@/lib/db/models';
 
+const DESTINATION_FIELDS = 'id name slug country division category image heroImage isPopular avgCostSolo avgRating totalTrips description';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.toLowerCase();
     const category = searchParams.get('category');
     const country = searchParams.get('country');
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const limit = Math.min(30, Math.max(1, Number(searchParams.get('limit')) || 12));
+    const skip = (page - 1) * limit;
 
     const conn = await connectToDatabase();
 
@@ -29,22 +34,27 @@ export async function GET(request: Request) {
         query.country = { $regex: new RegExp(`^${country}$`, 'i') };
       }
 
-      const destinations = await DestinationModel.find(query).lean();
+      const [destinations, total] = await Promise.all([
+        DestinationModel.find(query)
+          .select(DESTINATION_FIELDS)
+          .sort({ isPopular: -1, name: 1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        DestinationModel.countDocuments(query),
+      ]);
 
-      // Recalculate trip counts dynamically from Atlas
-      for (const dest of destinations) {
-        const tripCount = await TripModel.countDocuments({
-          $or: [{ destinationId: dest.id }, { destinationName: dest.name }],
-          status: 'approved',
-        });
-        dest.totalTrips = tripCount;
-      }
-
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
-        total: destinations.length,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
         destinations,
       });
+
+      response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+      return response;
     }
 
     // In-Memory Fallback
@@ -64,15 +74,15 @@ export async function GET(request: Request) {
       destinations = destinations.filter((d) => d.category.toLowerCase() === category.toLowerCase());
     }
 
-    destinations.forEach((dest) => {
-      const matchingTrips = db.trips.filter((t) => t.destinationId === dest.id || t.destinationName === dest.name);
-      dest.totalTrips = matchingTrips.length;
-    });
+    const paginatedDestinations = destinations.slice(skip, skip + limit);
 
     return NextResponse.json({
       success: true,
       total: destinations.length,
-      destinations,
+      page,
+      limit,
+      totalPages: Math.ceil(destinations.length / limit),
+      destinations: paginatedDestinations,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch destinations' }, { status: 500 });

@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel, GalleryModel, DestinationModel, UserModel } from '@/lib/db/models';
 import { getCurrentUser } from '@/lib/auth/session';
-import { ITrip } from '@/types';
+
+// Card field projections for listing optimization
+const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt';
 
 export async function GET(request: Request) {
   try {
@@ -16,6 +18,11 @@ export async function GET(request: Request) {
     const statusFilter = searchParams.get('status') || 'approved';
     const userIdFilter = searchParams.get('userId');
     const popularFilter = searchParams.get('popular');
+
+    // Pagination
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const limit = popularFilter === 'true' ? 6 : Math.min(30, Math.max(1, Number(searchParams.get('limit')) || 12));
+    const skip = (page - 1) * limit;
 
     const conn = await connectToDatabase();
 
@@ -64,13 +71,32 @@ export async function GET(request: Request) {
       else if (sort === 'lowest_cost') sortOptions = { 'costBreakdown.perPersonCost': 1 };
       else if (sort === 'highest_rating') sortOptions = { 'ratings.overall': -1 };
 
-      const trips = await TripModel.find(query).sort(sortOptions).lean();
+      const [trips, total] = await Promise.all([
+        TripModel.find(query)
+          .select(TRIP_CARD_FIELDS)
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        TripModel.countDocuments(query),
+      ]);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
-        total: trips.length,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
         trips,
       });
+
+      if (!userIdFilter && statusFilter === 'approved') {
+        response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+      } else {
+        response.headers.set('Cache-Control', 'no-store');
+      }
+
+      return response;
     }
 
     // In-Memory Fallback
@@ -121,10 +147,15 @@ export async function GET(request: Request) {
       trips.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
+    const paginatedTrips = trips.slice(skip, skip + limit);
+
     return NextResponse.json({
       success: true,
       total: trips.length,
-      trips,
+      page,
+      limit,
+      totalPages: Math.ceil(trips.length / limit),
+      trips: paginatedTrips,
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch trips' }, { status: 500 });
@@ -146,7 +177,7 @@ export async function POST(request: Request) {
     let authorAvatar = sessionUser.avatar || 'https://i.pravatar.cc/150';
 
     if (conn) {
-      const dbUser = (await UserModel.findOne({ email: sessionUser.email.toLowerCase() }).lean()) as any;
+      const dbUser = (await UserModel.findOne({ email: sessionUser.email.toLowerCase() }).select('id name avatar').lean()) as any;
       if (dbUser) {
         authorId = dbUser.id || String(dbUser._id);
         authorName = dbUser.name;
