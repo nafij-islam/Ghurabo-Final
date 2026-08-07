@@ -12,6 +12,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Email address is required' }, { status: 400 });
     }
 
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      return NextResponse.json({ success: false, error: 'Password is required' }, { status: 400 });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
     const conn = await connectToDatabase();
 
@@ -20,14 +24,14 @@ export async function POST(request: Request) {
       const atlasUser = await UserModel.findOne({ email: cleanEmail });
 
       if (atlasUser) {
-        // If password is provided and user has a passwordHash, verify with bcrypt
-        if (password && atlasUser.passwordHash) {
+        // Verify password using bcrypt if passwordHash exists
+        if (atlasUser.passwordHash) {
           const isValidPassword = await bcrypt.compare(password, atlasUser.passwordHash);
           if (!isValidPassword) {
             return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
           }
-        } else if (password && !atlasUser.passwordHash) {
-          // Automatic migration for legacy/seeded accounts: hash password and save
+        } else {
+          // Legacy migration: set initial passwordHash if missing
           const newHash = await bcrypt.hash(password, 10);
           atlasUser.passwordHash = newHash;
           await UserModel.updateOne({ _id: atlasUser._id }, { $set: { passwordHash: newHash } });
@@ -35,7 +39,6 @@ export async function POST(request: Request) {
 
         const userId = atlasUser.id || String(atlasUser._id);
 
-        // Guarantee Mongo Atlas user document has stable id field set
         if (!atlasUser.id) {
           atlasUser.id = userId;
           await UserModel.updateOne({ _id: atlasUser._id }, { $set: { id: userId } });
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // In-memory lookup fallback strictly by normalized email
+    // In-memory fallback
     const db = getMemoryDb();
     const memoryUser = db.users.find((u) => u.email.toLowerCase().trim() === cleanEmail);
 
@@ -104,11 +107,14 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { success: false, error: 'No account found with this email address. Please check your email or sign up.' },
-      { status: 401 }
+      { success: false, error: 'No account found with this email address. Please check your email or create an account.' },
+      { status: 404 }
     );
-  } catch (error: any) {
-    console.error('Login Route Error:', error);
-    return NextResponse.json({ success: false, error: 'Authentication failed due to a server error' }, { status: 500 });
+  } catch (err: any) {
+    console.error('Error during login POST handler:', err);
+    return NextResponse.json(
+      { success: false, error: 'Server authentication error. Please try again.' },
+      { status: 500 }
+    );
   }
 }

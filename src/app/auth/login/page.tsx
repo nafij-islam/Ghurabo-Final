@@ -25,18 +25,18 @@ function LoginForm() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => ({ success: false, error: 'Server response error' }));
+      if (res.ok && data.success) {
         notifyAuthChange();
         router.refresh();
         router.push(redirectTarget);
       } else {
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Invalid email or password');
       }
-    } catch (err) {
-      setError('An error occurred during sign in');
+    } catch (err: any) {
+      setError(err?.message || 'Network error during sign in');
     }
     setLoading(false);
   };
@@ -54,7 +54,7 @@ function LoginForm() {
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center">
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center leading-relaxed">
           {error}
         </div>
       )}
@@ -67,7 +67,7 @@ function LoginForm() {
             <input
               type="email"
               required
-              placeholder="aria@ghurabo.com"
+              placeholder="sahariannafis70@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -99,11 +99,16 @@ function LoginForm() {
         </button>
       </form>
 
-      <div className="text-center text-xs text-slate-500 pt-2">
-        Don't have an account?{' '}
-        <Link href={`/auth/signup?redirect=${encodeURIComponent(redirectTarget)}`} className="text-brand-600 font-bold hover:underline">
-          Create Account
-        </Link>
+      <div className="text-center pt-2 border-t border-slate-100">
+        <p className="text-xs text-slate-500">
+          Don&apos;t have an account?{' '}
+          <Link
+            href={`/auth/signup?redirect=${encodeURIComponent(redirectTarget)}`}
+            className="font-bold text-brand-600 hover:underline"
+          >
+            Create Account
+          </Link>
+        </p>
       </div>
     </div>
   );
@@ -111,8 +116,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center px-4">
-      <Suspense fallback={<div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />}>
+    <div className="w-full min-h-screen pt-28 pb-20 bg-slate-50 flex items-center justify-center px-4">
+      <Suspense fallback={<div className="text-center text-xs text-slate-400 font-semibold animate-pulse">Loading login form...</div>}>
         <LoginForm />
       </Suspense>
     </div>
