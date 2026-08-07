@@ -24,22 +24,20 @@ async function runTests() {
     }
   }
 
-  // Determine active port
+  let activeUrl = 'http://127.0.0.1:3000';
   try {
-    const ping = await fetch('http://localhost:3000/api/destinations');
-    if (!ping.ok && ping.status !== 200) {
-      activeUrl = 'http://localhost:3001';
-    }
+    const ping = await fetch('http://127.0.0.1:3000/api/trips');
+    if (!ping.ok) activeUrl = 'http://127.0.0.1:3001';
   } catch (e) {
     try {
-      const ping2 = await fetch('http://localhost:3001/api/destinations');
-      if (ping2.ok) activeUrl = 'http://localhost:3001';
+      const ping2 = await fetch('http://127.0.0.1:3001/api/trips');
+      if (ping2.ok) activeUrl = 'http://127.0.0.1:3001';
     } catch (err) {}
   }
 
   // 1. Invalid Route & Health Check
   try {
-    const res = await fetch(`${activeUrl}/api/trips/invalid_slug_non_existent`);
+    const res = await fetch(`${activeUrl}/api/trips/non_existent_trip_id_12345`);
     assert(res.status === 404, '1. Invalid route handling (404 for non-existent trip)');
   } catch (e) {
     assert(false, '1. Invalid route handling error: ' + e.message);
@@ -54,11 +52,11 @@ async function runTests() {
     assert(false, '2. Public Destinations API fetch error: ' + e.message);
   }
 
-  // 3. Search and Filters Test
+  // 3. Search & Filters API
   try {
-    const res = await fetch(`${activeUrl}/api/destinations?q=cox`);
+    const res = await fetch(`${activeUrl}/api/trips?travelType=Solo&sort=popular`);
     const data = await res.json();
-    assert(data.success && Array.isArray(data.destinations), '3. Search & Filters API query processing');
+    assert(data.success && Array.isArray(data.trips), '3. Search & Filters API query processing');
   } catch (e) {
     assert(false, '3. Search & Filters error: ' + e.message);
   }

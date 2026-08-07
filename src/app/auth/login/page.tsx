@@ -3,7 +3,8 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, ShieldCheck } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
+import { notifyAuthChange } from '@/lib/auth/authEvent';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -28,13 +29,14 @@ function LoginForm() {
       });
       const data = await res.json();
       if (data.success) {
-        router.push(redirectTarget);
+        notifyAuthChange();
         router.refresh();
+        router.push(redirectTarget);
       } else {
         setError(data.error || 'Login failed');
       }
     } catch (err) {
-      setError('An error occurred');
+      setError('An error occurred during sign in');
     }
     setLoading(false);
   };

@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { notifyAuthChange } from '@/lib/auth/authEvent';
 
 function SignupForm() {
   const [name, setName] = useState('');
@@ -30,8 +31,9 @@ function SignupForm() {
       });
       const data = await res.json();
       if (data.success) {
-        router.push(redirectTarget);
+        notifyAuthChange();
         router.refresh();
+        router.push(redirectTarget);
       } else {
         setError(data.error || 'Registration failed');
       }

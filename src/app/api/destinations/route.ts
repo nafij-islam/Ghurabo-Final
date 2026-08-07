@@ -84,7 +84,8 @@ export async function GET(request: Request) {
       totalPages: Math.ceil(destinations.length / limit),
       destinations: paginatedDestinations,
     });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to fetch destinations' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Destinations Error:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Failed to fetch destinations' }, { status: 500 });
   }
 }
