@@ -33,14 +33,24 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
         body: JSON.stringify({ idToken }),
       });
 
-      const data = await res.json().catch(() => ({ success: false, error: 'Network error communicating with server.' }));
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = {
+          success: false,
+          error: res.status === 404
+            ? 'Authentication route not found (/api/auth/google).'
+            : `Server response error (HTTP ${res.status}). Please check Vercel environment variables.`,
+        };
+      }
 
       if (data.success) {
         notifyAuthChange();
         router.refresh();
         router.push(redirectTarget);
       } else {
-        if (onError) onError(data.error || 'Google authentication failed');
+        if (onError) onError(data.error || 'Google authentication failed.');
       }
     } catch (err: any) {
       // Handle graceful popup cancellation without scary banners

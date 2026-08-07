@@ -1,9 +1,16 @@
 import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, Auth } from 'firebase-admin/auth';
 
-function getFirebaseAdminApp() {
+let adminAuthInstance: Auth | null = null;
+
+export function getAdminAuth(): Auth {
+  if (adminAuthInstance) {
+    return adminAuthInstance;
+  }
+
   if (getApps().length > 0) {
-    return getApp();
+    adminAuthInstance = getAuth(getApp());
+    return adminAuthInstance;
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'ghurabo-a4960';
@@ -18,18 +25,22 @@ function getFirebaseAdminApp() {
     privateKey = privateKey.replace(/\\n/g, '\n');
   }
 
-  if (!privateKey) {
-    console.warn('⚠️ FIREBASE_PRIVATE_KEY is empty in server environment!');
-  }
-
-  return initializeApp({
+  const app = initializeApp({
     credential: cert({
       projectId,
       clientEmail,
       privateKey,
     }),
   });
+
+  adminAuthInstance = getAuth(app);
+  return adminAuthInstance;
 }
 
-const adminApp = getFirebaseAdminApp();
-export const adminAuth = getAuth(adminApp);
+// Backward compatibility export
+export const adminAuth = {
+  verifyIdToken: async (idToken: string) => {
+    const auth = getAdminAuth();
+    return await auth.verifyIdToken(idToken);
+  },
+};
