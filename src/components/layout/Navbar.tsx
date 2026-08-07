@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Compass, Menu, X, User, PlusCircle, ShieldCheck, LogOut, Globe, DollarSign, ChevronDown } from 'lucide-react';
@@ -12,6 +13,7 @@ import { usePreferences } from '@/context/PreferencesContext';
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -20,6 +22,10 @@ export default function Navbar() {
   const { currency, language, setCurrency, setLanguage, t } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -362,19 +368,20 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Dedicated Mobile Navigation Drawer & Backdrop Overlay (< 768px) */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 overflow-hidden">
+      {/* Portal Mounted Mobile Navigation Drawer (< 768px) */}
+      {mounted && mobileMenuOpen && createPortal(
+        <div className="md:hidden fixed inset-0 z-[9998] overflow-hidden" role="dialog" aria-modal="true">
           {/* Backdrop Overlay */}
           <div
             className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Slide-over Mobile Drawer Panel */}
-          <div className="fixed inset-y-0 right-0 w-[85vw] max-w-[360px] bg-darkslate-950 text-white shadow-2xl border-l border-white/10 flex flex-col z-50 transition-transform duration-300 ease-in-out transform">
+          <div className="fixed top-0 right-0 bottom-0 h-[100dvh] w-[min(88vw,360px)] z-[9999] bg-darkslate-950 text-white shadow-2xl border-l border-white/10 flex flex-col transition-transform duration-300 ease-out transform translate-x-0">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-darkslate-900/60">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-darkslate-900/80 shrink-0">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
                 <img
                   src="/logo-ghurabo.png"
@@ -384,7 +391,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                className="p-2 text-slate-300 hover:text-white rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors cursor-pointer"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -392,18 +399,18 @@ export default function Navbar() {
             </div>
 
             {/* Scrollable Drawer Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5 space-y-5">
               {/* Authenticated User Header Card */}
               {currentUser && (
-                <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="flex items-center space-x-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <img
                     src={getOptimizedImageUrl(currentUser.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
                     alt={currentUser.name}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-brand-400 shadow-sm"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-brand-400 shadow-sm shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
-                    <p className="text-xs text-slate-400 truncate mb-0.5">{currentUser.email}</p>
+                    <p className="text-xs text-slate-400 truncate mb-1">{currentUser.email}</p>
                     <span className="inline-block px-2 py-0.5 bg-brand-500/20 text-brand-300 border border-brand-500/30 text-[10px] font-bold rounded-full uppercase">
                       {currentUser.role}
                     </span>
@@ -419,7 +426,7 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
                 >
@@ -428,7 +435,7 @@ export default function Navbar() {
                 <Link
                   href="/destinations"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname.startsWith('/destinations') ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
                 >
@@ -437,7 +444,7 @@ export default function Navbar() {
                 <Link
                   href="/trips"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/trips' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
                 >
@@ -446,7 +453,7 @@ export default function Navbar() {
                 <Link
                   href="/gallery"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/gallery' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
                 >
@@ -455,7 +462,7 @@ export default function Navbar() {
                 <Link
                   href="/about"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/about' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
                 >
@@ -502,7 +509,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setLanguage('bn')}
-                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                         language === 'bn'
                           ? 'bg-brand-500 text-white shadow'
                           : 'text-slate-400 hover:text-white'
@@ -547,13 +554,13 @@ export default function Navbar() {
               </div>
 
               {/* Section 4: Authentication Actions */}
-              <div className="pt-3 border-t border-white/10 space-y-1.5">
+              <div className="pt-3 border-t border-white/10 space-y-1.5 pb-6">
                 {currentUser ? (
                   <>
                     <Link
                       href="/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
+                      className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
                     >
                       <Compass className="w-4 h-4 text-brand-300" />
                       <span>{t('nav.dashboard')}</span>
@@ -561,7 +568,7 @@ export default function Navbar() {
                     <Link
                       href={`/profile/${currentUser.id}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
+                      className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
                     >
                       <User className="w-4 h-4 text-brand-300" />
                       <span>{t('nav.profile')}</span>
@@ -571,7 +578,7 @@ export default function Navbar() {
                       <Link
                         href="/admin"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/30 text-brand-300 text-sm font-bold transition-all"
+                        className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/30 text-brand-300 text-sm font-bold transition-all"
                       >
                         <ShieldCheck className="w-4 h-4 text-brand-400" />
                         <span>{t('nav.admin')}</span>
@@ -580,7 +587,7 @@ export default function Navbar() {
 
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 text-sm font-semibold transition-all mt-2 cursor-pointer"
+                      className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 text-sm font-semibold transition-all mt-2 cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 text-red-400" />
                       <span>{t('nav.logOut')}</span>
@@ -608,7 +615,8 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
