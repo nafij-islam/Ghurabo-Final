@@ -155,7 +155,8 @@ export async function POST(request: Request) {
     }
 
     const tripId = `trip_${Date.now()}`;
-    const slug = body.title ? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : `trip-${Date.now()}`;
+    const slugBase = body.title ? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : `trip-${Date.now()}`;
+    const slug = `${slugBase}-${Date.now().toString().slice(-4)}`;
 
     const newTripData = {
       id: tripId,
@@ -252,7 +253,8 @@ export async function POST(request: Request) {
       trip: newTripData,
       message: 'Trip published successfully!',
     });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to save trip' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Trip Creation Error:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Failed to save trip' }, { status: 500 });
   }
 }

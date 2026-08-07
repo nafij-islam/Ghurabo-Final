@@ -104,7 +104,7 @@ async function runTests() {
       }),
     });
     const setCookie = res.headers.get('set-cookie');
-    if (setCookie) authCookie = setCookie;
+    if (setCookie) authCookie = setCookie.split(';')[0];
     const data = await res.json();
     assert(data.success && data.user && data.user.email === testEmail, '7. User Signup workflow');
   } catch (e) {
@@ -126,7 +126,7 @@ async function runTests() {
   try {
     const res = await fetch(`${activeUrl}/api/users/profile`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', cookie: authCookie },
+      headers: { 'Content-Type': 'application/json', Cookie: authCookie },
       body: JSON.stringify({
         name: 'Test Explorer Updated',
         bio: 'Updated bio for test runner',
@@ -144,7 +144,7 @@ async function runTests() {
   try {
     const res = await fetch(`${activeUrl}/api/trips`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: authCookie },
+      headers: { 'Content-Type': 'application/json', Cookie: authCookie },
       body: JSON.stringify({
         title: 'Automated Test Trip Story',
         destinationName: "Cox's Bazar Beach",
