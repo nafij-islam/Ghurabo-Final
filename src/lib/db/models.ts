@@ -12,6 +12,8 @@ const UserSchema = new Schema(
     bio: { type: String },
     location: { type: String },
     preferredStyle: { type: String, default: 'Solo' },
+    preferredCurrency: { type: String, enum: ['BDT', 'USD'], default: 'BDT' },
+    preferredLanguage: { type: String, enum: ['en', 'bn'], default: 'en' },
     visitedCount: { type: Number, default: 0 },
     followersCount: { type: Number, default: 0 },
     followingCount: { type: Number, default: 0 },
@@ -177,6 +179,9 @@ const SystemConfigSchema = new Schema(
   {
     key: { type: String, required: true, unique: true, index: true },
     adminPasscode: { type: String, default: 'ghurabo123' },
+    exchangeRateUSDToBDT: { type: Number, default: 130 },
+    exchangeRateMode: { type: String, enum: ['automatic', 'manual'], default: 'manual' },
+    lastFetchedAt: { type: Date },
   },
   { timestamps: true }
 );

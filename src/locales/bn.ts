@@ -1,0 +1,151 @@
+import { TranslationKey } from './en';
+
+const bn: Record<TranslationKey, string> = {
+  // Navbar
+  'nav.home': 'হোম',
+  'nav.destinations': 'গন্তব্য',
+  'nav.trips': 'সকল ভ্রমণ',
+  'nav.gallery': 'গ্যালারি',
+  'nav.about': 'আমাদের সম্পর্কে',
+  'nav.shareTrip': 'ট্রিপ শেয়ার করুন',
+  'nav.dashboard': 'ইউজার ড্যাশবোর্ড',
+  'nav.profile': 'আমার প্রোফাইল',
+  'nav.admin': 'অ্যাডমিন প্যানেল',
+  'nav.logIn': 'লগ ইন',
+  'nav.signUp': 'অ্যাকাউন্ট খুলুন',
+  'nav.logOut': 'লগ আউট',
+  'nav.signedInAs': 'সাইন ইন করেছেন',
+
+  // Hero & Search
+  'hero.badge': 'বাংলাদেশ ভ্রমণ কমিউনিটি',
+  'hero.title': 'বাংলাদেশের অপরূপ সৌন্দর্য ঘুরে দেখুন',
+  'hero.subtitle': 'বাস্তব ট্রাভেলারদের অভিজ্ঞতা, ভ্রমণ গাইড ও সঠিক খরচের হিসাব নিয়ে বাংলাদেশের সেরা প্ল্যাটফর্ম।',
+  'hero.searchPlaceholder': 'কোথায় ঘুরতে চান? (যেমন: কক্সবাজার, সিলেট)...',
+  'hero.searchButton': 'ট্রিপ খুঁজুন',
+  'hero.filterAll': 'সব ধরণ',
+  'hero.filterSolo': 'একাকী',
+  'hero.filterCouple': 'কপল',
+  'hero.filterFamily': 'পরিবার',
+  'hero.filterGroup': 'গ্রুপ',
+
+  // Sections
+  'section.popularDestinations': 'জনপ্রিয় গন্তব্যসমূহ',
+  'section.popularDestinationsSub': 'বাংলাদেশী ট্রাভেলারদের পছন্দের শীর্ষে থাকা জনপ্রিয় পর্যটন স্থানসমূহ',
+  'section.recentTrips': 'কমিউনিটি ট্রিপ স্টোরি',
+  'section.recentTripsSub': 'কমিউনিটি মেম্বারদের প্রকাশিত সত্যিকারের ভ্রমণ কাহিনী ও খরচের হিসাব',
+  'section.galleryFeed': 'এক্সপ্লোরার গ্যালারি',
+  'section.galleryFeedSub': 'বাংলাদেশের বিভিন্ন প্রান্ত থেকে তোলা মনোমুগ্ধকর আলোকচিত্র',
+  'section.whyGhurabo': 'কেন ঘুরাবো?',
+  'section.whyGhuraboSub': 'সঠিক খরচের হিসাব এবং সত্য ট্রাভেল গাইডের জন্য আমরাই সেরা',
+  'section.viewAll': 'সবগুলো দেখুন',
+  'section.exploreAllTrips': 'সকল ট্রিপ দেখুন',
+  'section.exploreGallery': 'সম্পূর্ণ গ্যালারি দেখুন',
+
+  // Trip Cards
+  'trip.perPerson': 'জনপ্রতি',
+  'trip.days': 'দিন',
+  'trip.by': 'লেখক',
+  'trip.verified': 'যাচাইকৃত',
+  'trip.popular': 'জনপ্রিয়',
+  'trip.viewDetails': 'বিস্তারিত দেখুন',
+
+  // Trip Details
+  'tripDetails.overview': 'ট্রিপ সারসংক্ষেপ',
+  'tripDetails.costBreakdown': 'বিস্তারিত খরচের হিসাব',
+  'tripDetails.transport': 'যাতায়াত ও ভাড়া',
+  'tripDetails.hotel': 'থাকা ও হোটেল খরচ',
+  'tripDetails.food': 'খাবার খরচ',
+  'tripDetails.localTransport': 'লোকাল যাতায়াত',
+  'tripDetails.tickets': 'এন্ট্রি টিকিট',
+  'tripDetails.guide': 'গাইড ফি',
+  'tripDetails.shopping': 'শপিং ও উপহার',
+  'tripDetails.misc': 'অন্যান্য খরচ',
+  'tripDetails.totalCost': 'মোট ট্রিপ খরচ',
+  'tripDetails.perPersonCost': 'জনপ্রতি আনুমানিক খরচ',
+  'tripDetails.itinerary': 'দিনভিত্তিক ভ্রমণ পরিকল্পনা',
+  'tripDetails.highlights': 'ভ্রমণের আকর্ষণীয় বিষয়',
+  'tripDetails.challenges': 'সতর্কতা ও চ্যালেঞ্জ',
+  'tripDetails.tips': 'জরুরি পরামর্শ',
+  'tripDetails.safetyNotes': 'নিরাপত্তা তথ্য',
+  'tripDetails.comments': 'কমিউনিটি মন্তব্য',
+  'tripDetails.addComment': 'মন্তব্য যোগ করুন',
+  'tripDetails.writeComment': 'আপনার প্রশ্ন বা মন্তব্য লিখুন...',
+  'tripDetails.submitComment': 'মন্তব্য করুন',
+  'tripDetails.helpful': 'সহায়ক',
+  'tripDetails.save': 'সেভ করুন',
+  'tripDetails.share': 'শেয়ার',
+  'tripDetails.notFound': 'ট্রিপ পাওয়া যায়নি',
+  'tripDetails.notFoundSub': 'আপনি যে ট্রিপটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা পাওয়া যায়নি।',
+  'tripDetails.backToTrips': 'সকল ট্রিপে ফিরে যান',
+
+  // Share Trip Page
+  'share.title': 'আপনার ভ্রমণ অভিজ্ঞতা শেয়ার করুন',
+  'share.subtitle': 'সঠিক খরচের হিসাব ও ভ্রমণ তথ্য শেয়ার করে অন্যান্য ট্রাভেলারদের সাহায্য করুন।',
+  'share.basicInfo': '১. মৌলিক তথ্য',
+  'share.tripTitle': 'ট্রিপের শিরোনাম',
+  'share.tripTitlePlaceholder': 'যেমন: সাজেক উপত্যকায় ৩ দিনের বাজেট ভ্রমণ',
+  'share.destination': 'গন্তব্য নির্বাচন করুন',
+  'share.selectDestination': 'গন্তব্য সিলেক্ট করুন',
+  'share.travelType': 'ভ্রমণের ধরন',
+  'share.travellersCount': 'যাত্রী সংখ্যা',
+  'share.durationDays': 'মেয়াদ (দিন)',
+  'share.summary': 'সংক্ষিপ্ত বিবরণ',
+  'share.summaryPlaceholder': 'আপনার ট্রিপের সংক্ষিপ্ত সারসংক্ষেপ লিখুন...',
+  'share.story': 'সম্পূর্ণ ভ্রমণ কাহিনী',
+  'share.storyPlaceholder': 'আপনার পুরো ভ্রমণের গল্প বিস্তারিত লিখুন...',
+  'share.costSection': '২. বিস্তারিত খরচের হিসাব',
+  'share.currencyNote': 'ডিফল্ট খরচ টাকা (৳) তে সংরক্ষিত হয়। আপনি কারেন্সি সিলেক্ট করতে পারেন।',
+  'share.coverImage': '৩. কভার ছবি ও গ্যালারি',
+  'share.submitButton': 'ট্রিপ জমা দিন',
+  'share.submitting': 'জমা হচ্ছে...',
+
+  // Destinations Page
+  'dest.title': 'বাংলাদেশের গন্তব্যসমূহ',
+  'dest.subtitle': 'সমুদ্রসৈকত, পাহাড়, চা বাগান এবং ঐতিহাসিক স্থানসমূহ এক্সপ্লোর করুন',
+  'dest.allCategories': 'সকল ক্যাটাগরি',
+  'dest.avgCost': 'গড় খরচ',
+  'dest.bestTime': 'ভ্রমণের সেরা সময়',
+
+  // Gallery Page
+  'gallery.title': 'কমিউনিটি আলোকচিত্র গ্যালারি',
+  'gallery.subtitle': 'ঘুরাবো ট্রাভেলারদের ক্যামেরায় তোলা বাংলাদেশের রূপসজ্জা',
+
+  // Auth Pages
+  'auth.welcomeBack': 'স্বাগতম',
+  'auth.signInSub': 'আপনার ঘুরাবো ট্রাভেলার অ্যাকাউন্টে সাইন ইন করুন',
+  'auth.joinTitle': 'কমিউনিটিতে যোগ দিন',
+  'auth.signUpSub': 'আপনার ঘুরাবো এক্সপ্লোরার অ্যাকাউন্ট তৈরি করুন',
+  'auth.fullName': 'পূর্ণ নাম',
+  'auth.email': 'ইমেইল ঠিকানা',
+  'auth.password': 'পাসওয়ার্ড',
+  'auth.homeCity': 'আপনার শহর',
+  'auth.travelStyle': 'ভ্রমণ পছন্দ',
+  'auth.noAccount': 'অ্যাকাউন্ট নেই?',
+  'auth.alreadyAccount': 'আগে থেকেই অ্যাকাউন্ট আছে?',
+
+  // Dashboard & Profile
+  'dash.title': 'মাই এক্সপ্লোরার ড্যাশবোর্ড',
+  'dash.publishedTrips': 'আমার প্রকাশিত ট্রিপ',
+  'dash.savedTrips': 'সেভ করা ট্রিপ',
+  'dash.followers': 'ফলোয়ার',
+  'dash.helpfulVotes': 'সহায়ক ভোট',
+  'dash.noTrips': 'আপনি এখনো কোনো ট্রিপ প্রকাশ করেননি।',
+  'dash.shareFirst': 'আপনার প্রথম ট্রিপ শেয়ার করুন',
+
+  // Admin
+  'admin.title': 'অ্যাডমিন মডারেশন ডেস্ক',
+  'admin.exchangeRateControl': 'USD / BDT এক্সচেঞ্জ রেট কন্ট্রোল',
+  'admin.currentRate': 'বর্তমান রেট (১ USD = BDT)',
+  'admin.rateMode': 'রেট গণনা মোড',
+  'admin.manualMode': 'ম্যানুয়াল রেট',
+  'admin.autoMode': 'অটোমেটিক (লাইভ রেট)',
+  'admin.updateRate': 'রেট আপডেট করুন',
+
+  // Footer
+  'footer.aboutText': 'ঘুরাবো হলো বাংলাদেশের অন্যতম শীর্ষ ট্রাভেল কমিউনিটি প্ল্যাটফর্ম যেখানে ট্রাভেলাররা সঠিক খরচের হিসাব ও নির্ভরযোগ্য ভ্রমণ গাইড শেয়ার করেন।',
+  'footer.quickLinks': 'দ্রুত লিঙ্ক',
+  'footer.legal': 'নীতিমালা ও শর্তাবলী',
+  'footer.rights': 'সর্বস্বত্ব সংরক্ষিত।',
+};
+
+export default bn;

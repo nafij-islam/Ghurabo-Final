@@ -2,6 +2,8 @@ export type UserRole = 'traveller' | 'admin';
 export type TravelType = 'Solo' | 'Couple' | 'Family' | 'Group';
 export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 export type CategoryType = 'Beach' | 'Mountain' | 'Resort' | 'Historical' | 'City' | 'Island';
+export type CurrencyCode = 'BDT' | 'USD';
+export type LanguageCode = 'en' | 'bn';
 
 export interface IUser {
   _id?: string;
@@ -14,6 +16,8 @@ export interface IUser {
   bio?: string;
   location?: string;
   preferredStyle?: TravelType;
+  preferredCurrency?: CurrencyCode;
+  preferredLanguage?: LanguageCode;
   visitedCount?: number;
   followersCount?: number;
   followingCount?: number;

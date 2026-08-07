@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Bookmark, Star, ShieldCheck, MapPin, Clock, Heart } from 'lucide-react';
 import { ITrip } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
+import { usePreferences } from '@/context/PreferencesContext';
 
 interface TripCardProps {
   trip: ITrip;
@@ -15,6 +16,7 @@ export default function TripCard({ trip }: TripCardProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
   const [saved, setSaved] = useState(false);
+  const { formatCost, t } = usePreferences();
   const router = useRouter();
 
   const verifyAuth = async (): Promise<boolean> => {
@@ -67,6 +69,8 @@ export default function TripCard({ trip }: TripCardProps) {
     } catch (err) {}
   };
 
+  const perPersonCostBDT = trip.costBreakdown?.perPersonCost || trip.costBreakdown?.totalCost || 0;
+
   return (
     <div className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-card-hover border border-slate-100 transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1">
       {/* Top Image Section */}
@@ -92,7 +96,7 @@ export default function TripCard({ trip }: TripCardProps) {
             {trip.isVerified && (
               <span className="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white text-xs font-semibold rounded-full shadow">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Verified</span>
+                <span>{t('trip.verified')}</span>
               </span>
             )}
           </div>
@@ -140,7 +144,7 @@ export default function TripCard({ trip }: TripCardProps) {
             </div>
             <div className="flex items-center space-x-1 font-medium text-slate-500">
               <Clock className="w-3.5 h-3.5 text-brand-500" />
-              <span>{trip.durationDays} Days</span>
+              <span>{trip.durationDays} {t('trip.days')}</span>
             </div>
           </div>
 
@@ -160,11 +164,9 @@ export default function TripCard({ trip }: TripCardProps) {
         {/* Card Footer: Cost & Like */}
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Cost / Person</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">{t('trip.perPerson')}</span>
             <div className="flex items-baseline text-slate-900 font-bold">
-              <span className="text-xs text-brand-600 font-bold">$</span>
-              <span className="text-lg text-brand-600 font-extrabold">{trip.costBreakdown?.perPersonCost || 120}</span>
-              <span className="text-[11px] text-slate-400 font-normal ml-1">total</span>
+              <span className="text-lg text-brand-600 font-extrabold">{formatCost(perPersonCostBDT)}</span>
             </div>
           </div>
 
@@ -185,7 +187,7 @@ export default function TripCard({ trip }: TripCardProps) {
               href={`/trips/${trip.slug || trip.id}`}
               className="text-xs font-bold text-brand-600 hover:text-brand-800 uppercase tracking-wider"
             >
-              Details &rarr;
+              {t('trip.viewDetails')} &rarr;
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import TripCard from '@/components/cards/TripCard';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel } from '@/lib/db/models';
 import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
+import { TripCostDisplay } from '@/components/trips/TripCostDisplay';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { MapPin, Calendar, Clock, ShieldCheck, Star, Lightbulb, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -166,11 +167,15 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
           </div>
           <div>
             <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1">Total Trip Expense</span>
-            <span className="font-display text-2xl font-bold text-cyan-300">${cost.totalCost}</span>
+            <span className="font-display text-2xl font-bold text-cyan-300">
+              <TripCostDisplay amountBDT={cost.totalCost || cost.perPersonCost || 0} />
+            </span>
           </div>
           <div>
             <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1">Cost / Person</span>
-            <span className="font-display text-3xl font-extrabold text-emerald-400">${cost.perPersonCost}</span>
+            <span className="font-display text-3xl font-extrabold text-emerald-400">
+              <TripCostDisplay amountBDT={cost.perPersonCost || cost.totalCost || 0} />
+            </span>
           </div>
         </div>
 
@@ -223,7 +228,9 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                 </ul>
                 <div className="flex items-center space-x-4 text-xs font-semibold text-slate-500 pt-2 border-t border-slate-200">
                   <span>Locations: {day.locations?.join(', ')}</span>
-                  <span className="text-brand-600 font-bold">Est. Cost: ${day.estimatedCost}</span>
+                  <span className="text-brand-600 font-bold">
+                    Est. Cost: <TripCostDisplay amountBDT={day.estimatedCost || 0} />
+                  </span>
                 </div>
               </div>
             ))}
@@ -242,44 +249,58 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                 <tr>
                   <th className="p-3.5 rounded-l-xl">Category</th>
                   <th className="p-3.5">Details</th>
-                  <th className="p-3.5 text-right rounded-r-xl">Cost (USD)</th>
+                  <th className="p-3.5 text-right rounded-r-xl">Cost</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 <tr>
                   <td className="p-3.5 font-bold">Transportation & Flights</td>
                   <td className="p-3.5 text-slate-500">AC Coach / Train / Flight tickets</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.transport}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.transport || 0} />
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3.5 font-bold">Hotel & Resort Accommodation</td>
                   <td className="p-3.5 text-slate-500">Stays and cottages</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.hotel}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.hotel || 0} />
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3.5 font-bold">Food & Meals</td>
                   <td className="p-3.5 text-slate-500">Breakfast, seafood dinners, bamboo tea</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.food}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.food || 0} />
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3.5 font-bold">Local Transport & Rides</td>
                   <td className="p-3.5 text-slate-500">Scooters, TomTom, Chander Gari</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.localTransport}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.localTransport || 0} />
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3.5 font-bold">Entry Tickets & Sightseeing</td>
                   <td className="p-3.5 text-slate-500">Park permits and boat tickets</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.tickets}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.tickets || 0} />
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-3.5 font-bold">Shopping & Crafts</td>
                   <td className="p-3.5 text-slate-500">Local souvenirs and coconut crafts</td>
-                  <td className="p-3.5 text-right text-brand-600 font-bold">${cost.shopping}</td>
+                  <td className="p-3.5 text-right text-brand-600 font-bold">
+                    <TripCostDisplay amountBDT={cost.shopping || 0} />
+                  </td>
                 </tr>
                 <tr className="bg-brand-50 font-bold text-sm">
                   <td className="p-4 text-brand-900">TOTAL PER-PERSON EXPENSE</td>
                   <td className="p-4 text-brand-700">Calculated for {trip.travellersCount} traveller(s)</td>
-                  <td className="p-4 text-right text-brand-600 text-base font-extrabold">${cost.perPersonCost}</td>
+                  <td className="p-4 text-right text-brand-600 text-base font-extrabold">
+                    <TripCostDisplay amountBDT={cost.perPersonCost || cost.totalCost || 0} />
+                  </td>
                 </tr>
               </tbody>
             </table>

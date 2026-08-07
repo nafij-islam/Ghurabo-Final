@@ -46,12 +46,13 @@ export default function ShareTripPage() {
   const [safetyNotes, setSafetyNotes] = useState('');
 
   // Step 3: Expenses
-  const [transport, setTransport] = useState(40);
-  const [hotel, setHotel] = useState(60);
-  const [food, setFood] = useState(30);
-  const [localTransport, setLocalTransport] = useState(15);
-  const [tickets, setTickets] = useState(10);
-  const [shopping, setShopping] = useState(15);
+  const [inputCurrency, setInputCurrency] = useState<'BDT' | 'USD'>('BDT');
+  const [transport, setTransport] = useState(3000);
+  const [hotel, setHotel] = useState(5000);
+  const [food, setFood] = useState(2500);
+  const [localTransport, setLocalTransport] = useState(1000);
+  const [tickets, setTickets] = useState(500);
+  const [shopping, setShopping] = useState(1000);
 
   const totalCost = transport + hotel + food + localTransport + tickets + shopping;
   const perPersonCost = Math.round(totalCost / Math.max(1, travellersCount));
@@ -158,6 +159,7 @@ export default function ShareTripPage() {
           tips,
           safetyNotes,
           costBreakdown,
+          inputCurrency,
           itinerary,
           images,
           coverImage: images[0]?.url || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
@@ -407,14 +409,42 @@ export default function ShareTripPage() {
           {/* Step 3: Cost Breakdown */}
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="font-display text-2xl font-bold text-slate-900 uppercase">Step 3: Itemized Expense Breakdown</h2>
-              <p className="text-xs text-slate-500 font-light">
-                Provide costs in USD. Per-person total is calculated automatically.
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-slate-900 uppercase">Step 3: Itemized Expense Breakdown</h2>
+                  <p className="text-xs text-slate-500 font-light">
+                    Provide costs for your trip. Costs will be normalized in BDT for database storage.
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-full border border-slate-200 self-start sm:self-auto">
+                  <span className="text-xs font-bold text-slate-600 pl-2">Input Currency:</span>
+                  <button
+                    type="button"
+                    onClick={() => setInputCurrency('BDT')}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                      inputCurrency === 'BDT' ? 'bg-brand-500 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    🇧🇩 BDT (৳)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputCurrency('USD')}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                      inputCurrency === 'USD' ? 'bg-brand-500 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    🇺🇸 USD ($)
+                  </button>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Transport / Flights ($)</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">
+                    Transport / Flights ({inputCurrency === 'BDT' ? '৳ BDT' : '$ USD'})
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -424,7 +454,9 @@ export default function ShareTripPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Hotel / Stay ($)</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">
+                    Hotel / Stay ({inputCurrency === 'BDT' ? '৳ BDT' : '$ USD'})
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -434,7 +466,9 @@ export default function ShareTripPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Food & Dining ($)</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">
+                    Food & Dining ({inputCurrency === 'BDT' ? '৳ BDT' : '$ USD'})
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -444,7 +478,9 @@ export default function ShareTripPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Local Rides / Rental ($)</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">
+                    Local Rides / Rental ({inputCurrency === 'BDT' ? '৳ BDT' : '$ USD'})
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -454,7 +490,9 @@ export default function ShareTripPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Entry Tickets ($)</label>
+                  <label className="text-xs font-bold text-slate-700 uppercase block mb-1">
+                    Entry Tickets ({inputCurrency === 'BDT' ? '৳ BDT' : '$ USD'})
+                  </label>
                   <input
                     type="number"
                     min="0"

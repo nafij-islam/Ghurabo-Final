@@ -189,6 +189,42 @@ export async function POST(request: Request) {
     const slugBase = body.title ? body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : `trip-${Date.now()}`;
     const slug = `${slugBase}-${Date.now().toString().slice(-4)}`;
 
+    const rawCost = body.costBreakdown || {};
+    const inputCurrency = body.inputCurrency === 'USD' ? 'USD' : 'BDT';
+    const rate = Number(body.exchangeRate) || 130;
+
+    const sanitize = (val: any) => {
+      const num = Number(val);
+      if (isNaN(num) || num < 0) return 0;
+      if (inputCurrency === 'USD') return Math.round(num * rate);
+      return Math.round(num);
+    };
+
+    const transport = sanitize(rawCost.transport || 0);
+    const hotel = sanitize(rawCost.hotel || 0);
+    const food = sanitize(rawCost.food || 0);
+    const localTransport = sanitize(rawCost.localTransport || 0);
+    const tickets = sanitize(rawCost.tickets || 0);
+    const guide = sanitize(rawCost.guide || 0);
+    const shopping = sanitize(rawCost.shopping || 0);
+    const misc = sanitize(rawCost.misc || 0);
+    const totalCost = transport + hotel + food + localTransport + tickets + guide + shopping + misc;
+    const travellers = Math.max(1, Number(body.travellersCount) || 1);
+    const perPersonCost = Math.round(totalCost / travellers);
+
+    const costBreakdown = {
+      transport,
+      hotel,
+      food,
+      localTransport,
+      tickets,
+      guide,
+      shopping,
+      misc,
+      totalCost,
+      perPersonCost,
+    };
+
     const newTripData = {
       id: tripId,
       title: body.title || 'Untitled Trip Story',
@@ -200,7 +236,7 @@ export async function POST(request: Request) {
       destinationName: body.destinationName || "Cox's Bazar Beach",
       travelDate: body.travelDate || new Date().toISOString().split('T')[0],
       travelType: body.travelType || 'Solo',
-      travellersCount: Number(body.travellersCount) || 1,
+      travellersCount: travellers,
       durationDays: Number(body.durationDays) || 3,
       summary: body.summary || 'A wonderful trip shared with the Ghurabo travel community.',
       story: body.story || '',
@@ -210,18 +246,7 @@ export async function POST(request: Request) {
       safetyNotes: body.safetyNotes || '',
       coverImage: body.coverImage || (body.images && body.images[0]?.url) || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
       images: body.images || [],
-      costBreakdown: body.costBreakdown || {
-        transport: 50,
-        hotel: 80,
-        food: 40,
-        localTransport: 20,
-        tickets: 10,
-        guide: 0,
-        shopping: 20,
-        misc: 10,
-        totalCost: 230,
-        perPersonCost: 230,
-      },
+      costBreakdown,
       itinerary: body.itinerary || [],
       status: body.isDraft ? 'draft' : 'pending',
       isVerified: false,
