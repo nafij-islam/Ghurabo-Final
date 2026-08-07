@@ -82,10 +82,18 @@ export default function Navbar() {
 
   // Lock background scroll when mobile drawer is open & handle Escape key
   useEffect(() => {
+    const lenis = (window as any).lenis;
+
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      if (lenis && typeof lenis.stop === 'function') {
+        lenis.stop();
+      }
     } else {
       document.body.style.overflow = '';
+      if (lenis && typeof lenis.start === 'function') {
+        lenis.start();
+      }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,6 +108,9 @@ export default function Navbar() {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = '';
+      if (lenis && typeof lenis.start === 'function') {
+        lenis.start();
+      }
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [mobileMenuOpen]);

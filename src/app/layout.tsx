@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FloatingSocialBar from '@/components/layout/FloatingSocialBar';
 import { PreferencesProvider } from '@/context/PreferencesContext';
+import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 
 export const metadata: Metadata = {
   title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
@@ -32,10 +33,12 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
         <PreferencesProvider>
-          <Navbar />
-          <FloatingSocialBar />
-          <main className="flex-1 w-full">{children}</main>
-          <Footer />
+          <SmoothScrollProvider>
+            <Navbar />
+            <FloatingSocialBar />
+            <main className="flex-1 w-full">{children}</main>
+            <Footer />
+          </SmoothScrollProvider>
         </PreferencesProvider>
       </body>
     </html>
