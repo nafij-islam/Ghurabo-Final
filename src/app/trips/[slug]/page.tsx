@@ -1,85 +1,68 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React from 'react';
 import Link from 'next/link';
+import mongoose from 'mongoose';
 import TripCard from '@/components/cards/TripCard';
-import { ITrip, IComment } from '@/types';
-import {
-  MapPin, Calendar, Clock, DollarSign, ShieldCheck, Heart, Bookmark, ThumbsUp,
-  Share2, MessageSquare, Star, User, AlertTriangle, Lightbulb, CheckCircle2, ChevronDown
-} from 'lucide-react';
+import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
+import { TripModel } from '@/lib/db/models';
+import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
+import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
+import { MapPin, Calendar, Clock, ShieldCheck, Star, Lightbulb, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
-export default function TripDetailsPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt';
 
-  const [trip, setTrip] = useState<ITrip | null>(null);
-  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>([]);
-  const [authorTrips, setAuthorTrips] = useState<ITrip[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getTripData(idOrSlug: string) {
+  try {
+    const conn = await connectToDatabase();
 
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [helpfulCount, setHelpfulCount] = useState(0);
+    if (conn) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
+      const query = isObjectId
+        ? { $or: [{ id: idOrSlug }, { slug: idOrSlug }, { _id: idOrSlug }] }
+        : { $or: [{ id: idOrSlug }, { slug: idOrSlug }] };
 
-  const [comments, setComments] = useState<IComment[]>([
-    {
-      id: 'c1',
-      tripId: slug,
-      userId: 'user_2',
-      userName: 'Tanvir & Sarah',
-      userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400',
-      content: 'This itinerary is super clean! Thanks for sharing exact per-person costs.',
-      createdAt: '2026-02-03T10:00:00Z',
+      const trip = (await TripModel.findOne(query).lean()) as any;
+
+      if (trip) {
+        const relatedTrips = (await TripModel.find({
+          id: { $ne: trip.id },
+          status: 'approved',
+          $or: [{ destinationId: trip.destinationId }, { travelType: trip.travelType }],
+        })
+          .select(TRIP_CARD_FIELDS)
+          .limit(3)
+          .sort({ createdAt: -1 })
+          .lean()) as any[];
+
+        return { trip, relatedTrips };
+      }
     }
-  ]);
-  const [newComment, setNewComment] = useState('');
 
-  useEffect(() => {
-    if (slug) {
-      fetch(`/api/trips/${slug}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setTrip(data.trip);
-            setRelatedTrips(data.relatedTrips || []);
-            setAuthorTrips(data.authorTrips || []);
-            setHelpfulCount(data.trip.helpfulVotesCount || 45);
-          }
-          setLoading(false);
-        });
-    }
-  }, [slug]);
+    // In-Memory Fallback
+    const db = getMemoryDb();
+    const trip =
+      db.trips.find((t) => t.id === idOrSlug || t.slug === idOrSlug) ||
+      db.pendingApprovals.find((t) => t.id === idOrSlug || t.slug === idOrSlug) ||
+      db.drafts.find((t) => t.id === idOrSlug || t.slug === idOrSlug);
 
-  const handleHelpfulVote = () => {
-    setHelpfulCount(helpfulCount + 1);
-  };
+    if (!trip) return { trip: null, relatedTrips: [] };
 
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newComment.trim() && trip) {
-      const added: IComment = {
-        id: `c_${Date.now()}`,
-        tripId: trip.id,
-        userId: 'user_current',
-        userName: 'You (Explorer)',
-        userAvatar: 'https://i.pravatar.cc/150?u=me',
-        content: newComment.trim(),
-        createdAt: new Date().toISOString(),
-      };
-      setComments([...comments, added]);
-      setNewComment('');
-    }
-  };
+    const relatedTrips = db.trips
+      .filter((t) => t.id !== trip.id && (t.destinationId === trip.destinationId || t.travelType === trip.travelType))
+      .slice(0, 3);
 
-  if (loading) {
-    return <div className="pt-32 pb-20 text-center text-slate-500 font-medium">Loading trip story...</div>;
+    return { trip, relatedTrips };
+  } catch (error) {
+    return { trip: null, relatedTrips: [] };
   }
+}
+
+export default async function TripDetailsPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+  const { trip, relatedTrips } = await getTripData(slug);
 
   if (!trip) {
     return (
-      <div className="pt-32 pb-20 text-center">
+      <div className="pt-32 pb-20 text-center bg-slate-50 min-h-screen">
         <h2 className="font-display text-3xl font-bold text-slate-900 uppercase">Trip Story Not Found</h2>
         <Link href="/trips" className="mt-4 inline-block text-brand-600 font-bold text-sm">
           &larr; Back to All Trips
@@ -105,7 +88,11 @@ export default function TripDetailsPage() {
     <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20">
       {/* Cover Image Header */}
       <div className="relative h-[480px] w-full overflow-hidden bg-slate-950">
-        <img src={trip.coverImage} alt={trip.title} className="w-full h-full object-cover opacity-85" />
+        <img
+          src={getOptimizedImageUrl(trip.coverImage, { width: 1400, height: 800, quality: 'auto' })}
+          alt={trip.title}
+          className="w-full h-full object-cover opacity-85"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
         <div className="absolute bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 text-white z-10">
@@ -148,11 +135,11 @@ export default function TripDetailsPage() {
 
       {/* Main Content Container */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-        {/* Author Bar & Action Buttons */}
+        {/* Author Bar & Interactive Action Buttons */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <img
-              src={trip.userAvatar}
+              src={getOptimizedImageUrl(trip.userAvatar, { width: 120, height: 120 })}
               alt={trip.userName}
               className="w-14 h-14 rounded-full object-cover border-2 border-brand-500"
             />
@@ -164,35 +151,7 @@ export default function TripDetailsPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setLiked(!liked)}
-              className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                liked ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-600'
-              }`}
-            >
-              <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-              <span>{liked ? 'Liked' : 'Like'}</span>
-            </button>
-
-            <button
-              onClick={() => setSaved(!saved)}
-              className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                saved ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-600'
-              }`}
-            >
-              <Bookmark className={`w-4 h-4 ${saved ? 'fill-current' : ''}`} />
-              <span>{saved ? 'Saved' : 'Save'}</span>
-            </button>
-
-            <button
-              onClick={handleHelpfulVote}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-full bg-brand-500 text-white hover:bg-brand-600 text-xs font-bold transition-all"
-            >
-              <ThumbsUp className="w-4 h-4" />
-              <span>Helpful ({helpfulCount})</span>
-            </button>
-          </div>
+          <AuthorActions trip={trip} initialHelpfulCount={trip.helpfulVotesCount || 45} />
         </div>
 
         {/* Cost Summary Banner */}
@@ -230,7 +189,7 @@ export default function TripDetailsPage() {
                 <span>Trip Highlights</span>
               </h3>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
-                {trip.highlights.map((h, i) => (
+                {trip.highlights.map((h: string, i: number) => (
                   <li key={i} className="flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
                     <span>{h}</span>
@@ -248,14 +207,14 @@ export default function TripDetailsPage() {
           </h2>
 
           <div className="space-y-6">
-            {trip.itinerary?.map((day) => (
+            {trip.itinerary?.map((day: any) => (
               <div key={day.dayNumber} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 relative pl-12">
                 <div className="absolute left-4 top-6 w-6 h-6 rounded-full bg-brand-500 text-white font-bold text-xs flex items-center justify-center">
                   {day.dayNumber}
                 </div>
                 <h3 className="font-display text-xl font-bold text-slate-900 uppercase mb-2">{day.title}</h3>
                 <ul className="space-y-1 mb-3">
-                  {day.activities.map((act, i) => (
+                  {day.activities?.map((act: string, i: number) => (
                     <li key={i} className="text-xs text-slate-600 font-light flex items-center space-x-2">
                       <span className="text-brand-500 font-bold">•</span>
                       <span>{act}</span>
@@ -263,7 +222,7 @@ export default function TripDetailsPage() {
                   ))}
                 </ul>
                 <div className="flex items-center space-x-4 text-xs font-semibold text-slate-500 pt-2 border-t border-slate-200">
-                  <span>Locations: {day.locations.join(', ')}</span>
+                  <span>Locations: {day.locations?.join(', ')}</span>
                   <span className="text-brand-600 font-bold">Est. Cost: ${day.estimatedCost}</span>
                 </div>
               </div>
@@ -351,45 +310,7 @@ export default function TripDetailsPage() {
         </div>
 
         {/* Comments Section */}
-        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-100 mb-12">
-          <h2 className="font-display text-3xl font-bold text-slate-900 uppercase mb-6 flex items-center space-x-2">
-            <MessageSquare className="w-6 h-6 text-brand-500" />
-            <span>Community Discussion ({comments.length})</span>
-          </h2>
-
-          <form onSubmit={handleAddComment} className="mb-8 flex flex-col space-y-3">
-            <textarea
-              rows={3}
-              placeholder="Ask a question or leave a review for the author..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase rounded-full shadow transition-all"
-              >
-                Post Comment
-              </button>
-            </div>
-          </form>
-
-          <div className="space-y-4">
-            {comments.map((c) => (
-              <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex space-x-3">
-                <img src={c.userAvatar} alt={c.userName} className="w-9 h-9 rounded-full object-cover" />
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-xs text-slate-900">{c.userName}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1 font-light">{c.content}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <CommentsSection tripId={trip.id || (trip as any)._id} />
 
         {/* Related Trips */}
         {relatedTrips.length > 0 && (
@@ -398,8 +319,8 @@ export default function TripDetailsPage() {
               More Community Trips
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {relatedTrips.map((rt) => (
-                <TripCard key={rt.id} trip={rt} />
+              {relatedTrips.map((rt: any) => (
+                <TripCard key={rt.id || rt._id} trip={rt} />
               ))}
             </div>
           </div>

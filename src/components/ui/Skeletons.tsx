@@ -76,3 +76,52 @@ export function ProfileSkeleton() {
     </div>
   );
 }
+
+export function TripDetailsSkeleton() {
+  return (
+    <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20 animate-pulse">
+      {/* Hero Cover Skeleton */}
+      <div className="relative h-[480px] w-full bg-slate-300 overflow-hidden">
+        <div className="absolute bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 space-y-4">
+          <div className="h-6 bg-slate-400 rounded-full w-32" />
+          <div className="h-12 bg-slate-400 rounded-2xl w-3/4" />
+          <div className="flex space-x-4">
+            <div className="h-4 bg-slate-400 rounded w-24" />
+            <div className="h-4 bg-slate-400 rounded w-20" />
+            <div className="h-4 bg-slate-400 rounded w-28" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Body Skeleton */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-10">
+        {/* Author Bar Skeleton */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="w-14 h-14 bg-slate-200 rounded-full" />
+            <div className="space-y-2">
+              <div className="h-5 bg-slate-200 rounded w-36" />
+              <div className="h-3 bg-slate-200 rounded w-24" />
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <div className="h-8 bg-slate-200 rounded-full w-20" />
+            <div className="h-8 bg-slate-200 rounded-full w-20" />
+          </div>
+        </div>
+
+        {/* Cost Summary Box Skeleton */}
+        <div className="h-28 bg-slate-300 rounded-3xl w-full" />
+
+        {/* Story Box Skeleton */}
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 space-y-4">
+          <div className="h-7 bg-slate-200 rounded w-48" />
+          <div className="h-4 bg-slate-200 rounded w-full" />
+          <div className="h-4 bg-slate-200 rounded w-5/6" />
+          <div className="h-4 bg-slate-200 rounded w-4/5" />
+          <div className="h-4 bg-slate-200 rounded w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}

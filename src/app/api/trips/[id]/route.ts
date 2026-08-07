@@ -4,6 +4,8 @@ import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel } from '@/lib/db/models';
 import { getVerifiedUser, isOwnerOrAdmin } from '@/lib/auth/serverAuth';
 
+const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt';
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -21,13 +23,14 @@ export async function GET(
       const trip = (await TripModel.findOne(query).lean()) as any;
 
       if (trip) {
-        // Fetch related trips from Atlas using lean queries
+        // Fetch related trips from Atlas using lean queries & card field projections
         const [relatedTrips, authorTrips] = await Promise.all([
           TripModel.find({
             id: { $ne: trip.id },
             status: 'approved',
             $or: [{ destinationId: trip.destinationId }, { travelType: trip.travelType }],
           })
+            .select(TRIP_CARD_FIELDS)
             .limit(3)
             .sort({ createdAt: -1 })
             .lean(),
@@ -36,17 +39,21 @@ export async function GET(
             status: 'approved',
             userId: trip.userId,
           })
+            .select(TRIP_CARD_FIELDS)
             .limit(3)
             .sort({ createdAt: -1 })
             .lean(),
         ]);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           trip,
           relatedTrips,
           authorTrips,
         });
+
+        response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+        return response;
       }
     }
 

@@ -122,6 +122,7 @@ const TripSchema = new Schema(
   { timestamps: true }
 );
 
+TripSchema.index({ slug: 1, status: 1 });
 TripSchema.index({ status: 1, createdAt: -1 });
 TripSchema.index({ status: 1, isPopular: -1 });
 TripSchema.index({ userId: 1, status: 1 });
