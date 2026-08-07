@@ -8,7 +8,6 @@ import { SessionUser } from '@/lib/auth/session';
 import { AUTH_CHANGE_EVENT, notifyAuthChange } from '@/lib/auth/authEvent';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { usePreferences } from '@/context/PreferencesContext';
-import { CurrencyCode, LanguageCode } from '@/types';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -56,6 +55,30 @@ export default function Navbar() {
     }
   }, [pathname]);
 
+  // Lock background scroll when mobile drawer is open & handle Escape key
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+        setUserDropdownOpen(false);
+        setLangDropdownOpen(false);
+        setCurrencyDropdownOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setCurrentUser(null);
@@ -78,28 +101,20 @@ export default function Navbar() {
           : 'bg-darkslate-900/90 backdrop-blur-md h-16 sm:h-20 border-b border-white/10'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full">
-        {/* Left: Mobile Toggle & Brand Logo */}
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-white hover:text-brand-300 lg:hidden focus:outline-none cursor-pointer"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full h-full">
+        {/* Brand Logo (Left) */}
+        <div className="flex items-center">
           <Link href="/" className="flex items-center group">
             <img
               src="/logo-ghurabo.png"
               alt="Ghurabo Logo"
-              className="h-12 sm:h-16 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-md"
+              className="h-10 sm:h-14 md:h-16 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-md"
             />
           </Link>
         </div>
 
-        {/* Center: Navigation Links */}
-        <nav className="hidden lg:flex items-center space-x-7 text-sm font-medium text-white/90">
+        {/* Center: Desktop Navigation Links (>= 768px) */}
+        <nav className="hidden md:flex items-center space-x-6 lg:space-x-7 text-sm font-medium text-white/90">
           <Link
             href="/"
             className={`transition-colors hover:text-brand-300 ${
@@ -142,10 +157,10 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        {/* Right: Preferences, Auth & Share Trip CTA Buttons */}
+        {/* Right: Desktop Controls & Mobile Icons */}
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Language Selector Dropdown */}
-          <div className="relative">
+          {/* Desktop Language Selector Dropdown (Hidden < 768px) */}
+          <div className="hidden md:block relative">
             <button
               onClick={() => {
                 setLangDropdownOpen(!langDropdownOpen);
@@ -189,8 +204,8 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Currency Selector Dropdown */}
-          <div className="relative">
+          {/* Desktop Currency Selector Dropdown (Hidden < 768px) */}
+          <div className="hidden md:block relative">
             <button
               onClick={() => {
                 setCurrencyDropdownOpen(!currencyDropdownOpen);
@@ -232,36 +247,51 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Share a Trip CTA */}
+          {/* Desktop Share a Trip CTA (Hidden < 768px) */}
           <Link
             href="/trips/share"
-            className="hidden sm:flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 px-3.5 py-2 rounded-full transition-all"
+            className="hidden md:flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 px-3.5 py-2 rounded-full transition-all"
           >
             <PlusCircle className="w-4 h-4 text-brand-300" />
             <span>{t('nav.shareTrip')}</span>
           </Link>
 
-          {/* User Profile or Cyan Log In Pill Button */}
+          {/* User Profile or Log In Pill Button */}
           {currentUser ? (
             <div className="relative">
+              {/* Desktop Profile Pill (Hidden < 768px) */}
               <button
                 onClick={() => {
                   setUserDropdownOpen(!userDropdownOpen);
                   setLangDropdownOpen(false);
                   setCurrencyDropdownOpen(false);
                 }}
-                className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-3.5 py-1.5 rounded-full font-medium text-sm transition-all shadow-md cursor-pointer"
+                className="hidden md:flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-3.5 py-1.5 rounded-full font-medium text-sm transition-all shadow-md cursor-pointer"
               >
                 <img
                   src={getOptimizedImageUrl(currentUser.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
                   alt={currentUser.name}
                   className="w-6 h-6 rounded-full object-cover border border-white"
                 />
-                <span className="max-w-[80px] sm:max-w-[90px] truncate">{currentUser.name}</span>
+                <span className="max-w-[90px] truncate">{currentUser.name}</span>
               </button>
 
+              {/* Mobile Small Avatar Icon (Visible < 768px when authenticated) */}
+              <Link
+                href={`/profile/${currentUser.id}`}
+                className="md:hidden flex items-center justify-center p-0.5 rounded-full border border-brand-400/60 hover:border-brand-400 transition-all"
+                aria-label="Profile"
+              >
+                <img
+                  src={getOptimizedImageUrl(currentUser.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
+                />
+              </Link>
+
+              {/* Desktop Profile Dropdown (Hidden < 768px) */}
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl py-2 text-slate-800 border border-slate-100 z-50">
+                <div className="hidden md:block absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl py-2 text-slate-800 border border-slate-100 z-50">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="text-xs text-slate-500">{t('nav.signedInAs')}</p>
                     <p className="font-semibold text-sm truncate">{currentUser.email}</p>
@@ -309,121 +339,278 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center space-x-2">
+            /* Desktop Log In Button (Hidden < 768px, Guest mobile uses menu) */
+            <div className="hidden md:flex items-center space-x-2">
               <Link
                 href="/auth/login"
-                className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-4 sm:px-5 py-2 rounded-full font-medium text-xs sm:text-sm transition-all shadow-md transform hover:scale-105"
+                className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-full font-medium text-sm transition-all shadow-md transform hover:scale-105"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>{t('nav.logIn')}</span>
               </Link>
             </div>
           )}
+
+          {/* Mobile Hamburger Toggle Button (Visible < 768px) */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-white hover:text-brand-300 focus:outline-none cursor-pointer rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all ml-1"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6 text-brand-300" /> : <Menu className="w-6 h-6 text-white" />}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Dedicated Mobile Navigation Drawer & Backdrop Overlay (< 768px) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-darkslate-900/95 backdrop-blur-xl border-b border-white/10 px-6 py-6 space-y-4 max-h-[85vh] overflow-y-auto">
-          {currentUser && (
-            <div className="flex items-center space-x-3 pb-3 border-b border-white/10">
-              <img
-                src={getOptimizedImageUrl(currentUser.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
-                alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover border border-white"
-              />
-              <div>
-                <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
-                <p className="text-xs text-brand-300 capitalize">{currentUser.role}</p>
+        <div className="md:hidden fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop Overlay */}
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Slide-over Mobile Drawer Panel */}
+          <div className="fixed inset-y-0 right-0 w-[85vw] max-w-[360px] bg-darkslate-950 text-white shadow-2xl border-l border-white/10 flex flex-col z-50 transition-transform duration-300 ease-in-out transform">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-darkslate-900/60">
+              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
+                <img
+                  src="/logo-ghurabo.png"
+                  alt="Ghurabo Logo"
+                  className="h-9 w-auto object-contain"
+                />
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Drawer Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              {/* Authenticated User Header Card */}
+              {currentUser && (
+                <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <img
+                    src={getOptimizedImageUrl(currentUser.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
+                    alt={currentUser.name}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-brand-400 shadow-sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
+                    <p className="text-xs text-slate-400 truncate mb-0.5">{currentUser.email}</p>
+                    <span className="inline-block px-2 py-0.5 bg-brand-500/20 text-brand-300 border border-brand-500/30 text-[10px] font-bold rounded-full uppercase">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Section 1: Navigation Links */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block px-2 mb-1.5">
+                  Navigation
+                </span>
+                <Link
+                  href="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                    pathname === '/' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{t('nav.home')}</span>
+                </Link>
+                <Link
+                  href="/destinations"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                    pathname.startsWith('/destinations') ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{t('nav.destinations')}</span>
+                </Link>
+                <Link
+                  href="/trips"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                    pathname === '/trips' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{t('nav.trips')}</span>
+                </Link>
+                <Link
+                  href="/gallery"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                    pathname === '/gallery' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{t('nav.gallery')}</span>
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                    pathname === '/about' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{t('nav.about')}</span>
+                </Link>
               </div>
-            </div>
-          )}
 
-          {/* Preferences in Mobile Drawer */}
-          <div className="flex items-center justify-between py-2 border-b border-white/10 text-xs">
-            <div className="flex items-center space-x-2">
-              <span className="text-slate-400">Language:</span>
-              <button
-                onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
-                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full border border-white/20"
-              >
-                {language === 'en' ? '🇬🇧 English' : '🇧🇩 বাংলা'}
-              </button>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-slate-400">Currency:</span>
-              <button
-                onClick={() => setCurrency(currency === 'BDT' ? 'USD' : 'BDT')}
-                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full border border-white/20"
-              >
-                {currency === 'BDT' ? '🇧🇩 BDT (৳)' : '🇺🇸 USD ($)'}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col space-y-3 font-medium text-white/90">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-              {t('nav.home')}
-            </Link>
-            <Link href="/destinations" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-              {t('nav.destinations')}
-            </Link>
-            <Link href="/trips" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-              {t('nav.trips')}
-            </Link>
-            <Link href="/gallery" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-              {t('nav.gallery')}
-            </Link>
-            <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-              {t('nav.about')}
-            </Link>
-            <Link href="/trips/share" onClick={() => setMobileMenuOpen(false)} className="text-brand-300 py-1 font-semibold">
-              + {t('nav.shareTrip')}
-            </Link>
-
-            {currentUser ? (
-              <>
-                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-                  {t('nav.dashboard')}
+              {/* Section 2: Action CTA */}
+              <div className="pt-1">
+                <Link
+                  href="/trips/share"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>+ {t('nav.shareTrip')}</span>
                 </Link>
-                <Link href={`/profile/${currentUser.id}`} onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
-                  {t('nav.profile')}
-                </Link>
-                {currentUser.role === 'admin' && (
-                  <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="text-brand-400 py-1 font-semibold">
-                    {t('nav.admin')}
-                  </Link>
+              </div>
+
+              {/* Section 3: Preferences (Language & Currency) */}
+              <div className="pt-3 border-t border-white/10 space-y-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block px-1">
+                  Preferences / পছন্দসমূহ
+                </span>
+
+                {/* Language Controls */}
+                <div className="bg-white/5 p-3 rounded-2xl border border-white/10 space-y-2">
+                  <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
+                    <Globe className="w-3.5 h-3.5 text-brand-300" />
+                    <span>Language</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 bg-black/40 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('en')}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        language === 'en'
+                          ? 'bg-brand-500 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🇬🇧 English
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLanguage('bn')}
+                      className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        language === 'bn'
+                          ? 'bg-brand-500 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🇧🇩 বাংলা
+                    </button>
+                  </div>
+                </div>
+
+                {/* Currency Controls */}
+                <div className="bg-white/5 p-3 rounded-2xl border border-white/10 space-y-2">
+                  <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
+                    <DollarSign className="w-3.5 h-3.5 text-brand-300" />
+                    <span>Currency</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 bg-black/40 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setCurrency('BDT')}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        currency === 'BDT'
+                          ? 'bg-brand-500 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🇧🇩 BDT (৳)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrency('USD')}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        currency === 'USD'
+                          ? 'bg-brand-500 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🇺🇸 USD ($)
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Authentication Actions */}
+              <div className="pt-3 border-t border-white/10 space-y-1.5">
+                {currentUser ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
+                    >
+                      <Compass className="w-4 h-4 text-brand-300" />
+                      <span>{t('nav.dashboard')}</span>
+                    </Link>
+                    <Link
+                      href={`/profile/${currentUser.id}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
+                    >
+                      <User className="w-4 h-4 text-brand-300" />
+                      <span>{t('nav.profile')}</span>
+                    </Link>
+
+                    {currentUser.role === 'admin' && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/30 text-brand-300 text-sm font-bold transition-all"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-brand-400" />
+                        <span>{t('nav.admin')}</span>
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 text-sm font-semibold transition-all mt-2 cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-red-400" />
+                      <span>{t('nav.logOut')}</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-2 pt-2">
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>{t('nav.logIn')}</span>
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider border border-white/20 rounded-xl transition-all"
+                    >
+                      <span>{t('nav.signUp')}</span>
+                    </Link>
+                  </div>
                 )}
-                <button
-                  onClick={handleLogout}
-                  className="text-red-400 hover:text-red-300 py-1 font-semibold text-left flex items-center space-x-2 pt-2 border-t border-white/10"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>{t('nav.logOut')}</span>
-                </button>
-              </>
-            ) : (
-              <div className="pt-2 border-t border-white/10 flex flex-col space-y-2">
-                <Link
-                  href="/auth/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-full text-center text-sm shadow"
-                >
-                  {t('nav.logIn')}
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-full text-center text-sm border border-white/20"
-                >
-                  {t('nav.signUp')}
-                </Link>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
     </header>
   );
 }
+
