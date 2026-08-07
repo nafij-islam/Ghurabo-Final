@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Compass, Menu, X, User, PlusCircle, ShieldCheck, LogOut } from 'lucide-react';
+import { Compass, Menu, X, User, PlusCircle, ShieldCheck, LogOut } from 'lucide-react';
 import { SessionUser } from '@/lib/auth/session';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const router = useRouter();
@@ -39,13 +38,6 @@ export default function Navbar() {
       .catch(() => {});
   }, [pathname]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/trips?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setCurrentUser(null);
@@ -65,7 +57,7 @@ export default function Navbar() {
           : 'bg-darkslate-900/90 backdrop-blur-md h-16 sm:h-20 border-b border-white/10'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full">
         {/* Left: Mobile Toggle & Brand Logo */}
         <div className="flex items-center space-x-3">
           <button
@@ -129,25 +121,8 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        {/* Right: Search Field & Auth Pill Button */}
+        {/* Right: Auth & Share Trip CTA Buttons */}
         <div className="flex items-center space-x-4">
-          {/* Pill Search Field matching reference image */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden md:flex items-center bg-white rounded-full px-4 py-1.5 shadow-md w-52 lg:w-64 focus-within:ring-2 focus-within:ring-brand-400 transition-all"
-          >
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-slate-800 text-sm focus:outline-none w-full placeholder-slate-400 pr-2"
-            />
-            <button type="submit" aria-label="Search" className="text-brand-500 hover:text-brand-700">
-              <Search className="w-4 h-4" />
-            </button>
-          </form>
-
           {/* Share a Trip CTA */}
           <Link
             href="/trips/share"
@@ -162,7 +137,7 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-1.5 rounded-full font-medium text-sm transition-all shadow-md"
+                className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-1.5 rounded-full font-medium text-sm transition-all shadow-md cursor-pointer"
               >
                 <img
                   src={currentUser.avatar || 'https://i.pravatar.cc/150'}
@@ -212,7 +187,7 @@ export default function Navbar() {
 
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-slate-100 mt-1"
+                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-slate-100 mt-1 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Log Out</span>
@@ -235,19 +210,6 @@ export default function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-darkslate-900/95 backdrop-blur-xl border-b border-white/10 px-6 py-6 space-y-4">
-          <form onSubmit={handleSearch} className="flex items-center bg-white rounded-full px-4 py-2 mb-4">
-            <input
-              type="text"
-              placeholder="Search destinations, trips..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-slate-800 text-sm focus:outline-none w-full pr-2"
-            />
-            <button type="submit" aria-label="Search" className="text-brand-500">
-              <Search className="w-4 h-4" />
-            </button>
-          </form>
-
           <div className="flex flex-col space-y-3 font-medium text-white/90">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className="hover:text-brand-300 py-1">
               Home
