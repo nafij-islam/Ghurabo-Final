@@ -12,13 +12,14 @@ export async function GET(request: Request) {
     const conn = await connectToDatabase();
 
     if (identifier && conn) {
+      const cleanId = identifier.trim();
       // Find in Atlas by ID, Email, or Name match
-      let user = await UserModel.findOne({ id: identifier });
+      let user = await UserModel.findOne({ id: cleanId });
       if (!user) {
-        user = await UserModel.findOne({ email: identifier.toLowerCase() });
+        user = await UserModel.findOne({ email: cleanId.toLowerCase() });
       }
       if (!user) {
-        const decoded = decodeURIComponent(identifier).replace(/-/g, ' ');
+        const decoded = decodeURIComponent(cleanId).replace(/-/g, ' ');
         user = await UserModel.findOne({ name: { $regex: new RegExp(`^${decoded}$`, 'i') } });
       }
       if (user) {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Fallback: Check memory DB or current logged in user
+    // Fallback: Return current logged in user profile if no identifier passed
     const sessionUser = await getCurrentUser();
     if (sessionUser) {
       if (conn) {
@@ -39,9 +40,21 @@ export async function GET(request: Request) {
     }
 
     const db = getMemoryDb();
-    const fallbackUser = db.users.find((u) => u.id === identifier || u.email.toLowerCase() === identifier?.toLowerCase()) || db.users[0];
+    if (identifier) {
+      const cleanId = identifier.trim().toLowerCase();
+      const matchUser = db.users.find(
+        (u) =>
+          u.id === identifier ||
+          u.email.toLowerCase() === cleanId ||
+          u.name.toLowerCase() === cleanId ||
+          u.name.toLowerCase().replace(/\s+/g, '-') === cleanId
+      );
+      if (matchUser) {
+        return NextResponse.json({ success: true, user: matchUser });
+      }
+    }
 
-    return NextResponse.json({ success: true, user: fallbackUser });
+    return NextResponse.json({ success: false, error: 'User profile not found' }, { status: 404 });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch user profile' }, { status: 500 });
   }
@@ -61,7 +74,7 @@ export async function PUT(request: Request) {
     const conn = await connectToDatabase();
 
     if (conn) {
-      // Update User in MongoDB Atlas
+      // Update User in MongoDB Atlas strictly for authenticated session user
       const updatedUser = await UserModel.findOneAndUpdate(
         { $or: [{ id: sessionUser.id }, { email: sessionUser.email.toLowerCase() }] },
         {

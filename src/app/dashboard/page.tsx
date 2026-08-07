@@ -62,18 +62,18 @@ export default function DashboardPage() {
             />
             <div>
               <div className="flex items-center space-x-3">
-                <h1 className="font-display text-3xl font-bold uppercase text-white">{currentUser?.name || 'Explorer'}</h1>
+                <h1 className="font-display text-3xl font-bold uppercase text-white">{currentUser?.name || 'Traveller Account'}</h1>
                 <span className="px-3 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase">
                   {currentUser?.role || 'Traveller'}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-1 font-light">{currentUser?.bio || 'Full-time backpacker & community story author.'}</p>
+              <p className="text-xs text-slate-300 mt-1 font-light">{currentUser?.bio || 'No bio added yet.'}</p>
               <div className="flex items-center space-x-4 text-xs text-cyan-300 mt-3 font-semibold">
-                <span>{currentUser?.location || 'Dhaka, Bangladesh'}</span>
+                <span>{currentUser?.location || 'Location not specified'}</span>
                 <span>•</span>
-                <span>{(currentUser?.followersCount || 3420).toLocaleString()} Followers</span>
+                <span>{(currentUser?.followersCount || 0).toLocaleString()} Followers</span>
                 <span>•</span>
-                <span>{(currentUser?.totalHelpfulVotes || 489).toLocaleString()} Helpful Votes</span>
+                <span>{(currentUser?.totalHelpfulVotes || 0).toLocaleString()} Helpful Votes</span>
               </div>
             </div>
           </div>

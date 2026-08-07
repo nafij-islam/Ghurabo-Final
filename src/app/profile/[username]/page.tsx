@@ -100,7 +100,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center space-x-3 justify-center md:justify-start">
                 <h1 className="font-display text-3xl font-bold uppercase text-slate-900">
-                  {activeUser?.name || 'Explorer'}
+                  {activeUser?.name || 'Traveller Profile'}
                 </h1>
                 <span className="px-3 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase">
                   {activeUser?.badges?.[0] || activeUser?.preferredStyle || 'Explorer'}
@@ -108,18 +108,18 @@ export default function ProfilePage() {
               </div>
 
               <p className="text-xs text-slate-600 mt-1 font-light max-w-md leading-relaxed">
-                {activeUser?.bio || 'Passionate traveller & community story author.'}
+                {activeUser?.bio || 'No bio added yet.'}
               </p>
 
               <div className="flex flex-wrap items-center space-x-4 text-xs font-semibold text-slate-600 mt-3 justify-center md:justify-start gap-y-1">
                 <span className="flex items-center space-x-1">
                   <MapPin className="w-3.5 h-3.5 text-brand-500" />
-                  <span>{activeUser?.location || 'Dhaka, Bangladesh'}</span>
+                  <span>{activeUser?.location || 'Location not specified'}</span>
                 </span>
                 <span>•</span>
-                <span>{(activeUser?.followersCount || 3420).toLocaleString()} Followers</span>
+                <span>{(activeUser?.followersCount || 0).toLocaleString()} Followers</span>
                 <span>•</span>
-                <span>{(activeUser?.totalHelpfulVotes || 489).toLocaleString()} Helpful Votes</span>
+                <span>{(activeUser?.totalHelpfulVotes || 0).toLocaleString()} Helpful Votes</span>
               </div>
             </div>
           </div>
