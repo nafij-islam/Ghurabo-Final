@@ -1,22 +1,23 @@
+'use client';
+
 import React from 'react';
 
 export function TripCardSkeleton() {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm animate-pulse flex flex-col justify-between h-[450px]">
-      <div className="h-60 bg-slate-200 w-full relative overflow-hidden" />
-      <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
+    <div className="w-full bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-xl animate-pulse flex flex-col h-[420px]">
+      <div className="w-full h-48 bg-white/10 relative" />
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <div className="h-4 bg-slate-200 rounded w-24" />
-            <div className="h-4 bg-slate-200 rounded w-16" />
+            <div className="w-24 h-4 bg-white/10 rounded-full" />
+            <div className="w-16 h-4 bg-white/10 rounded-full" />
           </div>
-          <div className="h-6 bg-slate-200 rounded w-3/4" />
-          <div className="h-3 bg-slate-200 rounded w-full" />
-          <div className="h-3 bg-slate-200 rounded w-2/3" />
+          <div className="w-full h-6 bg-white/10 rounded-lg" />
+          <div className="w-3/4 h-4 bg-white/10 rounded-lg" />
         </div>
-        <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-          <div className="h-6 bg-slate-200 rounded w-20" />
-          <div className="h-8 bg-slate-200 rounded-full w-24" />
+        <div className="pt-3 border-t border-white/10 flex justify-between items-center">
+          <div className="w-28 h-5 bg-white/10 rounded-md" />
+          <div className="w-20 h-5 bg-white/10 rounded-md" />
         </div>
       </div>
     </div>
@@ -25,53 +26,11 @@ export function TripCardSkeleton() {
 
 export function DestinationCardSkeleton() {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm animate-pulse h-[380px]">
-      <div className="h-56 bg-slate-200 w-full" />
-      <div className="p-5 space-y-3">
-        <div className="h-5 bg-slate-200 rounded w-1/2" />
-        <div className="h-4 bg-slate-200 rounded w-full" />
-        <div className="flex justify-between items-center pt-2">
-          <div className="h-4 bg-slate-200 rounded w-20" />
-          <div className="h-4 bg-slate-200 rounded w-16" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function GalleryCardSkeleton() {
-  return (
-    <div className="bg-slate-200 animate-pulse rounded-3xl h-72 w-full overflow-hidden" />
-  );
-}
-
-export function DashboardSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse max-w-7xl mx-auto px-4 py-12">
-      <div className="h-44 bg-slate-200 rounded-3xl w-full" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-28 bg-slate-200 rounded-3xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <TripCardSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function ProfileSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse max-w-7xl mx-auto px-4 py-12">
-      <div className="h-64 bg-slate-200 rounded-3xl w-full" />
-      <div className="h-32 bg-slate-200 rounded-3xl w-full" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <TripCardSkeleton key={i} />
-        ))}
+    <div className="w-full bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-xl animate-pulse h-80 relative">
+      <div className="w-full h-full bg-white/10" />
+      <div className="absolute bottom-6 left-6 right-6 space-y-2">
+        <div className="w-32 h-6 bg-white/20 rounded-lg" />
+        <div className="w-48 h-4 bg-white/10 rounded-md" />
       </div>
     </div>
   );
@@ -79,49 +38,82 @@ export function ProfileSkeleton() {
 
 export function TripDetailsSkeleton() {
   return (
-    <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20 animate-pulse">
-      {/* Hero Cover Skeleton */}
-      <div className="relative h-[480px] w-full bg-slate-300 overflow-hidden">
-        <div className="absolute bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 space-y-4">
-          <div className="h-6 bg-slate-400 rounded-full w-32" />
-          <div className="h-12 bg-slate-400 rounded-2xl w-3/4" />
-          <div className="flex space-x-4">
-            <div className="h-4 bg-slate-400 rounded w-24" />
-            <div className="h-4 bg-slate-400 rounded w-20" />
-            <div className="h-4 bg-slate-400 rounded w-28" />
-          </div>
+    <div className="max-w-4xl mx-auto px-4 py-28 space-y-8 animate-pulse">
+      <div className="w-full h-[380px] bg-slate-900 border border-white/10 rounded-3xl" />
+      <div className="space-y-4">
+        <div className="w-1/3 h-6 bg-slate-900 rounded-full" />
+        <div className="w-3/4 h-10 bg-slate-900 rounded-2xl" />
+        <div className="w-1/2 h-5 bg-slate-900 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="h-32 bg-slate-900 rounded-2xl border border-white/10" />
+        <div className="h-32 bg-slate-900 rounded-2xl border border-white/10" />
+        <div className="h-32 bg-slate-900 rounded-2xl border border-white/10" />
+      </div>
+      <div className="w-full h-64 bg-slate-900 rounded-3xl border border-white/10" />
+    </div>
+  );
+}
+
+export function PopularTripsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <TripCardSkeleton />
+      <TripCardSkeleton />
+      <TripCardSkeleton />
+    </div>
+  );
+}
+
+export function GallerySkeleton() {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="w-full h-48 bg-slate-900 border border-white/10 rounded-2xl" />
+      ))}
+    </div>
+  );
+}
+
+export function ProfileSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-28 space-y-8 animate-pulse">
+      <div className="w-full h-64 bg-slate-900 rounded-3xl" />
+      <div className="flex items-center space-x-4">
+        <div className="w-20 h-20 rounded-full bg-slate-900 border-2 border-white/10" />
+        <div className="space-y-2">
+          <div className="w-40 h-6 bg-slate-900 rounded-lg" />
+          <div className="w-60 h-4 bg-slate-900 rounded-md" />
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Main Body Skeleton */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-10">
-        {/* Author Bar Skeleton */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 bg-slate-200 rounded-full" />
-            <div className="space-y-2">
-              <div className="h-5 bg-slate-200 rounded w-36" />
-              <div className="h-3 bg-slate-200 rounded w-24" />
-            </div>
-          </div>
-          <div className="flex space-x-2">
-            <div className="h-8 bg-slate-200 rounded-full w-20" />
-            <div className="h-8 bg-slate-200 rounded-full w-20" />
-          </div>
-        </div>
-
-        {/* Cost Summary Box Skeleton */}
-        <div className="h-28 bg-slate-300 rounded-3xl w-full" />
-
-        {/* Story Box Skeleton */}
-        <div className="bg-white p-8 rounded-3xl border border-slate-100 space-y-4">
-          <div className="h-7 bg-slate-200 rounded w-48" />
-          <div className="h-4 bg-slate-200 rounded w-full" />
-          <div className="h-4 bg-slate-200 rounded w-5/6" />
-          <div className="h-4 bg-slate-200 rounded w-4/5" />
-          <div className="h-4 bg-slate-200 rounded w-full" />
-        </div>
+export function DashboardSkeleton() {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-28 space-y-6 animate-pulse">
+      <div className="w-full h-40 bg-slate-900 rounded-3xl border border-white/10" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TripCardSkeleton />
+        <TripCardSkeleton />
       </div>
+    </div>
+  );
+}
+
+export function CommentSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex items-start space-x-3 p-4 bg-slate-900 border border-white/10 rounded-2xl">
+          <div className="w-10 h-10 rounded-full bg-white/10 shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="w-32 h-4 bg-white/10 rounded-md" />
+            <div className="w-full h-4 bg-white/10 rounded-md" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -75,6 +75,9 @@ const TripSchema = new Schema(
     challenges: { type: String },
     tips: { type: String },
     safetyNotes: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    googlePlaceId: { type: String },
     coverImage: { type: String, required: true },
     images: [
       {
@@ -129,6 +132,50 @@ TripSchema.index({ status: 1, createdAt: -1 });
 TripSchema.index({ status: 1, isPopular: -1 });
 TripSchema.index({ userId: 1, status: 1 });
 TripSchema.index({ destinationName: 1, status: 1 });
+
+// SavedTrip Schema
+const SavedTripSchema = new Schema(
+  {
+    userId: { type: String, required: true, index: true },
+    tripId: { type: String, required: true, index: true },
+  },
+  { timestamps: true }
+);
+SavedTripSchema.index({ userId: 1, tripId: 1 }, { unique: true });
+
+// TripLike Schema
+const TripLikeSchema = new Schema(
+  {
+    userId: { type: String, required: true, index: true },
+    tripId: { type: String, required: true, index: true },
+  },
+  { timestamps: true }
+);
+TripLikeSchema.index({ userId: 1, tripId: 1 }, { unique: true });
+
+// HelpfulVote Schema
+const HelpfulVoteSchema = new Schema(
+  {
+    userId: { type: String, required: true, index: true },
+    tripId: { type: String, required: true, index: true },
+  },
+  { timestamps: true }
+);
+HelpfulVoteSchema.index({ userId: 1, tripId: 1 }, { unique: true });
+
+// Comment Schema
+const CommentSchema = new Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    tripId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    userName: { type: String, required: true },
+    userAvatar: { type: String },
+    content: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+CommentSchema.index({ tripId: 1, createdAt: -1 });
 
 // Review Schema
 const ReviewSchema = new Schema(
@@ -189,6 +236,10 @@ const SystemConfigSchema = new Schema(
 export const UserModel = models.User || model('User', UserSchema);
 export const DestinationModel = models.Destination || model('Destination', DestinationSchema);
 export const TripModel = models.Trip || model('Trip', TripSchema);
+export const SavedTripModel = models.SavedTrip || model('SavedTrip', SavedTripSchema);
+export const TripLikeModel = models.TripLike || model('TripLike', TripLikeSchema);
+export const HelpfulVoteModel = models.HelpfulVote || model('HelpfulVote', HelpfulVoteSchema);
+export const CommentModel = models.Comment || model('Comment', CommentSchema);
 export const ReviewModel = models.Review || model('Review', ReviewSchema);
 export const GalleryModel = models.Gallery || model('Gallery', GallerySchema);
 export const SystemConfigModel = models.SystemConfig || model('SystemConfig', SystemConfigSchema);

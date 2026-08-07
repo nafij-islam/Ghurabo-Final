@@ -6,6 +6,7 @@ import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel } from '@/lib/db/models';
 import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
 import { TripCostDisplay } from '@/components/trips/TripCostDisplay';
+import GoogleTripMap from '@/components/trips/GoogleTripMap';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { MapPin, Calendar, Clock, ShieldCheck, Star, Lightbulb, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -306,6 +307,14 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
             </table>
           </div>
         </div>
+
+        {/* Google Maps Interactive Destination Location */}
+        <GoogleTripMap
+          destinationName={trip.destinationName}
+          latitude={trip.latitude || 21.4272}
+          longitude={trip.longitude || 92.0058}
+          googlePlaceId={trip.googlePlaceId}
+        />
 
         {/* Tips & Safety Notes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">

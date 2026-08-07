@@ -12,7 +12,8 @@ export default function DashboardPage() {
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [drafts, setDrafts] = useState<ITrip[]>([]);
-  const [activeTab, setActiveTab] = useState<'published' | 'pending' | 'drafts'>('published');
+  const [savedTrips, setSavedTrips] = useState<ITrip[]>([]);
+  const [activeTab, setActiveTab] = useState<'published' | 'pending' | 'saved' | 'drafts'>('published');
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +25,7 @@ export default function DashboardPage() {
           const user = data.user as IUser;
           setCurrentUser(user);
 
-          // Fetch trips belonging to this specific user from MongoDB Atlas
+          // Fetch user's own trips
           fetch(`/api/trips?status=all&userId=${encodeURIComponent(user.id)}`)
             .then((res) => res.json())
             .then((tripData) => {
@@ -41,8 +42,18 @@ export default function DashboardPage() {
                 setPendingTrips(myTrips.filter((t) => t.status === 'pending'));
                 setDrafts(myTrips.filter((t) => t.status === 'draft'));
               }
-              setLoading(false);
             });
+
+          // Fetch user's saved trips from MongoDB Atlas
+          fetch('/api/users/saved-trips')
+            .then((res) => res.json())
+            .then((savedData) => {
+              if (savedData.success && Array.isArray(savedData.savedTrips)) {
+                setSavedTrips(savedData.savedTrips);
+              }
+              setLoading(false);
+            })
+            .catch(() => setLoading(false));
         } else {
           setLoading(false);
         }
@@ -133,10 +144,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-3 mb-8 border-b border-slate-200 pb-4">
+        <div className="flex items-center space-x-3 mb-8 border-b border-slate-200 pb-4 overflow-x-auto">
           <button
             onClick={() => setActiveTab('published')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
               activeTab === 'published' ? 'bg-brand-500 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -144,15 +155,23 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
               activeTab === 'pending' ? 'bg-amber-500 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
             Pending Review ({pendingTrips.length})
           </button>
           <button
+            onClick={() => setActiveTab('saved')}
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
+              activeTab === 'saved' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Saved Trips ({savedTrips.length})
+          </button>
+          <button
             onClick={() => setActiveTab('drafts')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${
+            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
               activeTab === 'drafts' ? 'bg-slate-800 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -187,6 +206,20 @@ export default function DashboardPage() {
             ) : (
               <div className="col-span-2 py-12 text-center bg-white rounded-3xl border border-slate-100 text-slate-500 text-xs">
                 No trips currently awaiting moderation approval.
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'saved' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {savedTrips.length > 0 ? (
+              savedTrips.map((t) => (
+                <TripCard key={t.id} trip={t} />
+              ))
+            ) : (
+              <div className="col-span-3 py-12 text-center bg-white rounded-3xl border border-slate-100 text-slate-500 text-xs font-medium">
+                You haven&apos;t saved any trips yet. Browse trips and click &quot;Save&quot; to bookmark your favorite itineraries!
               </div>
             )}
           </div>

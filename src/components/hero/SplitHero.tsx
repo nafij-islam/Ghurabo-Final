@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin } from 'lucide-react';
+import Image from 'next/image';
+import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin, PlusCircle } from 'lucide-react';
 
 const HERO_SLIDES = [
   {
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000',
+    image: '/banner-one.png',
     title: 'EXPLORE THE WORLD',
     subtitle: 'WORLDWIDE TRAVEL COMMUNITY',
     description: 'Share your real travel stories, itemized budget breakdowns, day-by-day itineraries, and connect with passionate solo, couple, family, and group explorers around the globe.',
@@ -14,7 +15,7 @@ const HERO_SLIDES = [
     slug: 'coxs-bazar-beach',
   },
   {
-    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000',
+    image: '/banner-two.png',
     title: 'TOUCH THE CLOUDS',
     subtitle: 'AUTHENTIC MOUNTAIN ESCAPES',
     description: 'Discover high-altitude valleys, misty morning ridges, scenic 4x4 jeep trails, and local tribal culture with real cost insights from fellow travellers.',
@@ -22,7 +23,7 @@ const HERO_SLIDES = [
     slug: 'sajek-valley-hilltop',
   },
   {
-    image: 'https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?auto=format&fit=crop&q=80&w=2000',
+    image: '/banner-one.png',
     title: 'CRYSTAL PARADISE',
     subtitle: 'UNSPOILED ISLAND ADVENTURES',
     description: 'Uncover crystal blue coral waters, secluded coconut palm beaches, seafood markets, and verified budget guides created by real community members.',
@@ -33,10 +34,22 @@ const HERO_SLIDES = [
 
 export default function SplitHero() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Touch Swipe State for Mobile Slider
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => setIsAuthenticated(false));
+  }, []);
 
   const slide = HERO_SLIDES[currentSlideIndex];
 
@@ -70,6 +83,8 @@ export default function SplitHero() {
     touchStartX.current = null;
     touchEndX.current = null;
   };
+
+  const shareTripHref = isAuthenticated ? '/trips/share' : '/auth/login?redirect=/trips/share';
 
   return (
     <>
@@ -134,17 +149,18 @@ export default function SplitHero() {
                   href="/trips"
                   className="inline-flex items-center space-x-3 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-semibold px-7 py-3.5 rounded-full border border-white/40 transition-all shadow-lg transform hover:-translate-y-0.5"
                 >
-                  <span className="text-sm uppercase tracking-wider">Discover</span>
+                  <span className="text-sm uppercase tracking-wider">Explore Trips</span>
                   <div className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
                     <ArrowRight className="w-3.5 h-3.5 text-white" />
                   </div>
                 </Link>
 
                 <Link
-                  href="/about"
-                  className="inline-flex items-center justify-center text-white font-semibold text-sm uppercase tracking-wider px-7 py-3.5 rounded-md border-2 border-white hover:bg-white hover:text-brand-700 transition-all shadow-md"
+                  href={shareTripHref}
+                  className="inline-flex items-center space-x-2 text-white font-semibold text-sm uppercase tracking-wider px-7 py-3.5 rounded-full border-2 border-white hover:bg-white hover:text-brand-700 transition-all shadow-md"
                 >
-                  Know More
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Share Your Trip</span>
                 </Link>
               </div>
 
@@ -158,9 +174,13 @@ export default function SplitHero() {
 
           {/* Right Side: Cinematic Photograph with Paint-Brush Mask Overlay */}
           <div className="w-full lg:w-1/2 h-[450px] lg:h-full relative overflow-hidden">
-            <div
-              className="w-full h-full bg-cover bg-center transition-all duration-700 transform scale-105"
-              style={{ backgroundImage: `url(${slide.image})` }}
+            <Image
+              src={slide.image}
+              alt={slide.location}
+              fill
+              priority={currentSlideIndex === 0}
+              className="object-cover object-center transition-all duration-700 transform scale-105"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
 
             <div className="hidden lg:block absolute -left-1 top-0 bottom-0 w-24 z-20 pointer-events-none">
@@ -204,13 +224,17 @@ export default function SplitHero() {
           className="relative w-full h-[clamp(480px,72vh,680px)] overflow-hidden bg-slate-900 shadow-2xl"
         >
           {/* Full-width, Full-height Image Background */}
-          <div
-            className="w-full h-full bg-cover bg-center transition-all duration-500 ease-out"
-            style={{ backgroundImage: `url(${slide.image})` }}
+          <Image
+            src={slide.image}
+            alt={slide.location}
+            fill
+            priority={currentSlideIndex === 0}
+            className="object-cover object-center transition-all duration-500 ease-out"
+            sizes="100vw"
           />
 
           {/* Minimal Dark Gradient Overlay (Transparent at top, stronger at bottom) */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none z-10" />
 
           {/* Left Arrow (Compact 40px Transparent Circle) */}
           <button
@@ -253,7 +277,7 @@ export default function SplitHero() {
                 href="/trips"
                 className="inline-flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-full shadow-lg transition-all active:scale-95"
               >
-                <span>Explore Trip</span>
+                <span>Explore Trips</span>
                 <ArrowRight className="w-3.5 h-3.5 text-white" />
               </Link>
             </div>
