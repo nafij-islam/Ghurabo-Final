@@ -10,8 +10,9 @@ export const metadata: Metadata = {
   keywords: ['travel community', 'trip sharing', 'budget travel', 'travel itinerary', 'coxs bazar', 'sajek valley', 'st martin'],
   authors: [{ name: 'Ghurabo Community' }],
   icons: {
-    icon: '/logo-ghurabo.png',
-    apple: '/logo-ghurabo.png',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
   openGraph: {
     title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
