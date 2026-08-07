@@ -11,7 +11,7 @@ export default function AllTripsPage() {
   const [search, setSearch] = useState('');
   const [travelType, setTravelType] = useState('All');
   const [sortOption, setSortOption] = useState('newest');
-  const [maxBudget, setMaxBudget] = useState(1000);
+  const [maxBudget, setMaxBudget] = useState(100000);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -120,13 +120,13 @@ export default function AllTripsPage() {
             <div className="sm:col-span-2">
               <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
                 <span>Max Budget Per Person</span>
-                <span className="text-brand-600 font-extrabold">${maxBudget}</span>
+                <span className="text-brand-600 font-extrabold">৳{maxBudget.toLocaleString()}</span>
               </div>
               <input
                 type="range"
-                min="50"
-                max="1000"
-                step="25"
+                min="1000"
+                max="100000"
+                step="2500"
                 value={maxBudget}
                 onChange={(e) => setMaxBudget(Number(e.target.value))}
                 className="w-full accent-brand-500 cursor-pointer"

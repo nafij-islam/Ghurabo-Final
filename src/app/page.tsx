@@ -13,11 +13,17 @@ export default function HomePage() {
   const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
+  const [stats, setStats] = useState({
+    totalTrips: 0,
+    totalUsers: 0,
+    totalHelpfulVotes: 0,
+    totalDestinations: 0,
+  });
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [maxBudget, setMaxBudget] = useState<number>(500);
+  const [maxBudget, setMaxBudget] = useState<number>(50000);
 
   useEffect(() => {
-    // Parallelize all initial homepage data requests
+    // Parallelize all initial homepage data requests from MongoDB Atlas
     Promise.all([
       fetch('/api/destinations').then((res) => res.json()),
       fetch('/api/trips?popular=true').then((res) => res.json()),
@@ -25,9 +31,22 @@ export default function HomePage() {
       fetch('/api/gallery').then((res) => res.json()),
     ])
       .then(([destData, popData, tripData, galData]) => {
-        if (destData.success) setDestinations(destData.destinations || []);
+        if (destData.success) {
+          const destList = destData.destinations || [];
+          setDestinations(destList);
+          setStats((prev) => ({ ...prev, totalDestinations: destList.length }));
+        }
         if (popData.success) setPopularTrips(popData.trips || []);
-        if (tripData.success) setTrips(tripData.trips || []);
+        if (tripData.success) {
+          const tripList = tripData.trips || [];
+          setTrips(tripList);
+          const totalHelpful = tripList.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
+          setStats((prev) => ({
+            ...prev,
+            totalTrips: tripData.total || tripList.length,
+            totalHelpfulVotes: totalHelpful,
+          }));
+        }
         if (galData.success) setGalleryItems(galData.gallery || []);
       })
       .catch((err) => console.warn('Homepage data load error:', err));
@@ -68,11 +87,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {popularTrips.length > 0
             ? popularTrips.slice(0, 6).map((trip) => <TripCard key={trip.id || (trip as any)._id} trip={trip} />)
-            : destinations
-                .filter((d) => d.isPopular)
-                .concat(destinations.filter((d) => !d.isPopular))
-                .slice(0, 6)
-                .map((dest) => <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />)}
+            : destinations.slice(0, 6).map((dest) => <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />)}
         </div>
       </section>
 
@@ -125,13 +140,13 @@ export default function HomePage() {
             <div className="flex-1">
               <div className="flex justify-between text-xs font-semibold mb-1">
                 <span>Filter by Max Budget / Person</span>
-                <span className="text-cyan-300 font-bold">${maxBudget}</span>
+                <span className="text-cyan-300 font-bold">৳{maxBudget.toLocaleString()}</span>
               </div>
               <input
                 type="range"
-                min="50"
-                max="1000"
-                step="25"
+                min="1000"
+                max="100000"
+                step="2500"
                 value={maxBudget}
                 onChange={(e) => setMaxBudget(Number(e.target.value))}
                 className="w-full accent-cyan-300 cursor-pointer"
@@ -140,21 +155,21 @@ export default function HomePage() {
           </div>
 
           {/* Trips Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTrips.slice(0, 6).map((trip) => (
-              <TripCard key={trip.id || (trip as any)._id} trip={trip} />
-            ))}
-          </div>
-
-          {filteredTrips.length === 0 && (
-            <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/10">
-              <p className="text-white/80">No trips found matching budget under ${maxBudget}.</p>
-              <button
-                onClick={() => setMaxBudget(1000)}
-                className="mt-3 px-4 py-2 bg-white text-brand-700 text-xs font-bold rounded-full uppercase cursor-pointer"
+          {filteredTrips.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredTrips.slice(0, 6).map((trip) => (
+                <TripCard key={trip.id || (trip as any)._id} trip={trip} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white/5 rounded-3xl border border-white/10">
+              <p className="text-white/80 text-sm font-medium">No trips have been shared in this category yet.</p>
+              <Link
+                href="/trips/share"
+                className="mt-4 inline-flex items-center space-x-2 px-6 py-2.5 bg-white text-brand-700 text-xs font-bold rounded-full uppercase cursor-pointer shadow-lg hover:bg-cyan-50 transition-all"
               >
-                Reset Budget Filter
-              </button>
+                <span>+ Be the First to Share a Trip</span>
+              </Link>
             </div>
           )}
 
@@ -196,46 +211,52 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {galleryItems.slice(0, 6).map((item) => (
-            <Link
-              key={item.id || (item as any)._id}
-              href={`/trips/${item.tripSlug || item.tripId}`}
-              className="group relative h-48 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
-            >
-              <img
-                src={item.url}
-                alt={item.caption || item.destinationName}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white">
-                <p className="text-[11px] font-bold truncate">{item.photographerName}</p>
-                <p className="text-[10px] text-cyan-300 font-semibold truncate">{item.tripTitle}</p>
-                <p className="text-[9px] text-white/70 truncate">{item.destinationName} • {item.travelType}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {galleryItems.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {galleryItems.slice(0, 6).map((item) => (
+              <Link
+                key={item.id || (item as any)._id}
+                href={`/trips/${item.tripSlug || item.tripId}`}
+                className="group relative h-48 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
+              >
+                <img
+                  src={item.url}
+                  alt={item.caption || item.destinationName}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white">
+                  <p className="text-[11px] font-bold truncate">{item.photographerName}</p>
+                  <p className="text-[10px] text-cyan-300 font-semibold truncate">{item.tripTitle}</p>
+                  <p className="text-[9px] text-white/70 truncate">{item.destinationName} • {item.travelType}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white rounded-3xl border border-slate-100 text-slate-500 text-xs font-medium">
+            No gallery photos uploaded yet. Photos from approved community trips will appear here automatically!
+          </div>
+        )}
       </section>
 
-      {/* Community Stats Section */}
+      {/* Real Live Database Community Stats Section */}
       <section className="py-16 bg-darkslate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">1,420+</div>
+            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalTrips}</div>
             <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Shared Trips</div>
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">8,950+</div>
-            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Active Explorers</div>
+            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalDestinations}</div>
+            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Destinations</div>
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">4,300+</div>
+            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalHelpfulVotes}</div>
             <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Helpful Votes</div>
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">34+</div>
-            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Countries Covered</div>
+            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{galleryItems.length}</div>
+            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Gallery Photos</div>
           </div>
         </div>
       </section>

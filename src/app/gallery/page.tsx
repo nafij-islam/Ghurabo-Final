@@ -132,7 +132,7 @@ export default function GalleryPage() {
                         onClick={(e) => e.stopPropagation()}
                         className="block font-display text-base font-bold text-white hover:text-cyan-300 transition-colors line-clamp-1 leading-tight"
                       >
-                        {item.tripTitle || item.caption || 'Exploring Sajek Valley'}
+                        {item.tripTitle || item.caption || item.destinationName || 'Community Photo'}
                       </Link>
 
                       <p className="text-[11px] text-cyan-200 font-medium truncate">
