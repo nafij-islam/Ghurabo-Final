@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -13,12 +13,14 @@ import { usePreferences } from '@/context/PreferencesContext';
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuAnimate, setMobileMenuAnimate] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
 
+  const touchStartRef = useRef<number>(0);
   const { currency, language, setCurrency, setLanguage, t } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
@@ -61,6 +63,23 @@ export default function Navbar() {
     }
   }, [pathname]);
 
+  // Open & Close mobile menu handlers with 2-stage smooth animation
+  const openMobileMenu = () => {
+    setMobileMenuOpen(true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setMobileMenuAnimate(true);
+      });
+    });
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuAnimate(false);
+    setTimeout(() => {
+      setMobileMenuOpen(false);
+    }, 300);
+  };
+
   // Lock background scroll when mobile drawer is open & handle Escape key
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -71,7 +90,7 @@ export default function Navbar() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setMobileMenuOpen(false);
+        closeMobileMenu();
         setUserDropdownOpen(false);
         setLangDropdownOpen(false);
         setCurrencyDropdownOpen(false);
@@ -85,11 +104,26 @@ export default function Navbar() {
     };
   }, [mobileMenuOpen]);
 
+  // Touch handlers for swipe-left to close gesture
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const currentX = e.touches[0].clientX;
+    const diffX = touchStartRef.current - currentX;
+    if (diffX > 50) {
+      touchStartRef.current = 0;
+      closeMobileMenu();
+    }
+  };
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setCurrentUser(null);
     setUserDropdownOpen(false);
-    setMobileMenuOpen(false);
+    closeMobileMenu();
     notifyAuthChange();
     router.refresh();
     router.push('/');
@@ -359,7 +393,7 @@ export default function Navbar() {
 
           {/* Mobile Hamburger Toggle Button (Visible < 768px) */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => (mobileMenuOpen ? closeMobileMenu() : openMobileMenu())}
             className="md:hidden p-2 text-white hover:text-brand-300 focus:outline-none cursor-pointer rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition-all ml-1"
             aria-label="Toggle navigation menu"
           >
@@ -368,21 +402,29 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Portal Mounted Mobile Navigation Drawer (< 768px) */}
+      {/* Portal Mounted Left-Sliding Mobile Navigation Drawer (< 768px) */}
       {mounted && mobileMenuOpen && createPortal(
         <div className="md:hidden fixed inset-0 z-[9998] overflow-hidden" role="dialog" aria-modal="true">
-          {/* Backdrop Overlay */}
+          {/* Backdrop Overlay with smooth fade in/out */}
           <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
+            className={`fixed inset-0 bg-[#030a19]/60 backdrop-blur-[2px] transition-opacity duration-300 ease-out ${
+              mobileMenuAnimate ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={closeMobileMenu}
             aria-hidden="true"
           />
 
-          {/* Slide-over Mobile Drawer Panel */}
-          <div className="fixed top-0 right-0 bottom-0 h-[100dvh] w-[min(88vw,360px)] z-[9999] bg-darkslate-950 text-white shadow-2xl border-l border-white/10 flex flex-col transition-transform duration-300 ease-out transform translate-x-0">
+          {/* Left-Sliding Mobile Drawer Panel */}
+          <div
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            className={`fixed top-0 left-0 bottom-0 h-[100dvh] w-[min(88vw,360px)] z-[9999] bg-darkslate-950 text-white shadow-[20px_0_50px_rgba(0,0,0,0.4)] border-r border-white/10 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform ${
+              mobileMenuAnimate ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+            }`}
+          >
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-darkslate-900/80 shrink-0">
-              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center">
+              <Link href="/" onClick={closeMobileMenu} className="flex items-center">
                 <img
                   src="/logo-ghurabo.png"
                   alt="Ghurabo Logo"
@@ -390,8 +432,8 @@ export default function Navbar() {
                 />
               </Link>
               <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-2 text-slate-300 hover:text-white rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors cursor-pointer"
+                onClick={closeMobileMenu}
+                className="p-2 text-slate-300 hover:text-white rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all cursor-pointer hover:scale-105 active:scale-95"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -425,7 +467,7 @@ export default function Navbar() {
                 </span>
                 <Link
                   href="/"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
@@ -434,7 +476,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/destinations"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname.startsWith('/destinations') ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
@@ -443,7 +485,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/trips"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/trips' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
@@ -452,7 +494,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/gallery"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/gallery' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
@@ -461,7 +503,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/about"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
                     pathname === '/about' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
                   }`}
@@ -474,7 +516,7 @@ export default function Navbar() {
               <div className="pt-1">
                 <Link
                   href="/trips/share"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                   className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all"
                 >
                   <PlusCircle className="w-4 h-4" />
@@ -559,7 +601,7 @@ export default function Navbar() {
                   <>
                     <Link
                       href="/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                       className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
                     >
                       <Compass className="w-4 h-4 text-brand-300" />
@@ -567,7 +609,7 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href={`/profile/${currentUser.id}`}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                       className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-slate-200 text-sm font-medium transition-all"
                     >
                       <User className="w-4 h-4 text-brand-300" />
@@ -577,7 +619,7 @@ export default function Navbar() {
                     {currentUser.role === 'admin' && (
                       <Link
                         href="/admin"
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={closeMobileMenu}
                         className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-brand-500/10 border border-brand-500/30 text-brand-300 text-sm font-bold transition-all"
                       >
                         <ShieldCheck className="w-4 h-4 text-brand-400" />
@@ -597,7 +639,7 @@ export default function Navbar() {
                   <div className="space-y-2 pt-2">
                     <Link
                       href="/auth/login"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                       className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all"
                     >
                       <User className="w-4 h-4" />
@@ -605,7 +647,7 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/auth/signup"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                       className="w-full flex items-center justify-center py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider border border-white/20 rounded-xl transition-all"
                     >
                       <span>{t('nav.signUp')}</span>
@@ -621,4 +663,5 @@ export default function Navbar() {
     </header>
   );
 }
+
 
