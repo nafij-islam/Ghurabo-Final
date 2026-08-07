@@ -4,6 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { notifyAuthChange } from '@/lib/auth/authEvent';
+import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function SignupForm() {
   const [name, setName] = useState('');
@@ -29,16 +30,16 @@ function SignupForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, preferredStyle, location }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => ({ success: false, error: 'Server connection error' }));
+      if (res.ok && data.success) {
         notifyAuthChange();
         router.refresh();
         router.push(redirectTarget);
       } else {
         setError(data.error || 'Registration failed');
       }
-    } catch (err) {
-      setError('An error occurred during signup');
+    } catch (err: any) {
+      setError(err?.message || 'An error occurred during signup');
     }
     setLoading(false);
   };
@@ -56,10 +57,21 @@ function SignupForm() {
       </div>
 
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center">
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center leading-relaxed">
           {error}
         </div>
       )}
+
+      {/* Google Sign-In Provider */}
+      <GoogleAuthButton redirectTarget={redirectTarget} onError={(err) => setError(err)} />
+
+      {/* Divider */}
+      <div className="relative flex items-center justify-center my-4">
+        <div className="border-t border-slate-200 w-full" />
+        <span className="bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 absolute">
+          Or Register with Email
+        </span>
+      </div>
 
       <form onSubmit={handleSignup} className="space-y-4">
         <div>
@@ -104,7 +116,7 @@ function SignupForm() {
             <select
               value={preferredStyle}
               onChange={(e) => setPreferredStyle(e.target.value)}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
             >
               <option value="Solo">Solo</option>
               <option value="Couple">Couple</option>
@@ -112,13 +124,15 @@ function SignupForm() {
               <option value="Group">Group</option>
             </select>
           </div>
+
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Home City</label>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Location</label>
             <input
               type="text"
+              placeholder="City, Country"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
             />
           </div>
         </div>
@@ -132,11 +146,16 @@ function SignupForm() {
         </button>
       </form>
 
-      <div className="text-center text-xs text-slate-500 pt-2">
-        Already have an account?{' '}
-        <Link href={`/auth/login?redirect=${encodeURIComponent(redirectTarget)}`} className="text-brand-600 font-bold hover:underline">
-          Sign In
-        </Link>
+      <div className="text-center pt-2 border-t border-slate-100">
+        <p className="text-xs text-slate-500">
+          Already have an account?{' '}
+          <Link
+            href={`/auth/login?redirect=${encodeURIComponent(redirectTarget)}`}
+            className="font-bold text-brand-600 hover:underline"
+          >
+            Sign In
+          </Link>
+        </p>
       </div>
     </div>
   );
@@ -144,8 +163,8 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center px-4">
-      <Suspense fallback={<div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />}>
+    <div className="w-full min-h-screen pt-28 pb-20 bg-slate-50 flex items-center justify-center px-4">
+      <Suspense fallback={<div className="text-center text-xs text-slate-400 font-semibold animate-pulse">Loading signup form...</div>}>
         <SignupForm />
       </Suspense>
     </div>

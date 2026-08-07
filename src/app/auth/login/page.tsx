@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock } from 'lucide-react';
 import { notifyAuthChange } from '@/lib/auth/authEvent';
+import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json().catch(() => ({ success: false, error: 'Server response error' }));
+      const data = await res.json().catch(() => ({ success: false, error: 'Server connection error' }));
       if (res.ok && data.success) {
         notifyAuthChange();
         router.refresh();
@@ -58,6 +59,17 @@ function LoginForm() {
           {error}
         </div>
       )}
+
+      {/* Google Sign-In Provider */}
+      <GoogleAuthButton redirectTarget={redirectTarget} onError={(err) => setError(err)} />
+
+      {/* Divider */}
+      <div className="relative flex items-center justify-center my-4">
+        <div className="border-t border-slate-200 w-full" />
+        <span className="bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 absolute">
+          Or Sign In with Email
+        </span>
+      </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>

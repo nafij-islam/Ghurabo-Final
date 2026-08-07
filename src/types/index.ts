@@ -10,6 +10,8 @@ export interface IUser {
   id: string;
   name: string;
   email: string;
+  authProvider?: 'local' | 'google';
+  googleUid?: string;
   avatar?: string;
   coverImage?: string;
   role: UserRole;

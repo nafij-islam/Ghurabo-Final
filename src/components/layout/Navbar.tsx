@@ -131,6 +131,12 @@ export default function Navbar() {
   };
 
   const handleLogout = async () => {
+    try {
+      const { firebaseAuth, firebaseSignOut } = await import('@/lib/firebase/client');
+      await firebaseSignOut(firebaseAuth);
+    } catch (err) {
+      // Ignore if Firebase wasn't initialized or active
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
     setCurrentUser(null);
     setUserDropdownOpen(false);

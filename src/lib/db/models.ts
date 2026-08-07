@@ -7,6 +7,8 @@ const UserSchema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, index: true },
     passwordHash: { type: String },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    googleUid: { type: String },
     avatar: { type: String },
     coverImage: { type: String },
     role: { type: String, enum: ['traveller', 'admin'], default: 'traveller', index: true },
