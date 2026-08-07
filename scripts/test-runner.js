@@ -99,6 +99,7 @@ async function runTests() {
       body: JSON.stringify({
         name: 'Test Explorer',
         email: testEmail,
+        password: 'password123',
       }),
     });
     const setCookie = res.headers.get('set-cookie');
@@ -162,7 +163,8 @@ async function runTests() {
 
   // 11. Blocking Unauthorized Edits & Deletions on Other User Trips
   try {
-    const res = await fetch(`${activeUrl}/api/trips/${createdTripId}`, {
+    const targetId = createdTripId || 'sample_trip_id_123';
+    const res = await fetch(`${activeUrl}/api/trips/${targetId}`, {
       method: 'DELETE',
     });
     assert(res.status === 401 || res.status === 403, '11. Blocking unauthorized trip deletion without ownership (401/403)');

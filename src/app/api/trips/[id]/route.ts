@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { revalidatePath } from 'next/cache';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
-import { TripModel, SavedTripModel, TripLikeModel, HelpfulVoteModel } from '@/lib/db/models';
+import { TripModel, SavedTripModel, TripLikeModel, HelpfulVoteModel, GalleryModel } from '@/lib/db/models';
 import { getVerifiedUser, isOwnerOrAdmin } from '@/lib/auth/serverAuth';
 
 const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt likesCount savesCount helpfulVotesCount commentsCount';
@@ -71,7 +72,11 @@ export async function GET(
           authorTrips,
         });
 
-        response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+        if (currentUser) {
+          response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        } else {
+          response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+        }
         return response;
       }
     }
@@ -114,20 +119,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const currentUser = await getVerifiedUser();
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Sign in required' }, { status: 401 });
+    }
+
     const idOrSlug = params.id;
     const body = await request.json();
     const conn = await connectToDatabase();
-
-    const currentUser = await getVerifiedUser();
-    const isInteractionAction = ['like', 'unlike', 'save', 'unsave', 'helpful', 'unhelpful'].includes(body.action);
-
-    if (isInteractionAction && !currentUser) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Please log in to perform this action' }, { status: 401 });
-    }
-
-    if (!isInteractionAction && !currentUser) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Sign in required to edit trip' }, { status: 401 });
-    }
 
     if (conn) {
       const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
@@ -140,68 +139,59 @@ export async function PUT(
         return NextResponse.json({ success: false, error: 'Trip not found' }, { status: 404 });
       }
 
-      if (!isInteractionAction && currentUser && !isOwnerOrAdmin(existingTrip.userId, currentUser)) {
-        return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to edit this trip' }, { status: 403 });
-      }
-
-      let isSaved = false;
-      let isLiked = false;
-      let isHelpful = false;
-
-      if (isInteractionAction && currentUser) {
-        const userId = currentUser.id;
+      // Single Atomic Interaction Handlers (Like/Unlike, Save/Unsave, Helpful/Unhelpful)
+      if (body.action) {
         const tripId = existingTrip.id;
+        const userId = currentUser.id;
 
-        if (body.action === 'save') {
-          await SavedTripModel.updateOne({ userId, tripId }, { userId, tripId }, { upsert: true });
-          const count = await SavedTripModel.countDocuments({ tripId });
-          existingTrip.savesCount = count;
-          await existingTrip.save();
-          isSaved = true;
-        } else if (body.action === 'unsave') {
-          await SavedTripModel.deleteOne({ userId, tripId });
-          const count = await SavedTripModel.countDocuments({ tripId });
-          existingTrip.savesCount = count;
-          await existingTrip.save();
-          isSaved = false;
-        } else if (body.action === 'like') {
+        if (body.action === 'like') {
           await TripLikeModel.updateOne({ userId, tripId }, { userId, tripId }, { upsert: true });
           const count = await TripLikeModel.countDocuments({ tripId });
-          existingTrip.likesCount = count;
-          await existingTrip.save();
-          isLiked = true;
+          await TripModel.updateOne(query, { $set: { likesCount: count } });
         } else if (body.action === 'unlike') {
           await TripLikeModel.deleteOne({ userId, tripId });
           const count = await TripLikeModel.countDocuments({ tripId });
-          existingTrip.likesCount = count;
-          await existingTrip.save();
-          isLiked = false;
+          await TripModel.updateOne(query, { $set: { likesCount: count } });
+        } else if (body.action === 'save') {
+          await SavedTripModel.updateOne({ userId, tripId }, { userId, tripId }, { upsert: true });
+          const count = await SavedTripModel.countDocuments({ tripId });
+          await TripModel.updateOne(query, { $set: { savesCount: count } });
+        } else if (body.action === 'unsave') {
+          await SavedTripModel.deleteOne({ userId, tripId });
+          const count = await SavedTripModel.countDocuments({ tripId });
+          await TripModel.updateOne(query, { $set: { savesCount: count } });
         } else if (body.action === 'helpful') {
           await HelpfulVoteModel.updateOne({ userId, tripId }, { userId, tripId }, { upsert: true });
           const count = await HelpfulVoteModel.countDocuments({ tripId });
-          existingTrip.helpfulVotesCount = count;
-          await existingTrip.save();
-          isHelpful = true;
+          await TripModel.updateOne(query, { $set: { helpfulVotesCount: count } });
         } else if (body.action === 'unhelpful') {
           await HelpfulVoteModel.deleteOne({ userId, tripId });
           const count = await HelpfulVoteModel.countDocuments({ tripId });
-          existingTrip.helpfulVotesCount = count;
-          await existingTrip.save();
-          isHelpful = false;
+          await TripModel.updateOne(query, { $set: { helpfulVotesCount: count } });
         }
 
+        const updated = await TripModel.findOne(query).lean();
         return NextResponse.json({
           success: true,
-          trip: existingTrip,
-          isSaved,
-          isLiked,
-          isHelpful,
+          trip: updated,
           message: 'Interaction updated successfully',
         });
       }
 
-      // Regular Edit Updates
+      // Regular Edit Updates (Requires owner or admin)
+      if (!isOwnerOrAdmin(existingTrip.userId, currentUser)) {
+        return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to edit this trip' }, { status: 403 });
+      }
+
       const updatedTrip = await TripModel.findOneAndUpdate(query, { $set: body }, { new: true });
+
+      try {
+        revalidatePath('/');
+        revalidatePath('/trips');
+        revalidatePath(`/trips/${existingTrip.slug}`);
+        revalidatePath('/dashboard');
+      } catch (e) {}
+
       return NextResponse.json({
         success: true,
         trip: updatedTrip,
@@ -259,7 +249,16 @@ export async function DELETE(
         return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to delete this trip' }, { status: 403 });
       }
 
+      await GalleryModel.deleteMany({ tripId: existingTrip.id });
       await TripModel.deleteOne(query);
+
+      try {
+        revalidatePath('/');
+        revalidatePath('/trips');
+        revalidatePath('/gallery');
+        revalidatePath('/dashboard');
+      } catch (e) {}
+
       return NextResponse.json({ success: true, message: 'Trip deleted from MongoDB Atlas' });
     }
 

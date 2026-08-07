@@ -7,22 +7,27 @@ export async function GET() {
   try {
     const sessionUser = await getCurrentUser();
     if (!sessionUser || !sessionUser.email) {
-      return NextResponse.json({ success: false, user: null }, { status: 401 });
+      const response = NextResponse.json({ success: false, user: null }, { status: 401 });
+      response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      return response;
     }
 
     const cleanEmail = sessionUser.email.toLowerCase().trim();
     const conn = await connectToDatabase();
 
     if (conn) {
-      const atlasUser = await UserModel.findOne({ email: cleanEmail });
+      const atlasUser = await UserModel.findOne({ email: cleanEmail }).select('-passwordHash');
       if (atlasUser) {
         const formattedUser = atlasUser.toObject ? atlasUser.toObject() : atlasUser;
         if (!formattedUser.id) formattedUser.id = String(formattedUser._id);
+        delete formattedUser.passwordHash;
 
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           user: formattedUser,
         });
+        response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        return response;
       }
     }
 
@@ -30,17 +35,23 @@ export async function GET() {
     const memoryUser = db.users.find((u) => u.email.toLowerCase().trim() === cleanEmail);
 
     if (memoryUser) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user: memoryUser,
       });
+      response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      return response;
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: sessionUser,
     });
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    return response;
   } catch (error) {
-    return NextResponse.json({ success: false, user: null }, { status: 500 });
+    const response = NextResponse.json({ success: false, user: null }, { status: 500 });
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    return response;
   }
 }

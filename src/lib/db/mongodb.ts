@@ -36,11 +36,11 @@ if (!cached) {
 // In-Memory fallback database when MONGODB_URI is not provided
 if (!global.memoryDb) {
   global.memoryDb = {
-    users: [...SEED_USERS],
+    users: [],
     destinations: [...SEED_DESTINATIONS],
-    trips: [...SEED_TRIPS],
-    gallery: [...SEED_GALLERY],
-    reviews: [...SEED_REVIEWS],
+    trips: [],
+    gallery: [],
+    reviews: [],
     drafts: [],
     pendingApprovals: []
   };
