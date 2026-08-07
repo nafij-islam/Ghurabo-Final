@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel, GalleryModel, DestinationModel, UserModel } from '@/lib/db/models';
 import { getCurrentUser } from '@/lib/auth/session';
-import { ITrip, IGalleryItem } from '@/types';
+import { ITrip } from '@/types';
 
 export async function GET(request: Request) {
   try {
@@ -15,43 +15,48 @@ export async function GET(request: Request) {
     const sort = searchParams.get('sort') || 'newest';
     const statusFilter = searchParams.get('status') || 'approved';
     const userIdFilter = searchParams.get('userId');
+    const popularFilter = searchParams.get('popular');
 
     const conn = await connectToDatabase();
 
     if (conn) {
-      // MongoDB Atlas Dynamic Query
       const query: any = {};
 
-      if (statusFilter !== 'all') {
-        query.status = statusFilter;
-      }
+      if (popularFilter === 'true') {
+        query.status = 'approved';
+        query.isPopular = true;
+      } else {
+        if (statusFilter !== 'all') {
+          query.status = statusFilter;
+        }
 
-      if (userIdFilter) {
-        query.$or = [{ userId: userIdFilter }, { userName: userIdFilter }];
-      }
+        if (userIdFilter) {
+          query.$or = [{ userId: userIdFilter }, { userName: userIdFilter }];
+        }
 
-      if (q) {
-        query.$or = [
-          { title: { $regex: q, $options: 'i' } },
-          { summary: { $regex: q, $options: 'i' } },
-          { destinationName: { $regex: q, $options: 'i' } },
-        ];
-      }
+        if (q) {
+          query.$or = [
+            { title: { $regex: q, $options: 'i' } },
+            { summary: { $regex: q, $options: 'i' } },
+            { destinationName: { $regex: q, $options: 'i' } },
+          ];
+        }
 
-      if (destination) {
-        query.destinationName = { $regex: destination, $options: 'i' };
-      }
+        if (destination) {
+          query.destinationName = { $regex: destination, $options: 'i' };
+        }
 
-      if (travelType && travelType !== 'All') {
-        query.travelType = travelType;
-      }
+        if (travelType && travelType !== 'All') {
+          query.travelType = travelType;
+        }
 
-      if (maxBudget) {
-        query['costBreakdown.perPersonCost'] = { $lte: Number(maxBudget) };
-      }
+        if (maxBudget) {
+          query['costBreakdown.perPersonCost'] = { $lte: Number(maxBudget) };
+        }
 
-      if (minRating) {
-        query['ratings.overall'] = { $gte: Number(minRating) };
+        if (minRating) {
+          query['ratings.overall'] = { $gte: Number(minRating) };
+        }
       }
 
       let sortOptions: any = { createdAt: -1 };
@@ -59,7 +64,7 @@ export async function GET(request: Request) {
       else if (sort === 'lowest_cost') sortOptions = { 'costBreakdown.perPersonCost': 1 };
       else if (sort === 'highest_rating') sortOptions = { 'ratings.overall': -1 };
 
-      const trips = await TripModel.find(query).sort(sortOptions);
+      const trips = await TripModel.find(query).sort(sortOptions).lean();
 
       return NextResponse.json({
         success: true,
@@ -72,36 +77,40 @@ export async function GET(request: Request) {
     const db = getMemoryDb();
     let trips = [...db.trips];
 
-    if (statusFilter === 'pending') {
-      trips = db.pendingApprovals;
-    } else if (statusFilter !== 'all') {
-      trips = trips.filter((t) => t.status === 'approved');
-    }
+    if (popularFilter === 'true') {
+      trips = trips.filter((t) => t.status === 'approved' && t.isPopular);
+    } else {
+      if (statusFilter === 'pending') {
+        trips = db.pendingApprovals;
+      } else if (statusFilter !== 'all') {
+        trips = trips.filter((t) => t.status === 'approved');
+      }
 
-    if (userIdFilter) {
-      trips = trips.filter((t) => t.userId === userIdFilter || t.userName.toLowerCase() === userIdFilter.toLowerCase());
-    }
+      if (userIdFilter) {
+        trips = trips.filter((t) => t.userId === userIdFilter || t.userName.toLowerCase() === userIdFilter.toLowerCase());
+      }
 
-    if (q) {
-      trips = trips.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.summary.toLowerCase().includes(q) ||
-          t.destinationName.toLowerCase().includes(q)
-      );
-    }
+      if (q) {
+        trips = trips.filter(
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            t.summary.toLowerCase().includes(q) ||
+            t.destinationName.toLowerCase().includes(q)
+        );
+      }
 
-    if (destination) {
-      trips = trips.filter((t) => t.destinationName.toLowerCase().includes(destination));
-    }
+      if (destination) {
+        trips = trips.filter((t) => t.destinationName.toLowerCase().includes(destination));
+      }
 
-    if (travelType && travelType !== 'All') {
-      trips = trips.filter((t) => t.travelType === travelType);
-    }
+      if (travelType && travelType !== 'All') {
+        trips = trips.filter((t) => t.travelType === travelType);
+      }
 
-    if (maxBudget) {
-      const budgetNum = Number(maxBudget);
-      trips = trips.filter((t) => t.costBreakdown.perPersonCost <= budgetNum);
+      if (maxBudget) {
+        const budgetNum = Number(maxBudget);
+        trips = trips.filter((t) => t.costBreakdown.perPersonCost <= budgetNum);
+      }
     }
 
     if (sort === 'popular') {
@@ -125,17 +134,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const sessionUser = await getCurrentUser();
+    if (!sessionUser) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Sign in required to post a trip story' }, { status: 401 });
+    }
+
     const body = await request.json();
     const conn = await connectToDatabase();
 
-    let authorId = sessionUser?.id || `user_${Date.now()}`;
-    let authorName = sessionUser?.name || body.userName || 'Anonymous Explorer';
-    let authorAvatar = sessionUser?.avatar || body.userAvatar || 'https://i.pravatar.cc/150';
+    let authorId = sessionUser.id;
+    let authorName = sessionUser.name;
+    let authorAvatar = sessionUser.avatar || 'https://i.pravatar.cc/150';
 
-    if (sessionUser && conn) {
-      const dbUser = await UserModel.findOne({ email: sessionUser.email.toLowerCase() });
+    if (conn) {
+      const dbUser = (await UserModel.findOne({ email: sessionUser.email.toLowerCase() }).lean()) as any;
       if (dbUser) {
-        authorId = dbUser.id;
+        authorId = dbUser.id || String(dbUser._id);
         authorName = dbUser.name;
         authorAvatar = dbUser.avatar || authorAvatar;
       }
@@ -178,8 +191,9 @@ export async function POST(request: Request) {
         perPersonCost: 230,
       },
       itinerary: body.itinerary || [],
-      status: body.isDraft ? 'draft' : 'pending', // Submit trips for admin moderation review
+      status: body.isDraft ? 'draft' : 'pending',
       isVerified: false,
+      isPopular: false,
       likesCount: 0,
       savesCount: 0,
       helpfulVotesCount: 0,
@@ -196,7 +210,6 @@ export async function POST(request: Request) {
     };
 
     if (conn) {
-      // Save to MongoDB Atlas
       const createdTrip = await TripModel.create(newTripData);
 
       // Auto-sync gallery images into MongoDB Atlas

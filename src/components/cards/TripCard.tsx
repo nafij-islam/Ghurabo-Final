@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, Bookmark, Star, ShieldCheck, MapPin, Calendar, Clock, DollarSign } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bookmark, Star, ShieldCheck, MapPin, Clock, Heart } from 'lucide-react';
 import { ITrip } from '@/types';
 
 interface TripCardProps {
@@ -13,14 +14,31 @@ export default function TripCard({ trip }: TripCardProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
   const [saved, setSaved] = useState(false);
+  const router = useRouter();
+
+  const verifyAuth = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.success && data.user) return true;
+    } catch (e) {}
+    return false;
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const isAuthed = await verifyAuth();
+    if (!isAuthed) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
+      return;
+    }
+
     setLiked(!liked);
     setLikesCount(liked ? likesCount - 1 : likesCount + 1);
     try {
-      await fetch(`/api/trips/${trip.id}`, {
+      await fetch(`/api/trips/${trip.id || (trip as any)._id}`, {
         method: 'PUT',
         body: JSON.stringify({ action: 'like' }),
         headers: { 'Content-Type': 'application/json' },
@@ -31,9 +49,16 @@ export default function TripCard({ trip }: TripCardProps) {
   const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const isAuthed = await verifyAuth();
+    if (!isAuthed) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
+      return;
+    }
+
     setSaved(!saved);
     try {
-      await fetch(`/api/trips/${trip.id}`, {
+      await fetch(`/api/trips/${trip.id || (trip as any)._id}`, {
         method: 'PUT',
         body: JSON.stringify({ action: 'save' }),
         headers: { 'Content-Type': 'application/json' },
@@ -48,10 +73,11 @@ export default function TripCard({ trip }: TripCardProps) {
         <img
           src={trip.coverImage}
           alt={trip.title}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
 
-        {/* Dark Gradient Overlay for readability */}
+        {/* Dark Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20" />
 
         {/* Top Badges */}
@@ -74,7 +100,7 @@ export default function TripCard({ trip }: TripCardProps) {
           <button
             onClick={handleSave}
             aria-label="Save trip"
-            className={`p-2 rounded-full backdrop-blur-md transition-all ${
+            className={`p-2 rounded-full backdrop-blur-md transition-all cursor-pointer ${
               saved
                 ? 'bg-white text-amber-500 shadow-md'
                 : 'bg-black/30 text-white hover:bg-white hover:text-slate-800'
@@ -143,7 +169,7 @@ export default function TripCard({ trip }: TripCardProps) {
           <div className="flex items-center space-x-3">
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+              className={`flex items-center space-x-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all cursor-pointer ${
                 liked
                   ? 'bg-rose-50 text-rose-600'
                   : 'bg-slate-50 text-slate-600 hover:bg-rose-50 hover:text-rose-600'

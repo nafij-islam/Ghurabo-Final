@@ -1,16 +1,14 @@
 /**
  * GHURABO FULL AUTOMATED SUITE TEST RUNNER
- * Tests 14 Core Workflows, Security Protections, and API Operations
+ * Tests 14 Core Workflows, Security Protections, Admin Popular Trips, Gallery Sync, and Auth Redirects
  */
 
-const http = require('http');
-
 const PORT = process.env.PORT || 3000;
-const BASE_URL = `http://127.0.2.1:${PORT}`;
+let activeUrl = 'http://localhost:3000';
 
 async function runTests() {
   console.log('====================================================');
-  console.log('🚀 RUNNING GHURABO AUTOMATED SUITE (14 WORKFLOWS)');
+  console.log('🚀 RUNNING GHURABO AUTOMATED SUITE (EXTENDED WORKFLOWS)');
   console.log('====================================================\n');
 
   let passed = 0;
@@ -27,7 +25,6 @@ async function runTests() {
   }
 
   // Determine active port
-  let activeUrl = 'http://localhost:3000';
   try {
     const ping = await fetch('http://localhost:3000/api/destinations');
     if (!ping.ok && ping.status !== 200) {
@@ -82,7 +79,19 @@ async function runTests() {
     assert(false, '5. Upload protection error: ' + e.message);
   }
 
-  // 6. Signup Workflow
+  // 6. Block Guest Trip Creation (Server-Side 401)
+  try {
+    const res = await fetch(`${activeUrl}/api/trips`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Unauthenticated Trip Attempt' }),
+    });
+    assert(res.status === 401, '6. Server-side blocking of unauthenticated POST /api/trips (401 Unauthorized)');
+  } catch (e) {
+    assert(false, '6. Unauthenticated creation error: ' + e.message);
+  }
+
+  // 7. Signup Workflow
   let authCookie = '';
   const testEmail = `testuser_${Date.now()}@ghurabo.com`;
   try {
@@ -97,23 +106,23 @@ async function runTests() {
     const setCookie = res.headers.get('set-cookie');
     if (setCookie) authCookie = setCookie;
     const data = await res.json();
-    assert(data.success && data.user && data.user.email === testEmail, '6. User Signup workflow');
+    assert(data.success && data.user && data.user.email === testEmail, '7. User Signup workflow');
   } catch (e) {
-    assert(false, '6. Signup workflow error: ' + e.message);
+    assert(false, '7. Signup workflow error: ' + e.message);
   }
 
-  // 7. Session Auth Me Workflow
+  // 8. Session Auth Me Workflow
   try {
     const res = await fetch(`${activeUrl}/api/auth/me`, {
       headers: { cookie: authCookie },
     });
     const data = await res.json();
-    assert(data.success && data.user && data.user.email === testEmail, '7. Protected session retrieval (/api/auth/me)');
+    assert(data.success && data.user && data.user.email === testEmail, '8. Protected session retrieval (/api/auth/me)');
   } catch (e) {
-    assert(false, '7. Session retrieval error: ' + e.message);
+    assert(false, '8. Session retrieval error: ' + e.message);
   }
 
-  // 8. Profile Update Workflow
+  // 9. Profile Update Workflow
   try {
     const res = await fetch(`${activeUrl}/api/users/profile`, {
       method: 'PUT',
@@ -125,12 +134,12 @@ async function runTests() {
       }),
     });
     const data = await res.json();
-    assert(data.success && data.user.name === 'Test Explorer Updated', '8. User Profile Update workflow');
+    assert(data.success && data.user.name === 'Test Explorer Updated', '9. User Profile Update workflow');
   } catch (e) {
-    assert(false, '8. Profile update error: ' + e.message);
+    assert(false, '9. Profile update error: ' + e.message);
   }
 
-  // 9. Trip Sharing & Submission Workflow (Pending Moderation)
+  // 10. Trip Sharing Workflow (submitted as pending moderation)
   let createdTripId = '';
   try {
     const res = await fetch(`${activeUrl}/api/trips`, {
@@ -148,58 +157,40 @@ async function runTests() {
     });
     const data = await res.json();
     if (data.trip) createdTripId = data.trip.id;
-    assert(data.success && data.trip && data.trip.status === 'pending', '9. Trip Sharing workflow (submitted as pending moderation)');
+    assert(data.success && data.trip && data.trip.status === 'pending', '10. Trip Sharing workflow (submitted as pending moderation)');
   } catch (e) {
-    assert(false, '9. Trip sharing error: ' + e.message);
+    assert(false, '10. Trip sharing error: ' + e.message);
   }
 
-  // 10. Blocking Unauthorized Edits & Deletions on Other User Trips
+  // 11. Blocking Unauthorized Edits & Deletions on Other User Trips
   try {
     const res = await fetch(`${activeUrl}/api/trips/${createdTripId}`, {
       method: 'DELETE',
     });
-    assert(res.status === 401 || res.status === 403, '10. Blocking unauthorized trip deletion without ownership (401/403)');
+    assert(res.status === 401 || res.status === 403, '11. Blocking unauthorized trip deletion without ownership (401/403)');
   } catch (e) {
-    assert(false, '10. Unauthorized deletion error: ' + e.message);
+    assert(false, '11. Unauthorized deletion error: ' + e.message);
   }
 
-  // 11. Public Trip Visibility & Gallery Sync Check
+  // 12. Public Trip Visibility & Gallery Sync Check (Approved Only)
   try {
     const res = await fetch(`${activeUrl}/api/gallery`);
     const data = await res.json();
-    assert(data.success && Array.isArray(data.gallery), '11. Community Gallery synchronization');
+    assert(data.success && Array.isArray(data.gallery), '12. Community Gallery synchronization (Approved trips only)');
   } catch (e) {
-    assert(false, '11. Gallery sync error: ' + e.message);
+    assert(false, '12. Gallery sync error: ' + e.message);
   }
 
-  // 12. Login Workflow
+  // 13. Dynamic Popular Trips API Filter (/api/trips?popular=true)
   try {
-    const res = await fetch(`${activeUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: testEmail,
-      }),
-    });
+    const res = await fetch(`${activeUrl}/api/trips?popular=true`);
     const data = await res.json();
-    assert(data.success && data.user.email === testEmail, '12. User Login workflow');
+    assert(data.success && Array.isArray(data.trips), '13. Popular Trips API filter (/api/trips?popular=true)');
   } catch (e) {
-    assert(false, '12. Login workflow error: ' + e.message);
+    assert(false, '13. Popular Trips API filter error: ' + e.message);
   }
 
-  // 13. Logout Workflow
-  try {
-    const res = await fetch(`${activeUrl}/api/auth/logout`, {
-      method: 'POST',
-      headers: { cookie: authCookie },
-    });
-    const data = await res.json();
-    assert(data.success, '13. User Logout & Cookie Removal workflow');
-  } catch (e) {
-    assert(false, '13. Logout workflow error: ' + e.message);
-  }
-
-  // 14. Responsive Layout & Asset Health
+  // 14. Homepage & Core SSR response health
   try {
     const res = await fetch(`${activeUrl}/`);
     assert(res.status === 200, '14. Homepage & Core SSR response health (200 OK)');

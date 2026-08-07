@@ -5,11 +5,12 @@ import Link from 'next/link';
 import SplitHero from '@/components/hero/SplitHero';
 import DestinationCard from '@/components/cards/DestinationCard';
 import TripCard from '@/components/cards/TripCard';
-import { IDestination, ITrip, IGalleryItem, IUser } from '@/types';
-import { Compass, Users, MapPin, DollarSign, Camera, Star, ArrowRight, ShieldCheck, PlusCircle, CheckCircle2 } from 'lucide-react';
+import { IDestination, ITrip, IGalleryItem } from '@/types';
+import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const [destinations, setDestinations] = useState<IDestination[]>([]);
+  const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -21,6 +22,13 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setDestinations(data.destinations || []);
+      });
+
+    // Fetch Admin-Selected Popular Approved Trips
+    fetch('/api/trips?popular=true')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setPopularTrips(data.trips || []);
       });
 
     fetch('/api/trips')
@@ -38,16 +46,16 @@ export default function HomePage() {
 
   const filteredTrips = trips.filter((t) => {
     const matchesCategory = activeCategory === 'All' || t.travelType === activeCategory;
-    const matchesBudget = t.costBreakdown?.perPersonCost <= maxBudget;
+    const matchesBudget = (t.costBreakdown?.perPersonCost || 0) <= maxBudget;
     return matchesCategory && matchesBudget;
   });
 
   return (
     <div className="w-full bg-slate-50">
-      {/* Hero Section matching attached visual reference */}
+      {/* Hero Section */}
       <SplitHero />
 
-      {/* Popular Destinations Section */}
+      {/* Popular Destinations / Popular Trips Section */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
@@ -69,18 +77,17 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {(destinations.filter((d) => d.isPopular).length > 0
-            ? destinations.filter((d) => d.isPopular)
+          {popularTrips.length > 0
+            ? popularTrips.slice(0, 6).map((trip) => <TripCard key={trip.id || (trip as any)._id} trip={trip} />)
             : destinations
-          )
-            .slice(0, 6)
-            .map((dest) => (
-              <DestinationCard key={dest.id} destination={dest} />
-            ))}
+                .filter((d) => d.isPopular)
+                .concat(destinations.filter((d) => !d.isPopular))
+                .slice(0, 6)
+                .map((dest) => <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />)}
         </div>
       </section>
 
-      {/* Organic Paint-Brush Edge Section Divider */}
+      {/* Organic Edge Section Divider */}
       <div className="relative w-full h-16 bg-brand-500 overflow-hidden">
         <svg
           viewBox="0 0 1200 120"
@@ -111,7 +118,7 @@ export default function HomePage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                     activeCategory === cat
                       ? 'bg-white text-brand-700 shadow-lg scale-105'
                       : 'bg-white/10 hover:bg-white/20 text-white'
@@ -146,7 +153,7 @@ export default function HomePage() {
           {/* Trips Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTrips.slice(0, 6).map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <TripCard key={trip.id || (trip as any)._id} trip={trip} />
             ))}
           </div>
 
@@ -155,7 +162,7 @@ export default function HomePage() {
               <p className="text-white/80">No trips found matching budget under ${maxBudget}.</p>
               <button
                 onClick={() => setMaxBudget(1000)}
-                className="mt-3 px-4 py-2 bg-white text-brand-700 text-xs font-bold rounded-full uppercase"
+                className="mt-3 px-4 py-2 bg-white text-brand-700 text-xs font-bold rounded-full uppercase cursor-pointer"
               >
                 Reset Budget Filter
               </button>
@@ -174,7 +181,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Organic Paint-Brush Edge Divider Bottom */}
+      {/* Organic Edge Divider Bottom */}
       <div className="relative w-full h-16 bg-brand-500 overflow-hidden">
         <svg
           viewBox="0 0 1200 120"
@@ -203,8 +210,8 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {galleryItems.slice(0, 6).map((item) => (
             <Link
-              key={item.id}
-              href="/gallery"
+              key={item.id || (item as any)._id}
+              href={`/trips/${item.tripSlug || item.tripId}`}
               className="group relative h-48 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
             >
               <img
@@ -212,9 +219,10 @@ export default function HomePage() {
                 alt={item.caption || item.destinationName}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white">
-                <p className="text-[11px] font-bold truncate">{item.caption}</p>
-                <p className="text-[9px] text-cyan-300 truncate">{item.destinationName}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white">
+                <p className="text-[11px] font-bold truncate">{item.photographerName}</p>
+                <p className="text-[10px] text-cyan-300 font-semibold truncate">{item.tripTitle}</p>
+                <p className="text-[9px] text-white/70 truncate">{item.destinationName} • {item.travelType}</p>
               </div>
             </Link>
           ))}
@@ -249,15 +257,15 @@ export default function HomePage() {
           <h2 className="font-display text-4xl sm:text-6xl font-extrabold uppercase mb-4">
             Ready to Share Your Latest Adventure?
           </h2>
-          <p className="text-white/90 text-sm sm:text-base font-light max-w-2xl mx-auto mb-8">
-            Help thousands of solo backpackers, couples, and families plan their dream tours with real cost breakdowns and tips.
+          <p className="text-white/90 text-sm sm:text-base font-light max-w-2xl mx-auto mb-8 leading-relaxed">
+            Join thousands of travelers documenting budget itineraries, safety tips, and travel photos.
           </p>
           <Link
             href="/trips/share"
-            className="inline-flex items-center space-x-2 bg-white text-brand-700 hover:bg-cyan-50 font-bold px-9 py-4 rounded-full shadow-2xl transition-all uppercase tracking-wider text-sm transform hover:scale-105"
+            className="inline-flex items-center space-x-2 bg-white text-brand-700 hover:bg-cyan-50 font-bold px-8 py-4 rounded-full shadow-2xl transition-all uppercase text-sm tracking-wider"
           >
-            <PlusCircle className="w-5 h-5 text-brand-500" />
-            <span>Publish Your Trip Story Now</span>
+            <span>Start Sharing Trip</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>

@@ -11,6 +11,24 @@ import { ITripCost, IItineraryDay } from '@/types';
 
 export default function ShareTripPage() {
   const [step, setStep] = useState(1);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  React.useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setCurrentUser(data.user);
+          setCheckingAuth(false);
+        } else {
+          window.location.href = '/auth/login?redirect=/trips/share';
+        }
+      })
+      .catch(() => {
+        window.location.href = '/auth/login?redirect=/trips/share';
+      });
+  }, []);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -154,6 +172,17 @@ export default function ShareTripPage() {
     } catch (err) {}
     setSubmitting(false);
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="w-full min-h-screen pt-32 pb-20 bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Verifying Authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (submittedSuccess) {
     return (

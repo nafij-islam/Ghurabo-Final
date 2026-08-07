@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
-import { GalleryModel } from '@/lib/db/models';
+import { GalleryModel, TripModel } from '@/lib/db/models';
 
 export async function GET(request: Request) {
   try {
@@ -12,13 +12,19 @@ export async function GET(request: Request) {
     const conn = await connectToDatabase();
 
     if (conn) {
-      const query: any = {};
+      // Find IDs of all APPROVED trips to guarantee pending/draft/rejected photos never leak
+      const approvedTripIds = await TripModel.find({ status: 'approved' }).distinct('id');
+
+      const query: any = {
+        tripId: { $in: approvedTripIds },
+      };
 
       if (q) {
         query.$or = [
           { caption: { $regex: q, $options: 'i' } },
           { destinationName: { $regex: q, $options: 'i' } },
           { photographerName: { $regex: q, $options: 'i' } },
+          { tripTitle: { $regex: q, $options: 'i' } },
         ];
       }
 
@@ -30,7 +36,7 @@ export async function GET(request: Request) {
         query.destinationName = { $regex: destination, $options: 'i' };
       }
 
-      const gallery = await GalleryModel.find(query).sort({ createdAt: -1 });
+      const gallery = await GalleryModel.find(query).sort({ createdAt: -1 }).lean();
 
       return NextResponse.json({
         success: true,
@@ -41,14 +47,16 @@ export async function GET(request: Request) {
 
     // In-Memory Fallback
     const db = getMemoryDb();
-    let gallery = [...db.gallery];
+    const approvedTripIds = new Set(db.trips.filter((t) => t.status === 'approved').map((t) => t.id));
+    let gallery = db.gallery.filter((item) => approvedTripIds.has(item.tripId));
 
     if (q) {
       gallery = gallery.filter(
         (item) =>
           item.caption?.toLowerCase().includes(q) ||
           item.destinationName.toLowerCase().includes(q) ||
-          item.photographerName.toLowerCase().includes(q)
+          item.photographerName.toLowerCase().includes(q) ||
+          item.tripTitle?.toLowerCase().includes(q)
       );
     }
 
