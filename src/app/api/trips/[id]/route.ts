@@ -17,12 +17,16 @@ export async function GET(
     const currentUser = await getVerifiedUser();
 
     if (conn) {
-      const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
-      const query = isObjectId
-        ? { $or: [{ id: idOrSlug }, { slug: idOrSlug }, { _id: idOrSlug }] }
-        : { $or: [{ id: idOrSlug }, { slug: idOrSlug }] };
-
-      const trip = (await TripModel.findOne(query).lean()) as any;
+      let trip = null;
+      try {
+        const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
+        const query = isObjectId
+          ? { $or: [{ id: idOrSlug }, { slug: idOrSlug }, { _id: idOrSlug }] }
+          : { $or: [{ id: idOrSlug }, { slug: idOrSlug }] };
+        trip = (await TripModel.findOne(query).lean()) as any;
+      } catch (e) {
+        trip = null;
+      }
 
       if (trip) {
         let isSaved = false;
@@ -79,6 +83,7 @@ export async function GET(
         }
         return response;
       }
+      return NextResponse.json({ success: false, error: 'Trip story not found' }, { status: 404 });
     }
 
     // In-Memory Fallback

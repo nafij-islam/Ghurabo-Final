@@ -8,14 +8,18 @@ function getFirebaseAdminApp() {
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'ghurabo-a4960';
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@ghurabo-a4960.iam.gserviceaccount.com';
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
 
   if (privateKey) {
-    // Unescape escaped newlines safely if passed in environment
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    privateKey = privateKey.trim();
     if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      privateKey = privateKey.substring(1, privateKey.length - 1);
+      privateKey = privateKey.slice(1, -1);
     }
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+
+  if (!privateKey) {
+    console.warn('⚠️ FIREBASE_PRIVATE_KEY is empty in server environment!');
   }
 
   return initializeApp({

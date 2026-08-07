@@ -6,53 +6,63 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ghurabofinal:nJMXwm3IwoXa8TV8@cluster0.57pbeou.mongodb.net/ghurabo?appName=Cluster0';
 
 async function bootstrapAdmin() {
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@ghurabo.com').toLowerCase().trim();
-  const adminPassword = process.env.ADMIN_PASSWORD || 'GhuraboAdmin2026!';
-  const adminName = process.env.ADMIN_NAME || 'Ghurabo Admin';
+  const adminAccounts = [
+    {
+      id: 'user_admin_prod',
+      email: (process.env.ADMIN_EMAIL || 'admin@ghurabo.com').toLowerCase().trim(),
+      name: process.env.ADMIN_NAME || 'Ghurabo Admin',
+      password: process.env.ADMIN_PASSWORD || 'GhuraboAdmin2026!',
+    },
+    {
+      id: 'user_admin_saharian',
+      email: 'sahariannafis70@gmail.com',
+      name: 'Nafij Islam (Admin)',
+      password: 'GhuraboAdmin2026!',
+    },
+  ];
 
   try {
-    console.log('Connecting to MongoDB Atlas to bootstrap production Admin account...');
+    console.log('Connecting to MongoDB Atlas to bootstrap production Admin accounts...');
     await mongoose.connect(MONGODB_URI, { family: 4 });
     console.log('Connected to MongoDB Atlas.');
 
     const db = mongoose.connection.db;
 
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    for (const acc of adminAccounts) {
+      const passwordHash = await bcrypt.hash(acc.password, 10);
 
-    const adminDoc = {
-      id: 'user_admin_prod',
-      name: adminName,
-      email: adminEmail,
-      passwordHash,
-      role: 'admin',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
-      coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
-      bio: 'Official Ghurabo Community Lead and Quality Moderator.',
-      location: 'Dhaka, Bangladesh',
-      preferredStyle: 'Group',
-      preferredCurrency: 'BDT',
-      preferredLanguage: 'en',
-      visitedCount: 0,
-      followersCount: 0,
-      followingCount: 0,
-      totalHelpfulVotes: 0,
-      badges: ['Platform Admin'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      const adminDoc = {
+        id: acc.id,
+        name: acc.name,
+        email: acc.email,
+        passwordHash,
+        role: 'admin',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
+        coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
+        bio: 'Official Ghurabo Community Lead and Quality Moderator.',
+        location: 'Dhaka, Bangladesh',
+        preferredStyle: 'Solo',
+        preferredCurrency: 'BDT',
+        preferredLanguage: 'en',
+        visitedCount: 0,
+        followersCount: 0,
+        followingCount: 0,
+        totalHelpfulVotes: 0,
+        badges: ['Platform Admin'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await db.collection('users').updateOne(
-      { email: adminEmail },
-      { $set: adminDoc },
-      { upsert: true }
-    );
+      await db.collection('users').updateOne(
+        { email: acc.email },
+        { $set: adminDoc },
+        { upsert: true }
+      );
+      console.log(`• Bootstrapped Admin: ${acc.email} (Password: ${acc.password})`);
+    }
 
     console.log(`\n====================================================`);
-    console.log(`👑 PRODUCTION ADMIN BOOTSTRAPPED SUCCESSFULLY`);
-    console.log(`====================================================`);
-    console.log(`• Email:    ${adminEmail}`);
-    console.log(`• Role:     admin`);
-    console.log(`• Password: [SECURELY HASHED WITH BCRYPT]`);
+    console.log(`👑 PRODUCTION ADMIN ACCOUNTS READY`);
     console.log(`====================================================\n`);
 
     process.exit(0);

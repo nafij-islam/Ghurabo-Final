@@ -33,9 +33,9 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
         body: JSON.stringify({ idToken }),
       });
 
-      const data = await res.json().catch(() => ({ success: false, error: 'Server connection error' }));
+      const data = await res.json().catch(() => ({ success: false, error: 'Network error communicating with server.' }));
 
-      if (res.ok && data.success) {
+      if (data.success) {
         notifyAuthChange();
         router.refresh();
         router.push(redirectTarget);

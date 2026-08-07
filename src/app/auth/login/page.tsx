@@ -28,8 +28,8 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json().catch(() => ({ success: false, error: 'Server connection error' }));
-      if (res.ok && data.success) {
+      const data = await res.json().catch(() => ({ success: false, error: 'Network error communicating with server.' }));
+      if (data.success) {
         notifyAuthChange();
         router.refresh();
         router.push(redirectTarget);
