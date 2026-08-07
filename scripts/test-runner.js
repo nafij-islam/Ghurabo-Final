@@ -24,14 +24,14 @@ async function runTests() {
     }
   }
 
-  let activeUrl = 'http://127.0.0.1:3000';
+  let activeUrl = 'http://localhost:3000';
   try {
-    const ping = await fetch('http://127.0.0.1:3000/api/trips');
-    if (!ping.ok) activeUrl = 'http://127.0.0.1:3001';
+    const ping = await fetch('http://localhost:3000/api/trips');
+    if (!ping.ok) activeUrl = 'http://localhost:3001';
   } catch (e) {
     try {
-      const ping2 = await fetch('http://127.0.0.1:3001/api/trips');
-      if (ping2.ok) activeUrl = 'http://127.0.0.1:3001';
+      const ping2 = await fetch('http://localhost:3001/api/trips');
+      if (ping2.ok) activeUrl = 'http://localhost:3001';
     } catch (err) {}
   }
 
@@ -194,6 +194,17 @@ async function runTests() {
     assert(res.status === 200, '14. Homepage & Core SSR response health (200 OK)');
   } catch (e) {
     assert(false, '14. Homepage health error: ' + e.message);
+  }
+
+  // 15. Cleanup Test Artifacts
+  if (createdTripId) {
+    try {
+      await fetch(`${activeUrl}/api/admin/trips`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: authCookie },
+        body: JSON.stringify({ tripId: createdTripId, action: 'delete' }),
+      });
+    } catch (e) {}
   }
 
   console.log('\n====================================================');

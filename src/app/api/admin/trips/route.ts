@@ -101,7 +101,11 @@ export async function POST(request: Request) {
         );
 
         return NextResponse.json({ success: true, message: 'Trip approved successfully', trip });
-      } else if (action === 'reject') {
+      } else if (action === 'reject' || action === 'delete') {
+        if (action === 'delete') {
+          await TripModel.deleteOne(query);
+          return NextResponse.json({ success: true, message: 'Trip deleted successfully' });
+        }
         const trip = await TripModel.findOneAndUpdate(
           query,
           { $set: { status: 'rejected' } },
@@ -151,8 +155,7 @@ export async function POST(request: Request) {
         trip.status = 'approved';
         db.trips.unshift(trip);
         db.pendingApprovals.splice(pendingIndex, 1);
-      } else if (action === 'reject') {
-        trip.status = 'rejected';
+      } else if (action === 'reject' || action === 'delete') {
         db.pendingApprovals.splice(pendingIndex, 1);
       }
       return NextResponse.json({ success: true, trip });
