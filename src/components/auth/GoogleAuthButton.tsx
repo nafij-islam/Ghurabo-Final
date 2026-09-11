@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { signInWithGoogle } from '@/lib/firebase/client';
 import { normalizeApiErrorMessage } from '@/lib/api/apiError';
 
 interface GoogleAuthButtonProps {
@@ -10,89 +11,32 @@ interface GoogleAuthButtonProps {
   onError?: (errorMessage: string) => void;
 }
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select?: boolean;
-            cancel_on_tap_outside?: boolean;
-          }) => void;
-          prompt: (notification?: (notification: unknown) => void) => void;
-          renderButton: (
-            element: HTMLElement,
-            options: Record<string, unknown>
-          ) => void;
-        };
-      };
-    };
-  }
-}
-
 export default function GoogleAuthButton({ redirectTarget = '/dashboard', onError }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { googleLogin } = useAuth();
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
-  useEffect(() => {
-    if (!googleClientId || typeof window === 'undefined') return;
-
-    // Load Google Identity Services script if not already loaded
-    if (!document.getElementById('google-gsi-client')) {
-      const script = document.createElement('script');
-      script.id = 'google-gsi-client';
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (window.google?.accounts?.id) {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: async (response: { credential: string }) => {
-              if (response?.credential) {
-                setLoading(true);
-                try {
-                  await googleLogin(response.credential);
-                  router.push(redirectTarget);
-                } catch (err) {
-                  if (onError) onError(normalizeApiErrorMessage(err));
-                } finally {
-                  setLoading(false);
-                }
-              }
-            },
-          });
-        }
-      };
-      document.body.appendChild(script);
-    }
-  }, [googleClientId, googleLogin, redirectTarget, onError, router]);
-
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     if (onError) onError('');
+    setLoading(true);
 
-    if (!googleClientId) {
-      if (onError) {
-        onError('Google Client ID is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local to enable Google OAuth.');
+    try {
+      const idToken = await signInWithGoogle();
+      if (idToken) {
+        await googleLogin(idToken);
+        router.push(redirectTarget);
       }
-      return;
-    }
-
-    if (window.google?.accounts?.id) {
-      setLoading(true);
-      window.google.accounts.id.prompt((notification: any) => {
-        if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
-          setLoading(false);
-        }
-      });
-    } else {
-      if (onError) {
-        onError('Google Identity Services is initializing. Please try again in a moment.');
+    } catch (err: any) {
+      // Ignore user closing popup window
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        setLoading(false);
+        return;
       }
+      console.error('Firebase Google Sign-In Error:', err);
+      const message = normalizeApiErrorMessage(err);
+      if (onError) onError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
