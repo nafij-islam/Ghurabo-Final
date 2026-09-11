@@ -9,17 +9,48 @@ import {
   BackendDestination,
   PaginatedResponse,
   StandardResponse,
+  TripStats,
+  AdminTripsResponse,
 } from './api.types';
 
 export const adminApi = {
+  async getAllTrips(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    sort?: string;
+  }): Promise<AdminTripsResponse> {
+    return api.get<AdminTripsResponse>(API_ENDPOINTS.ADMIN_TRIPS, { params });
+  },
+
+  async getTripStats(): Promise<TripStats> {
+    const res = await api.get<StandardResponse<TripStats>>(API_ENDPOINTS.ADMIN_TRIP_STATS);
+    return res.data;
+  },
+
+  async toggleTripSuspend(id: string, isSuspended: boolean, reason?: string): Promise<BackendTrip> {
+    const res = await api.patch<StandardResponse<BackendTrip>>(API_ENDPOINTS.ADMIN_TRIP_SUSPEND(id), {
+      isSuspended,
+      reason,
+    });
+    return res.data;
+  },
+
   async getPendingTrips(params?: { page?: number; limit?: number }): Promise<PaginatedResponse<BackendTrip>> {
     return api.get<PaginatedResponse<BackendTrip>>(API_ENDPOINTS.ADMIN_PENDING_TRIPS, { params });
   },
 
-  async updateTripStatus(id: string, status: 'APPROVED' | 'REJECTED', moderationReason?: string): Promise<BackendTrip> {
+  async updateTripStatus(
+    id: string,
+    status: 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'PENDING',
+    moderationReason?: string
+  ): Promise<BackendTrip> {
     const res = await api.patch<StandardResponse<BackendTrip>>(API_ENDPOINTS.ADMIN_TRIP_STATUS(id), {
       status,
-      moderationReason: moderationReason || (status === 'APPROVED' ? 'Meets community quality guidelines' : 'Does not meet guidelines'),
+      moderationReason:
+        moderationReason ||
+        (status === 'APPROVED' ? 'Meets community quality guidelines' : 'Status updated by administrator'),
     });
     return res.data;
   },

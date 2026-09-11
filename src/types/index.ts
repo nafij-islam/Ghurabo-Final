@@ -1,6 +1,6 @@
 export type UserRole = 'traveller' | 'admin';
 export type TravelType = 'Solo' | 'Couple' | 'Family' | 'Group';
-export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended';
 export type CategoryType = 'Beach' | 'Mountain' | 'Resort' | 'Historical' | 'City' | 'Island' | 'Nature' | 'Wildlife';
 export type CurrencyCode = 'BDT' | 'USD';
 export type LanguageCode = 'en' | 'bn';

@@ -58,8 +58,11 @@ export const API_ENDPOINTS = {
   SETTING_BY_KEY: (key: string) => `${API_V1_PREFIX}/settings/${encodeURIComponent(key)}`,
 
   // Admin
+  ADMIN_TRIPS: `${API_V1_PREFIX}/admin/trips`,
+  ADMIN_TRIP_STATS: `${API_V1_PREFIX}/admin/trips/stats`,
   ADMIN_PENDING_TRIPS: `${API_V1_PREFIX}/admin/trips/pending`,
   ADMIN_TRIP_STATUS: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/status`,
+  ADMIN_TRIP_SUSPEND: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/suspend`,
   ADMIN_TRIP_VERIFIED: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/verified`,
   ADMIN_TRIP_FEATURED: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/featured`,
   ADMIN_TRIP_DELETE: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}`,

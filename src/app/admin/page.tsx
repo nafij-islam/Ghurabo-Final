@@ -8,24 +8,35 @@ import { useAuth } from '@/hooks/useAuth';
 import { adminApi } from '@/lib/api/admin.api';
 import { tripsApi } from '@/lib/api/trips.api';
 import { destinationsApi } from '@/lib/api/destinations.api';
+import { TripStats } from '@/lib/api/api.types';
 import { adaptBackendTripToITrip, adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
 import CurrencyControlCard from '@/components/admin/CurrencyControlCard';
 import DestinationsModerationCard from '@/components/admin/DestinationsModerationCard';
 import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
 import PublishedTripsDirectory from '@/components/admin/PublishedTripsDirectory';
+import AllTripsManager from '@/components/admin/AllTripsManager';
 
 export default function AdminPage() {
   const { user, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [destinations, setDestinations] = useState<IDestination[]>([]);
+  const [tripStats, setTripStats] = useState<TripStats>({
+    total: 0,
+    approved: 0,
+    pending: 0,
+    suspended: 0,
+    rejected: 0,
+    draft: 0,
+  });
 
   const fetchAdminData = async () => {
     try {
-      const [pendingRes, publishedRes, destRes] = await Promise.allSettled([
+      const [pendingRes, publishedRes, destRes, statsRes] = await Promise.allSettled([
         adminApi.getPendingTrips({ limit: 50 }),
         tripsApi.getTrips({ limit: 50 }),
         destinationsApi.getDestinations({ limit: 50 }),
+        adminApi.getTripStats(),
       ]);
 
       if (pendingRes.status === 'fulfilled' && pendingRes.value?.data) {
@@ -36,6 +47,9 @@ export default function AdminPage() {
       }
       if (destRes.status === 'fulfilled' && destRes.value?.data) {
         setDestinations(destRes.value.data.map(adaptBackendDestinationToIDestination));
+      }
+      if (statsRes.status === 'fulfilled' && statsRes.value) {
+        setTripStats(statsRes.value);
       }
     } catch (err) {
       console.error('Failed to fetch admin data:', err);
@@ -179,24 +193,39 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Published Trips</span>
-            <span className="font-display text-4xl font-extrabold text-brand-600">{publishedTrips.length}</span>
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Total Trips</span>
+            <span className="font-display text-4xl font-extrabold text-slate-900">
+              {tripStats.total || (publishedTrips.length + pendingTrips.length)}
+            </span>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Pending Approvals</span>
-            <span className="font-display text-4xl font-extrabold text-amber-500">{pendingTrips.length}</span>
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Approved Trips</span>
+            <span className="font-display text-4xl font-extrabold text-emerald-600">
+              {tripStats.approved || publishedTrips.length}
+            </span>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Total Explorers</span>
-            <span className="font-display text-4xl font-extrabold text-slate-900">3</span>
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Pending Review</span>
+            <span className="font-display text-4xl font-extrabold text-amber-500">
+              {tripStats.pending || pendingTrips.length}
+            </span>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Destinations</span>
-            <span className="font-display text-4xl font-extrabold text-slate-900">{destinations.length}</span>
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Suspended</span>
+            <span className="font-display text-4xl font-extrabold text-rose-600">
+              {tripStats.suspended}
+            </span>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">Destinations</span>
+            <span className="font-display text-4xl font-extrabold text-brand-600">{destinations.length}</span>
           </div>
         </div>
+
+        {/* Complete All Trips Management Panel (Search, Filter, Suspend, Delete) */}
+        <AllTripsManager onDataChanged={fetchAdminData} />
 
         {/* Currency Exchange Rate Control Card */}
         <CurrencyControlCard />

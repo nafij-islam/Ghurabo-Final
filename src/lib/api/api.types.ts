@@ -127,7 +127,7 @@ export interface BackendTrip {
   itinerary: BackendItineraryDay[];
   coverImage?: BackendImage;
   photos?: BackendImage[];
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   isVerified: boolean;
   isFeatured: boolean;
   publishedAt?: string;
@@ -137,6 +137,19 @@ export interface BackendTrip {
   commentsCount: number;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface TripStats {
+  total: number;
+  approved: number;
+  pending: number;
+  suspended: number;
+  rejected: number;
+  draft: number;
+}
+
+export interface AdminTripsResponse extends PaginatedResponse<BackendTrip> {
+  stats?: TripStats;
 }
 
 export interface BackendInteractionToggleResult {
