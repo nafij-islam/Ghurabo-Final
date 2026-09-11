@@ -41,7 +41,7 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
           success: false,
           error: res.status === 404
             ? 'Authentication route not found (/api/auth/google).'
-            : `Server response error (HTTP ${res.status}). Please check Vercel environment variables.`,
+            : `Server response error (HTTP ${res.status}).`,
         };
       }
 
