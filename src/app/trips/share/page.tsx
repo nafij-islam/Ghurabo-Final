@@ -187,20 +187,37 @@ export default function ShareTripPage() {
     const rate = inputCurrency === 'USD' ? exchangeRate : 1;
 
     // Resolve destination ID from backend
-    let destinationId = '';
-    const matchedDest = availableDestinations.find((d) =>
-      d.name.toLowerCase().includes(destinationName.toLowerCase()) ||
-      destinationName.toLowerCase().includes(d.name.toLowerCase()) ||
-      d.slug.toLowerCase().includes(destinationName.toLowerCase().replace(/[^a-z0-9]/g, ''))
-    );
-    if (matchedDest) {
-      destinationId = matchedDest._id;
-    } else if (availableDestinations.length > 0) {
-      destinationId = availableDestinations[0]._id;
-    } else {
-      // Fallback ID to Cox's Bazar seed if not yet loaded
-      destinationId = '6aa3ab9def763afbf0ec7ca5';
+    let currentDests = availableDestinations;
+    if (currentDests.length === 0) {
+      try {
+        const destRes = await destinationsApi.getDestinations({ limit: 50 });
+        if (destRes.data && destRes.data.length > 0) {
+          currentDests = destRes.data;
+          setAvailableDestinations(destRes.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch destinations on submit:', err);
+      }
     }
+
+    if (currentDests.length === 0) {
+      setValidationError('No destinations available on the server. Please check your connection.');
+      setSubmitting(false);
+      return;
+    }
+
+    const cleanInput = destinationName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    const inputWords = cleanInput.split(/\s+/).filter((w) => w.length > 2);
+
+    const matchedDest = currentDests.find((d) => {
+      const dName = d.name.toLowerCase();
+      const dSlug = d.slug.toLowerCase();
+      if (dName.includes(destinationName.toLowerCase()) || destinationName.toLowerCase().includes(dName)) return true;
+      if (dSlug.includes(cleanInput.replace(/\s+/g, '-')) || cleanInput.replace(/\s+/g, '-').includes(dSlug)) return true;
+      return inputWords.some((word) => dName.includes(word) || dSlug.includes(word));
+    });
+
+    const destinationId = matchedDest ? matchedDest._id : currentDests[0]._id;
 
     const defaultCover = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200';
     const selectedPhoto = images[coverImageIndex] || images[0];
