@@ -22,13 +22,27 @@ export const auth: Auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
+export interface FirebaseGoogleUser {
+  idToken: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  uid: string;
+}
+
 /**
- * Trigger Firebase Google popup and return the verified Google ID Token
+ * Trigger Firebase Google popup and return the verified Google ID Token & profile data
  */
-export async function signInWithGoogle(): Promise<string> {
+export async function signInWithGoogle(): Promise<FirebaseGoogleUser> {
   const result = await signInWithPopup(auth, googleProvider);
   const idToken = await result.user.getIdToken();
-  return idToken;
+  return {
+    idToken,
+    email: result.user.email,
+    displayName: result.user.displayName,
+    photoURL: result.user.photoURL,
+    uid: result.user.uid,
+  };
 }
 
 /**

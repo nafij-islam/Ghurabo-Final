@@ -68,9 +68,11 @@ export function adaptBackendUserToIUser(user: BackendUser | null | undefined): I
     role,
     authProvider: user.authProvider === 'GOOGLE' ? 'google' : 'local',
     avatar: avatarUrl,
-    coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
+    coverImage:
+      user.coverImage?.url ||
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
     bio: user.bio || '',
-    location: 'Bangladesh',
+    location: user.location || 'Dhaka, Bangladesh',
     preferredStyle: normalizeTravelType(user.travelStyle),
     preferredCurrency: (user.preferredCurrency === 'USD' ? 'USD' : 'BDT') as CurrencyCode,
     preferredLanguage: (user.preferredLanguage === 'BN' ? 'bn' : 'en') as LanguageCode,
@@ -93,9 +95,11 @@ export function adaptBackendPublicProfileToIUser(profile: BackendUserPublicProfi
     avatar:
       profile.avatar?.url ||
       'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
-    coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
+    coverImage:
+      profile.coverImage?.url ||
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
     bio: profile.bio || '',
-    location: 'Bangladesh',
+    location: profile.location || 'Dhaka, Bangladesh',
     preferredStyle: normalizeTravelType(profile.travelStyle),
     preferredCurrency: 'BDT',
     preferredLanguage: (profile.preferredLanguage === 'BN' ? 'bn' : 'en') as LanguageCode,

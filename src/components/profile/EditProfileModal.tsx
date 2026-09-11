@@ -7,6 +7,7 @@ import { IUser, TravelType } from '@/types';
 import { usersApi } from '@/lib/api/users.api';
 import { mediaApi } from '@/lib/api/media.api';
 import { adaptBackendUserToIUser, toBackendTravelType } from '@/lib/api/adapters';
+import { notifyAuthChange } from '@/hooks/useAuth';
 
 interface EditProfileModalProps {
   user: IUser;
@@ -66,12 +67,15 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
       const backendUser = await usersApi.updateMe({
         fullName: name.trim(),
         bio: bio.trim(),
+        location: location.trim(),
         travelStyle: toBackendTravelType(preferredStyle),
         avatar: avatar ? { url: avatar } : undefined,
+        coverImage: coverImage ? { url: coverImage } : undefined,
       });
 
       const updated = adaptBackendUserToIUser(backendUser);
       if (updated) {
+        notifyAuthChange();
         onSuccess(updated);
         onClose();
       } else {

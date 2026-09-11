@@ -44,7 +44,9 @@ export interface BackendUser {
   role: 'USER' | 'ADMIN';
   authProvider: 'LOCAL' | 'GOOGLE';
   avatar?: BackendImage;
+  coverImage?: BackendImage;
   bio?: string;
+  location?: string;
   travelStyle?: string;
   preferredCurrency?: string;
   preferredLanguage?: string;
@@ -59,7 +61,9 @@ export interface BackendUserPublicProfile {
   fullName: string;
   username: string;
   avatar?: BackendImage;
+  coverImage?: BackendImage;
   bio?: string;
+  location?: string;
   travelStyle?: string;
   preferredLanguage?: string;
   createdAt?: string;

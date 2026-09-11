@@ -15,10 +15,15 @@ import {
 export interface UpdateProfilePayload {
   fullName?: string;
   bio?: string;
+  location?: string;
   travelStyle?: string;
   preferredCurrency?: string;
   preferredLanguage?: string;
   avatar?: {
+    url: string;
+    publicId?: string;
+  };
+  coverImage?: {
     url: string;
     publicId?: string;
   };

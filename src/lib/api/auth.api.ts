@@ -21,6 +21,13 @@ export interface SignupPayload {
   preferredLanguage?: string;
 }
 
+export interface GoogleLoginPayload {
+  idToken: string;
+  email?: string;
+  fullName?: string;
+  avatarUrl?: string;
+}
+
 export interface AuthSuccessData {
   user: BackendUser;
   tokens: AuthTokens;
@@ -47,10 +54,11 @@ export const authApi = {
     return res.data;
   },
 
-  async googleLogin(idToken: string): Promise<AuthSuccessData> {
+  async googleLogin(payload: string | GoogleLoginPayload): Promise<AuthSuccessData> {
+    const body = typeof payload === 'string' ? { idToken: payload } : payload;
     const res = await api.post<StandardResponse<AuthSuccessData>>(
       API_ENDPOINTS.AUTH_GOOGLE,
-      { idToken },
+      body,
       { skipAuth: true }
     );
     if (res.data?.tokens) {

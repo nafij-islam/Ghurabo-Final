@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { IUser } from '@/types';
-import { authApi, LoginPayload, SignupPayload } from '@/lib/api/auth.api';
+import { authApi, LoginPayload, SignupPayload, GoogleLoginPayload } from '@/lib/api/auth.api';
 import { adaptBackendUserToIUser } from '@/lib/api/adapters';
 import { tokenStorage } from '@/lib/api/tokenStorage';
+import { firebaseSignOut } from '@/lib/firebase/client';
 
 const AUTH_CHANGE_EVENT = 'ghurabo-auth-state-change';
 
@@ -80,10 +81,10 @@ export function useAuth() {
   );
 
   const googleLogin = useCallback(
-    async (idToken: string) => {
+    async (payload: string | GoogleLoginPayload) => {
       setIsLoading(true);
       try {
-        const { user: backendUser } = await authApi.googleLogin(idToken);
+        const { user: backendUser } = await authApi.googleLogin(payload);
         const adapted = adaptBackendUserToIUser(backendUser);
         cachedUser = adapted;
         setUser(adapted);
@@ -99,7 +100,7 @@ export function useAuth() {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await authApi.logout();
+      await Promise.allSettled([authApi.logout(), firebaseSignOut()]);
     } finally {
       cachedUser = null;
       setUser(null);

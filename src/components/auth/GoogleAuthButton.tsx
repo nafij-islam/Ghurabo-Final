@@ -21,9 +21,14 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
     setLoading(true);
 
     try {
-      const idToken = await signInWithGoogle();
-      if (idToken) {
-        await googleLogin(idToken);
+      const googleUser = await signInWithGoogle();
+      if (googleUser && googleUser.idToken) {
+        await googleLogin({
+          idToken: googleUser.idToken,
+          email: googleUser.email || undefined,
+          fullName: googleUser.displayName || undefined,
+          avatarUrl: googleUser.photoURL || undefined,
+        });
         router.push(redirectTarget);
       }
     } catch (err: any) {
