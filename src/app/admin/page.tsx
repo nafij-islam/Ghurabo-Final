@@ -5,15 +5,10 @@ import Link from 'next/link';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 import { ITrip, IDestination } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import {
-  getTrips,
-  getDestinations,
-  adminApproveTrip,
-  adminRejectTrip,
-  adminTogglePopularTrip,
-  adminToggleVerifyTrip,
-  adminTogglePopularDestination,
-} from '@/lib/clientStore';
+import { adminApi } from '@/lib/api/admin.api';
+import { tripsApi } from '@/lib/api/trips.api';
+import { destinationsApi } from '@/lib/api/destinations.api';
+import { adaptBackendTripToITrip, adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
 import CurrencyControlCard from '@/components/admin/CurrencyControlCard';
 import DestinationsModerationCard from '@/components/admin/DestinationsModerationCard';
 import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
@@ -25,11 +20,26 @@ export default function AdminPage() {
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [destinations, setDestinations] = useState<IDestination[]>([]);
 
-  const fetchAdminData = () => {
-    const allTrips = getTrips({ status: 'all' });
-    setPendingTrips(allTrips.filter((t) => t.status === 'pending'));
-    setPublishedTrips(allTrips.filter((t) => t.status === 'approved'));
-    setDestinations(getDestinations());
+  const fetchAdminData = async () => {
+    try {
+      const [pendingRes, publishedRes, destRes] = await Promise.allSettled([
+        adminApi.getPendingTrips({ limit: 50 }),
+        tripsApi.getTrips({ limit: 50 }),
+        destinationsApi.getDestinations({ limit: 50 }),
+      ]);
+
+      if (pendingRes.status === 'fulfilled' && pendingRes.value?.data) {
+        setPendingTrips(pendingRes.value.data.map(adaptBackendTripToITrip));
+      }
+      if (publishedRes.status === 'fulfilled' && publishedRes.value?.data) {
+        setPublishedTrips(publishedRes.value.data.map(adaptBackendTripToITrip));
+      }
+      if (destRes.status === 'fulfilled' && destRes.value?.data) {
+        setDestinations(destRes.value.data.map(adaptBackendDestinationToIDestination));
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin data:', err);
+    }
   };
 
   useEffect(() => {
@@ -38,17 +48,33 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-  const handleAction = (tripId: string, action: 'approve' | 'reject' | 'verify' | 'togglePopular') => {
-    if (action === 'approve') adminApproveTrip(tripId);
-    if (action === 'reject') adminRejectTrip(tripId);
-    if (action === 'togglePopular') adminTogglePopularTrip(tripId);
-    if (action === 'verify') adminToggleVerifyTrip(tripId);
-    fetchAdminData();
+  const handleAction = async (tripId: string, action: 'approve' | 'reject' | 'verify' | 'togglePopular') => {
+    try {
+      if (action === 'approve') {
+        await adminApi.updateTripStatus(tripId, 'APPROVED');
+      } else if (action === 'reject') {
+        await adminApi.updateTripStatus(tripId, 'REJECTED');
+      } else if (action === 'verify') {
+        const trip = publishedTrips.find((t) => t.id === tripId);
+        await adminApi.toggleTripVerified(tripId, !trip?.isVerified);
+      } else if (action === 'togglePopular') {
+        const trip = publishedTrips.find((t) => t.id === tripId);
+        await adminApi.toggleTripFeatured(tripId, !trip?.isPopular);
+      }
+      await fetchAdminData();
+    } catch (err) {
+      console.error(`Admin action ${action} failed:`, err);
+    }
   };
 
-  const handleTogglePopularDestination = (destinationId: string) => {
-    adminTogglePopularDestination(destinationId);
-    fetchAdminData();
+  const handleTogglePopularDestination = async (destinationId: string) => {
+    try {
+      const dest = destinations.find((d) => d.id === destinationId);
+      await adminApi.toggleDestinationFeatured(destinationId, !dest?.isPopular);
+      await fetchAdminData();
+    } catch (err) {
+      console.error('Failed to toggle destination popularity:', err);
+    }
   };
 
   if (authLoading) {

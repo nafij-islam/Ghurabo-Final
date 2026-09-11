@@ -8,37 +8,74 @@ import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser, IGalleryItem } from '@/types';
 import { MapPin, Award, Users, Compass, ThumbsUp, Heart, Edit3 } from 'lucide-react';
 
-import { getCurrentUser, getUserProfile, getTrips } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { usersApi } from '@/lib/api/users.api';
+import { tripsApi } from '@/lib/api/trips.api';
+import { adaptBackendPublicProfileToIUser, adaptBackendTripToITrip } from '@/lib/api/adapters';
 
 export default function ProfilePage() {
   const params = useParams();
   const rawParam = params?.slug || params?.username || '';
   const username = (Array.isArray(rawParam) ? rawParam[0] : rawParam) as string;
 
+  const { user: currentUser, refreshAuth } = useAuth();
   const [userProfile, setUserProfile] = useState<IUser | null>(null);
-  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const [userTrips, setUserTrips] = useState<ITrip[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const cur = getCurrentUser();
-    setCurrentUser(cur);
+    let isMounted = true;
+    if (!username) return;
 
-    const profile = getUserProfile(username);
-    setUserProfile(profile || cur);
+    setLoading(true);
 
-    const allTrips = getTrips({ status: 'all' });
-    const authorTrips = allTrips.filter(
-      (t) =>
-        t.userId === username ||
-        t.userName.toLowerCase().replace(/\s+/g, '-') === username.toLowerCase() ||
-        t.userName.toLowerCase() === username.toLowerCase()
-    );
-    setUserTrips(authorTrips);
-    setLoading(false);
-  }, [username]);
+    usersApi
+      .getPublicProfile(username)
+      .then(async (profileData) => {
+        if (!isMounted) return;
+        const adapted = adaptBackendPublicProfileToIUser(profileData);
+        setUserProfile(adapted);
+
+        // Fetch author's trips
+        try {
+          const tripsRes = await tripsApi.getTrips({
+            author: profileData.id,
+            limit: 50,
+          });
+          if (isMounted && tripsRes?.data) {
+            setUserTrips(tripsRes.data.map(adaptBackendTripToITrip));
+          }
+        } catch {
+          // Non-blocking trips fetch
+        }
+      })
+      .catch(async (err) => {
+        console.warn('Public profile fetch error:', err);
+        // Fallback: If viewing own profile or profile by email/id
+        if (currentUser && (currentUser.id === username || currentUser.name.toLowerCase() === username.toLowerCase())) {
+          if (isMounted) {
+            setUserProfile(currentUser);
+            try {
+              const myTripsRes = await usersApi.getMyTrips({ limit: 50 });
+              if (isMounted && myTripsRes?.data) {
+                setUserTrips(myTripsRes.data.map(adaptBackendTripToITrip));
+              }
+            } catch {
+              // Non-blocking
+            }
+          }
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [username, currentUser]);
 
   const activeUser = userProfile || currentUser;
   const isSelf =
@@ -164,7 +201,7 @@ export default function ProfilePage() {
           onClose={() => setShowEditModal(false)}
           onSuccess={(updated) => {
             setUserProfile(updated);
-            setCurrentUser(updated);
+            refreshAuth();
           }}
         />
       )}

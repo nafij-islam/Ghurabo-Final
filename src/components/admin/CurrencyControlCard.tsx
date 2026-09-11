@@ -2,15 +2,20 @@
 
 import React from 'react';
 import { Compass } from 'lucide-react';
-import { setCurrencyRate } from '@/lib/clientStore';
+import { settingsApi } from '@/lib/api/settings.api';
 
 export default function CurrencyControlCard() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const rateInput = e.currentTarget.elements.namedItem('rate') as HTMLInputElement;
     const targetRate = Number(rateInput?.value || 130);
-    setCurrencyRate(targetRate);
-    alert(`Exchange rate updated! 1 USD = ৳${targetRate}`);
+    try {
+      await settingsApi.updateCurrencyRate(targetRate);
+      alert(`Exchange rate updated on server! 1 USD = ৳${targetRate}`);
+    } catch (err: unknown) {
+      console.error('Failed to update exchange rate:', err);
+      alert('Failed to update exchange rate on the server.');
+    }
   };
 
   return (

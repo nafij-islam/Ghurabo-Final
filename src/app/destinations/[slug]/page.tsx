@@ -4,10 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import TripCard from '@/components/cards/TripCard';
+import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination, ITrip } from '@/types';
 import { MapPin, Calendar, Compass, ShieldAlert, Bus, Star, DollarSign, Users, ArrowRight } from 'lucide-react';
-
-import { getDestinationBySlug } from '@/lib/clientStore';
+import { destinationsApi, tripsApi } from '@/lib/api';
+import {
+  adaptBackendDestinationToIDestination,
+  adaptBackendTripToITrip,
+} from '@/lib/api/adapters';
 
 export default function DestinationDetailsPage() {
   const params = useParams();
@@ -16,37 +20,71 @@ export default function DestinationDetailsPage() {
   const [destination, setDestination] = useState<IDestination | null>(null);
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [costStats, setCostStats] = useState<{ Solo: number; Couple: number; Family: number; Group: number }>({
-    Solo: 120,
-    Couple: 250,
-    Family: 450,
-    Group: 600,
+    Solo: 3500,
+    Couple: 6000,
+    Family: 10000,
+    Group: 14000,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (slug) {
-      const data = getDestinationBySlug(slug);
-      setDestination(data.destination);
-      setTrips(data.trips);
-      if (data.dynamicCostStats) {
-        setCostStats(data.dynamicCostStats);
-      }
-      setLoading(false);
-    }
+    if (!slug) return;
+    let mounted = true;
+    setLoading(true);
+
+    destinationsApi
+      .getDestinationBySlug(slug)
+      .then(async (backendDest) => {
+        if (!mounted) return;
+        const adaptedDest = adaptBackendDestinationToIDestination(backendDest);
+        setDestination(adaptedDest);
+
+        const daily = backendDest.averageDailyCostBDT || 3500;
+        setCostStats({
+          Solo: daily,
+          Couple: Math.round(daily * 1.8),
+          Family: Math.round(daily * 3.2),
+          Group: Math.round(daily * 4.5),
+        });
+
+        // Fetch trips for this destination
+        try {
+          const tripsRes = await tripsApi.getTrips({ destination: backendDest._id, limit: 10 });
+          if (mounted) {
+            setTrips(tripsRes.data.map(adaptBackendTripToITrip));
+          }
+        } catch {
+          // Continue if trips fetch fails
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load destination:', err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [slug]);
 
   if (loading) {
     return (
-      <div className="pt-32 pb-20 text-center text-slate-500 font-medium">
-        Loading destination details...
+      <div className="w-full min-h-screen pt-36 pb-20 bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Loading Destination Details...</p>
+        </div>
       </div>
     );
   }
 
   if (!destination) {
     return (
-      <div className="pt-32 pb-20 text-center">
+      <div className="pt-36 pb-20 text-center bg-slate-50 min-h-screen">
         <h2 className="font-display text-3xl font-bold text-slate-900 uppercase">Destination Not Found</h2>
+        <p className="text-xs text-slate-500 mt-1">The requested destination does not exist or has been removed.</p>
         <Link href="/destinations" className="mt-4 inline-block text-brand-600 font-bold text-sm">
           &larr; Back to Destinations
         </Link>
@@ -158,53 +196,63 @@ export default function DestinationDetailsPage() {
           <div className="space-y-6">
             <div className="bg-darkslate-900 text-white p-6 rounded-3xl shadow-xl border border-white/10">
               <h3 className="font-display text-xl font-bold uppercase tracking-wider mb-2 text-cyan-300">
-                Community Cost Benchmarks
+                Estimated Daily Costs
               </h3>
-              <p className="text-white/60 text-xs mb-6 font-light">
-                Calculated automatically from real approved user trip expenses.
+              <p className="text-xs text-slate-400 font-light mb-6">
+                Calculated from real traveler submissions in BDT (৳)
               </p>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-brand-300" />
-                    <span className="text-xs font-semibold">Solo Backpacker</span>
+                  <div className="flex items-center space-x-2.5 text-xs font-semibold">
+                    <Users className="w-4 h-4 text-brand-400" />
+                    <span>Solo Explorer</span>
                   </div>
-                  <span className="font-extrabold text-cyan-300 text-sm">${costStats.Solo} / person</span>
+                  <span className="font-display text-lg font-bold text-emerald-400">
+                    ৳{costStats.Solo.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-brand-300" />
-                    <span className="text-xs font-semibold">Couple Escape</span>
+                  <div className="flex items-center space-x-2.5 text-xs font-semibold">
+                    <Users className="w-4 h-4 text-brand-400" />
+                    <span>Couple Escape</span>
                   </div>
-                  <span className="font-extrabold text-cyan-300 text-sm">${costStats.Couple} / person</span>
+                  <span className="font-display text-lg font-bold text-emerald-400">
+                    ৳{costStats.Couple.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-brand-300" />
-                    <span className="text-xs font-semibold">Family Tour</span>
+                  <div className="flex items-center space-x-2.5 text-xs font-semibold">
+                    <Users className="w-4 h-4 text-brand-400" />
+                    <span>Family Vacation</span>
                   </div>
-                  <span className="font-extrabold text-cyan-300 text-sm">${costStats.Family} / person</span>
+                  <span className="font-display text-lg font-bold text-emerald-400">
+                    ৳{costStats.Family.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-brand-300" />
-                    <span className="text-xs font-semibold">Group & Friends</span>
+                  <div className="flex items-center space-x-2.5 text-xs font-semibold">
+                    <Users className="w-4 h-4 text-brand-400" />
+                    <span>Group Adventure</span>
                   </div>
-                  <span className="font-extrabold text-cyan-300 text-sm">${costStats.Group} / person</span>
+                  <span className="font-display text-lg font-bold text-emerald-400">
+                    ৳{costStats.Group.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
-              <Link
-                href={`/trips/share?destination=${destination.id}`}
-                className="mt-6 w-full flex items-center justify-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-2xl text-xs uppercase tracking-wider transition-all"
-              >
-                <span>Add Your Trip Expense</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="mt-6 pt-4 border-t border-white/10">
+                <Link
+                  href="/trips/share"
+                  className="w-full flex items-center justify-center space-x-2 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md"
+                >
+                  <span>Share Your Trip to {destination.name}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

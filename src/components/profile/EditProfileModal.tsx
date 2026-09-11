@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { Camera, Image as ImageIcon, User, MapPin, Sparkles, Check, X, Upload } from 'lucide-react';
 import { IUser, TravelType } from '@/types';
 
-import { updateProfile } from '@/lib/clientStore';
+import { usersApi } from '@/lib/api/users.api';
+import { mediaApi } from '@/lib/api/media.api';
+import { adaptBackendUserToIUser, toBackendTravelType } from '@/lib/api/adapters';
 
 interface EditProfileModalProps {
   user: IUser;
@@ -24,9 +26,25 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileUpload = (file: File, type: 'avatar' | 'cover') => {
+  const handleFileUpload = async (file: File, type: 'avatar' | 'cover') => {
     if (type === 'avatar') setUploadingAvatar(true);
     else setUploadingCover(true);
+
+    try {
+      const folder = type === 'avatar' ? 'ghurabo/avatars' : 'ghurabo/covers';
+      const uploaded = await mediaApi.uploadMedia(file, folder);
+      const mediaUrl = uploaded.url || uploaded.secureUrl;
+      if (uploaded && mediaUrl) {
+        if (type === 'avatar') setAvatar(mediaUrl);
+        else setCoverImage(mediaUrl);
+        return;
+      }
+    } catch (uploadErr) {
+      console.warn('Real media upload failed in profile modal, falling back to data URL:', uploadErr);
+    } finally {
+      if (type === 'avatar') setUploadingAvatar(false);
+      else setUploadingCover(false);
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -35,37 +53,37 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
         if (type === 'avatar') setAvatar(url);
         else setCoverImage(url);
       }
-      if (type === 'avatar') setUploadingAvatar(false);
-      else setUploadingCover(false);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError('');
 
     try {
-      const updated = updateProfile(user.id, {
-        name,
-        avatar,
-        coverImage,
-        bio,
-        location,
-        preferredStyle,
+      const backendUser = await usersApi.updateMe({
+        fullName: name.trim(),
+        bio: bio.trim(),
+        travelStyle: toBackendTravelType(preferredStyle),
+        avatar: avatar ? { url: avatar } : undefined,
       });
 
+      const updated = adaptBackendUserToIUser(backendUser);
       if (updated) {
         onSuccess(updated);
         onClose();
       } else {
         setError('Failed to update profile.');
       }
-    } catch (err) {
-      setError('An error occurred updating profile.');
+    } catch (err: unknown) {
+      console.error('Profile update error:', err);
+      const msg = err instanceof Error ? err.message : 'An error occurred updating profile.';
+      setError(msg);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (

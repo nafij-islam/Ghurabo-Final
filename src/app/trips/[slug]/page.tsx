@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import TripCard from '@/components/cards/TripCard';
-import { getTripByIdOrSlug } from '@/lib/clientStore';
+import { tripsApi } from '@/lib/api/trips.api';
+import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
 import { TripCostDisplay } from '@/components/trips/TripCostDisplay';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
@@ -22,24 +23,66 @@ const GoogleTripMap = dynamic(() => import('@/components/trips/GoogleTripMap'), 
 
 export default function TripDetailsPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const initialData = slug ? getTripByIdOrSlug(slug) : { trip: null, relatedTrips: [] };
-  const [trip, setTrip] = useState<ITrip | null>(() => initialData.trip);
-  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>(() => initialData.relatedTrips);
-  const [loading, setLoading] = useState(() => !initialData.trip);
+  const [trip, setTrip] = useState<ITrip | null>(null);
+  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (slug) {
-      const data = getTripByIdOrSlug(slug);
-      setTrip(data.trip);
-      setRelatedTrips(data.relatedTrips);
-      setLoading(false);
-    }
+    let isMounted = true;
+    if (!slug) return;
+
+    setLoading(true);
+    tripsApi
+      .getTripBySlug(slug)
+      .then(async (backendTrip) => {
+        if (!isMounted) return;
+        const adapted = adaptBackendTripToITrip(backendTrip);
+        setTrip(adapted);
+
+        try {
+          const relatedRes = await tripsApi.getTrips({
+            travelType: backendTrip.travelType,
+            limit: 4,
+          });
+          if (isMounted && relatedRes?.data) {
+            const adaptedRelated = relatedRes.data
+              .map(adaptBackendTripToITrip)
+              .filter((t) => t.id !== backendTrip._id && t.slug !== slug)
+              .slice(0, 3);
+            setRelatedTrips(adaptedRelated);
+          }
+        } catch {
+          // related trips load failure is non-blocking
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load trip story:', err);
+        if (isMounted) setTrip(null);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
   if (loading) {
     return (
-      <div className="pt-32 pb-20 text-center text-slate-500 font-medium">
-        Loading trip story...
+      <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20 animate-pulse">
+        <div className="h-[480px] w-full bg-slate-800 relative">
+          <div className="absolute bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 space-y-4">
+            <div className="h-6 w-32 bg-slate-700 rounded-full" />
+            <div className="h-10 w-3/4 bg-slate-700 rounded-xl" />
+            <div className="h-4 w-1/2 bg-slate-700 rounded" />
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+          <div className="h-24 bg-white rounded-3xl shadow-sm border border-slate-100" />
+          <div className="h-32 bg-slate-900 rounded-3xl shadow-xl" />
+          <div className="h-64 bg-white rounded-3xl shadow-sm border border-slate-100" />
+        </div>
       </div>
     );
   }

@@ -1,35 +1,58 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DestinationCard from '@/components/cards/DestinationCard';
 import { DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination } from '@/types';
 import { Search, MapPin, Compass } from 'lucide-react';
-import { getDestinations } from '@/lib/clientStore';
+import { destinationsApi } from '@/lib/api';
+import { adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
 
 export default function DestinationsPage() {
-  const [destinations, setDestinations] = useState<IDestination[]>(() => getDestinations());
+  const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const list = getDestinations();
-    setDestinations(list);
-  }, []);
+    // Debounce search
+    const timer = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-  const filtered = useMemo(() => {
-    return destinations.filter((dest) => {
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        dest.category.toLowerCase() === selectedCategory.toLowerCase();
-      const matchesSearch =
-        dest.name.toLowerCase().includes(search.toLowerCase()) ||
-        dest.country.toLowerCase().includes(search.toLowerCase()) ||
-        dest.description.toLowerCase().includes(search.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [destinations, selectedCategory, search]);
+      setLoading(true);
+
+      const categoryParam =
+        selectedCategory === 'All' ? undefined : selectedCategory.toUpperCase();
+
+      destinationsApi
+        .getDestinations(
+          {
+            search: search.trim() || undefined,
+            category: categoryParam,
+            limit: 50,
+          },
+          controller.signal
+        )
+        .then((res) => {
+          setDestinations(res.data.map(adaptBackendDestinationToIDestination));
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (err?.name !== 'AbortError') {
+            setLoading(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [search, selectedCategory]);
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
@@ -91,9 +114,9 @@ export default function DestinationsPage() {
               <DestinationCardSkeleton key={i} />
             ))}
           </div>
-        ) : filtered.length > 0 ? (
+        ) : destinations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filtered.map((dest) => (
+            {destinations.map((dest) => (
               <DestinationCard key={dest.id} destination={dest} />
             ))}
           </div>

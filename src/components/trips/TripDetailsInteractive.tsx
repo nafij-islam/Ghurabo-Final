@@ -1,20 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2 } from 'lucide-react';
-import { ITrip, IComment, IUser } from '@/types';
+import { ITrip, IComment } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
-import {
-  getCurrentUser,
-  toggleLikeTrip,
-  toggleSaveTrip,
-  toggleHelpfulVote,
-  isTripSaved,
-  getComments,
-  addComment,
-} from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { tripsApi, commentsApi } from '@/lib/api';
+import { adaptBackendCommentToIComment } from '@/lib/api/adapters';
 
 interface Props {
   trip: ITrip;
@@ -28,21 +21,15 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
   const [savesCount, setSavesCount] = useState(trip.savesCount || 0);
   const [helpfulCount, setHelpfulCount] = useState(initialHelpfulCount || trip.helpfulVotesCount || 0);
-  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
+  const [submittingLike, setSubmittingLike] = useState(false);
+  const [submittingSave, setSubmittingSave] = useState(false);
+  const [submittingHelpful, setSubmittingHelpful] = useState(false);
+
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const tripIdOrSlug = trip.id || trip.slug;
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
-    if (trip.id) {
-      setSaved(isTripSaved(trip.id));
-    }
-  }, [trip.id]);
-
   const requireAuth = () => {
-    if (!currentUser) {
+    if (!isAuthenticated) {
       const currentUrl = typeof window !== 'undefined' ? window.location.pathname : `/trips/${trip.slug || trip.id}`;
       router.push(`/auth/login?redirect=${encodeURIComponent(currentUrl)}`);
       return false;
@@ -50,25 +37,76 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
     return true;
   };
 
-  const handleLike = () => {
-    if (!requireAuth()) return;
-    const res = toggleLikeTrip(trip.id);
-    setLiked(res.liked);
-    setLikesCount(res.count);
+  const handleLike = async () => {
+    if (!requireAuth() || submittingLike) return;
+    setSubmittingLike(true);
+
+    const prevLiked = liked;
+    const prevCount = likesCount;
+    const nextLiked = !prevLiked;
+    const nextCount = nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    setLiked(nextLiked);
+    setLikesCount(nextCount);
+
+    try {
+      const res = await tripsApi.toggleLike(trip.id);
+      setLiked(res.active);
+      setLikesCount(res.count);
+    } catch {
+      setLiked(prevLiked);
+      setLikesCount(prevCount);
+    } finally {
+      setSubmittingLike(false);
+    }
   };
 
-  const handleSave = () => {
-    if (!requireAuth()) return;
-    const nowSaved = toggleSaveTrip(trip.id);
-    setSaved(nowSaved);
-    setSavesCount((prev) => (nowSaved ? prev + 1 : Math.max(0, prev - 1)));
+  const handleSave = async () => {
+    if (!requireAuth() || submittingSave) return;
+    setSubmittingSave(true);
+
+    const prevSaved = saved;
+    const prevCount = savesCount;
+    const nextSaved = !prevSaved;
+    const nextCount = nextSaved ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    setSaved(nextSaved);
+    setSavesCount(nextCount);
+
+    try {
+      const res = await tripsApi.toggleSave(trip.id);
+      setSaved(res.active);
+      setSavesCount(res.count);
+    } catch {
+      setSaved(prevSaved);
+      setSavesCount(prevCount);
+    } finally {
+      setSubmittingSave(false);
+    }
   };
 
-  const handleHelpfulVote = () => {
-    if (!requireAuth()) return;
-    const res = toggleHelpfulVote(trip.id);
-    setHelpful(res.voted);
-    setHelpfulCount(res.count);
+  const handleHelpfulVote = async () => {
+    if (!requireAuth() || submittingHelpful) return;
+    setSubmittingHelpful(true);
+
+    const prevHelpful = helpful;
+    const prevCount = helpfulCount;
+    const nextHelpful = !prevHelpful;
+    const nextCount = nextHelpful ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    setHelpful(nextHelpful);
+    setHelpfulCount(nextCount);
+
+    try {
+      const res = await tripsApi.toggleHelpful(trip.id);
+      setHelpful(res.active);
+      setHelpfulCount(res.count);
+    } catch {
+      setHelpful(prevHelpful);
+      setHelpfulCount(prevCount);
+    } finally {
+      setSubmittingHelpful(false);
+    }
   };
 
   return (
@@ -114,38 +152,61 @@ export function CommentsSection({ tripId }: { tripId: string }) {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
-    const list = getComments(tripId);
-    setComments(list);
-    setLoading(false);
+    if (!tripId) return;
+    let mounted = true;
+    setLoading(true);
+
+    commentsApi
+      .getTripComments(tripId)
+      .then((res) => {
+        if (mounted) {
+          setComments(res.data.map(adaptBackendCommentToIComment));
+        }
+      })
+      .catch((err) => console.error('Failed to load comments:', err))
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [tripId]);
 
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    if (!currentUser) {
+    if (!isAuthenticated) {
       const currentUrl = typeof window !== 'undefined' ? window.location.pathname : `/trips/${tripId}`;
       router.push(`/auth/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
 
     setSubmitting(true);
-    const added = addComment(tripId, newComment);
-    if (added) {
-      setComments([added, ...comments]);
+    try {
+      const created = await commentsApi.createComment(tripId, newComment.trim());
+      const adapted = adaptBackendCommentToIComment(created);
+      setComments((prev) => [adapted, ...prev]);
       setNewComment('');
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await commentsApi.deleteComment(commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId && c._id !== commentId));
+    } catch (err) {
+      console.error('Failed to delete comment:', err);
+    }
   };
 
   return (
@@ -158,7 +219,7 @@ export function CommentsSection({ tripId }: { tripId: string }) {
       <form onSubmit={handleAddComment} className="mb-8 flex flex-col space-y-3">
         <textarea
           rows={3}
-          placeholder={currentUser ? 'Ask a question or leave a review for the author...' : 'Sign in to join the conversation...'}
+          placeholder={user ? 'Ask a question or leave a review for the author...' : 'Sign in to join the conversation...'}
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -167,7 +228,7 @@ export function CommentsSection({ tripId }: { tripId: string }) {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase rounded-full shadow transition-all cursor-pointer"
+            className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase rounded-full shadow transition-all cursor-pointer disabled:opacity-60"
           >
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
@@ -202,7 +263,7 @@ export function CommentsSection({ tripId }: { tripId: string }) {
                 </div>
               </div>
 
-              {currentUser && (currentUser.id === c.userId || currentUser.role === 'admin') && (
+              {user && (user.id === c.userId || user.role === 'admin') && (
                 <button
                   type="button"
                   onClick={() => handleDeleteComment(c.id)}

@@ -1,34 +1,69 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip, TravelType } from '@/types';
 import { Search, Compass, SlidersHorizontal } from 'lucide-react';
-import { getTrips } from '@/lib/clientStore';
-import { useTripFilters, TripSortOption } from '@/hooks/useTripFilters';
+import { tripsApi } from '@/lib/api';
+import { adaptBackendTripToITrip, toBackendTravelType } from '@/lib/api/adapters';
+
+export type TripSortOption = 'newest' | 'popular' | 'lowest_cost' | 'highest_rating';
 
 export default function AllTripsPage() {
-  const [allTrips, setAllTrips] = useState<ITrip[]>(() => getTrips());
-  const [loading, setLoading] = useState(false);
+  const [trips, setTrips] = useState<ITrip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [travelType, setTravelType] = useState<TravelType | 'All'>('All');
+  const [maxBudget, setMaxBudget] = useState<number>(100000);
+  const [sortBy, setSortBy] = useState<TripSortOption>('newest');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Keep in sync with clientStore
-    const list = getTrips();
-    setAllTrips(list);
-  }, []);
+    const timer = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-  const {
-    travelType,
-    setTravelType,
-    searchQuery,
-    setSearchQuery,
-    maxBudget,
-    setMaxBudget,
-    sortBy,
-    setSortBy,
-    filteredTrips,
-  } = useTripFilters(allTrips);
+      setLoading(true);
+
+      const backendSort =
+        sortBy === 'popular'
+          ? 'popular'
+          : sortBy === 'lowest_cost'
+          ? 'lowest-cost'
+          : 'newest';
+
+      const backendType = travelType === 'All' ? undefined : toBackendTravelType(travelType);
+
+      tripsApi
+        .getTrips(
+          {
+            search: searchQuery.trim() || undefined,
+            travelType: backendType,
+            maxBudget: maxBudget < 100000 ? maxBudget : undefined,
+            sort: backendSort,
+            limit: 50,
+          },
+          controller.signal
+        )
+        .then((res) => {
+          setTrips(res.data.map(adaptBackendTripToITrip));
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (err?.name !== 'AbortError') {
+            setLoading(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery, travelType, maxBudget, sortBy]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,9 +172,9 @@ export default function AllTripsPage() {
               <TripCardSkeleton key={i} />
             ))}
           </div>
-        ) : filteredTrips.length > 0 ? (
+        ) : trips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTrips.map((trip) => (
+            {trips.map((trip) => (
               <TripCard key={trip.id} trip={trip} />
             ))}
           </div>

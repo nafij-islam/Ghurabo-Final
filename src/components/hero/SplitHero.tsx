@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin, PlusCircle } from 'lucide-react';
 
-import { getCurrentUser, AUTH_CHANGE_EVENT } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
 
 const HERO_SLIDES = [
   {
@@ -36,25 +36,11 @@ const HERO_SLIDES = [
 
 export default function SplitHero() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   // Touch Swipe State for Mobile Slider
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    setIsAuthenticated(!!user);
-
-    const handleAuth = () => {
-      setIsAuthenticated(!!getCurrentUser());
-    };
-
-    window.addEventListener(AUTH_CHANGE_EVENT, handleAuth);
-    return () => {
-      window.removeEventListener(AUTH_CHANGE_EVENT, handleAuth);
-    };
-  }, []);
 
   const slide = HERO_SLIDES[currentSlideIndex];
 

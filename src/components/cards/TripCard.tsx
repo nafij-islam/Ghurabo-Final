@@ -8,8 +8,8 @@ import { Bookmark, Star, ShieldCheck, MapPin, Clock, Heart } from 'lucide-react'
 import { ITrip } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { usePreferences } from '@/context/PreferencesContext';
-
-import { getCurrentUser, toggleLikeTrip, toggleSaveTrip, isTripSaved } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { tripsApi } from '@/lib/api';
 
 interface TripCardProps {
   trip: ITrip;
@@ -18,37 +18,71 @@ interface TripCardProps {
 export default function TripCard({ trip }: TripCardProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
-  const [saved, setSaved] = useState(() => isTripSaved(trip.id));
+  const [saved, setSaved] = useState(false);
+  const [submittingLike, setSubmittingLike] = useState(false);
+  const [submittingSave, setSubmittingSave] = useState(false);
   const { formatCost, t } = usePreferences();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const user = getCurrentUser();
-    if (!user) {
+    if (!isAuthenticated) {
       router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
       return;
     }
 
-    const res = toggleLikeTrip(trip.id);
-    setLiked(res.liked);
-    setLikesCount(res.count);
+    if (submittingLike) return;
+    setSubmittingLike(true);
+
+    const prevLiked = liked;
+    const prevCount = likesCount;
+    const nextLiked = !prevLiked;
+    const nextCount = nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    // Optimistic UI update
+    setLiked(nextLiked);
+    setLikesCount(nextCount);
+
+    try {
+      const res = await tripsApi.toggleLike(trip.id);
+      setLiked(res.active);
+      setLikesCount(res.count);
+    } catch {
+      // Rollback on error
+      setLiked(prevLiked);
+      setLikesCount(prevCount);
+    } finally {
+      setSubmittingLike(false);
+    }
   };
 
-  const handleSave = (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const user = getCurrentUser();
-    if (!user) {
+    if (!isAuthenticated) {
       router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
       return;
     }
 
-    const nowSaved = toggleSaveTrip(trip.id);
-    setSaved(nowSaved);
+    if (submittingSave) return;
+    setSubmittingSave(true);
+
+    const prevSaved = saved;
+    setSaved(!prevSaved);
+
+    try {
+      const res = await tripsApi.toggleSave(trip.id);
+      setSaved(res.active);
+    } catch {
+      // Rollback
+      setSaved(prevSaved);
+    } finally {
+      setSubmittingSave(false);
+    }
   };
 
   const perPersonCostBDT = trip.costBreakdown?.perPersonCost || trip.costBreakdown?.totalCost || 0;

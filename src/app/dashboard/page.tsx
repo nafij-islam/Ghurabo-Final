@@ -7,9 +7,14 @@ import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser } from '@/types';
 import { Compass, User, Clock, FileText, Bookmark, Heart, ShieldCheck, PlusCircle, Edit3 } from 'lucide-react';
 
-import { getCurrentUser, getTrips, getSavedTrips } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { usersApi } from '@/lib/api/users.api';
+import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading, refreshAuth } = useAuth();
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
@@ -20,25 +25,34 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = getCurrentUser();
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/dashboard');
+      return;
+    }
+
     if (user) {
       setCurrentUser(user);
-      const all = getTrips({ status: 'all' });
-      const myTrips = all.filter(
-        (t) =>
-          t.userId === user.id ||
-          t.userName.toLowerCase() === user.name.toLowerCase() ||
-          t.userName.toLowerCase() === user.email.toLowerCase()
-      );
-      setPublishedTrips(myTrips.filter((t) => t.status === 'approved'));
-      setPendingTrips(myTrips.filter((t) => t.status === 'pending'));
-      setDrafts(myTrips.filter((t) => t.status === 'draft'));
-
-      const saved = getSavedTrips(user.id);
-      setSavedTrips(saved);
+      Promise.allSettled([
+        usersApi.getMyTrips({ limit: 100 }),
+        usersApi.getMySavedTrips({ limit: 100 }),
+      ])
+        .then(([tripsRes, savedRes]) => {
+          if (tripsRes.status === 'fulfilled' && tripsRes.value?.data) {
+            const adapted = tripsRes.value.data.map(adaptBackendTripToITrip);
+            setPublishedTrips(adapted.filter((t) => t.status === 'approved'));
+            setPendingTrips(adapted.filter((t) => t.status === 'pending'));
+            setDrafts(adapted.filter((t) => t.status === 'draft'));
+          }
+          if (savedRes.status === 'fulfilled' && savedRes.value?.data) {
+            const adaptedSaved = savedRes.value.data.map(adaptBackendTripToITrip);
+            setSavedTrips(adaptedSaved);
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-    setLoading(false);
-  }, []);
+  }, [authLoading, isAuthenticated, user, router]);
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
@@ -219,6 +233,7 @@ export default function DashboardPage() {
           onClose={() => setShowEditModal(false)}
           onSuccess={(updated) => {
             setCurrentUser(updated);
+            refreshAuth();
           }}
         />
       )}

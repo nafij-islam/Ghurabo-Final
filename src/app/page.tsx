@@ -6,30 +6,82 @@ import Image from 'next/image';
 import SplitHero from '@/components/hero/SplitHero';
 import DestinationCard from '@/components/cards/DestinationCard';
 import TripCard from '@/components/cards/TripCard';
+import { TripCardSkeleton, DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination, ITrip, IGalleryItem } from '@/types';
 import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
-
-import { getDestinations, getTrips, getGallery } from '@/lib/clientStore';
+import { destinationsApi, tripsApi, galleryApi } from '@/lib/api';
+import {
+  adaptBackendDestinationToIDestination,
+  adaptBackendTripToITrip,
+  adaptBackendGalleryToIGalleryItem,
+} from '@/lib/api/adapters';
 
 export default function HomePage() {
-  const [destinations, setDestinations] = useState<IDestination[]>(() => getDestinations());
-  const [popularTrips, setPopularTrips] = useState<ITrip[]>(() => getTrips({ popular: true }));
-  const [trips, setTrips] = useState<ITrip[]>(() => getTrips());
-  const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>(() => getGallery());
+  const [destinations, setDestinations] = useState<IDestination[]>([]);
+  const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
+  const [trips, setTrips] = useState<ITrip[]>([]);
+  const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [maxBudget, setMaxBudget] = useState<number>(50000);
+  const [loadingDestinations, setLoadingDestinations] = useState(true);
+  const [loadingTrips, setLoadingTrips] = useState(true);
 
   useEffect(() => {
-    // Keep in sync with clientStore
-    const destList = getDestinations();
-    const tripList = getTrips();
-    const popList = getTrips({ popular: true });
-    const galList = getGallery();
+    let mounted = true;
 
-    setDestinations(destList);
-    setTrips(tripList);
-    setPopularTrips(popList);
-    setGalleryItems(galList);
+    // Fetch popular destinations
+    destinationsApi
+      .getDestinations({ limit: 6 })
+      .then((res) => {
+        if (mounted) {
+          setDestinations(res.data.map(adaptBackendDestinationToIDestination));
+          setLoadingDestinations(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) setLoadingDestinations(false);
+      });
+
+    // Fetch popular trips (for spotlight)
+    tripsApi
+      .getTrips({ featured: true, limit: 6 })
+      .then((res) => {
+        if (mounted) {
+          const adapted = res.data.map(adaptBackendTripToITrip);
+          setPopularTrips(adapted);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch recent community trips
+    tripsApi
+      .getTrips({ limit: 20, sort: 'newest' })
+      .then((res) => {
+        if (mounted) {
+          const adapted = res.data.map(adaptBackendTripToITrip);
+          setTrips(adapted);
+          // If no explicitly featured trips, use popular trips from recent
+          setPopularTrips((prev) => (prev.length > 0 ? prev : adapted.slice(0, 6)));
+          setLoadingTrips(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) setLoadingTrips(false);
+      });
+
+    // Fetch public community gallery photos
+    galleryApi
+      .getGallery({ limit: 6 })
+      .then((res) => {
+        if (mounted) {
+          setGalleryItems(res.data.map(adaptBackendGalleryToIGalleryItem));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const stats = useMemo(() => {
@@ -37,14 +89,13 @@ export default function HomePage() {
     return {
       totalDestinations: destinations.length,
       totalTrips: trips.length,
-      totalUsers: 3,
       totalHelpfulVotes: totalHelpful,
     };
   }, [destinations.length, trips]);
 
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
-      const matchesCategory = activeCategory === 'All' || t.travelType === activeCategory;
+      const matchesCategory = activeCategory === 'All' || t.travelType.toLowerCase() === activeCategory.toLowerCase();
       const matchesBudget = (t.costBreakdown?.perPersonCost || 0) <= maxBudget;
       return matchesCategory && matchesBudget;
     });
@@ -76,11 +127,19 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {popularTrips.length > 0
-            ? popularTrips.slice(0, 6).map((trip) => <TripCard key={trip.id} trip={trip} />)
-            : destinations.slice(0, 6).map((dest) => <DestinationCard key={dest.id} destination={dest} />)}
-        </div>
+        {loadingDestinations ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <DestinationCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {destinations.slice(0, 6).map((dest) => (
+              <DestinationCard key={dest.id} destination={dest} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Organic Edge Section Divider */}
@@ -147,7 +206,13 @@ export default function HomePage() {
           </div>
 
           {/* Trips Grid */}
-          {filteredTrips.length > 0 ? (
+          {loadingTrips ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <TripCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : filteredTrips.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredTrips.slice(0, 6).map((trip) => (
                 <TripCard key={trip.id} trip={trip} />
@@ -235,7 +300,7 @@ export default function HomePage() {
 
       {/* Real Live Database Community Stats Section */}
       <section className="py-16 bg-darkslate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
             <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalTrips}</div>
             <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Shared Trips</div>
@@ -247,10 +312,6 @@ export default function HomePage() {
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
             <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalHelpfulVotes}</div>
             <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Helpful Votes</div>
-          </div>
-          <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{galleryItems.length}</div>
-            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Gallery Photos</div>
           </div>
         </div>
       </section>

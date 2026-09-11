@@ -5,7 +5,9 @@ import { CurrencyCode, LanguageCode } from '@/types';
 import en, { TranslationKey } from '@/locales/en';
 import bn from '@/locales/bn';
 import { formatCurrency, FormatCurrencyOptions, DEFAULT_BDT_PER_USD } from '@/lib/currency/formatCurrency';
-import { getCurrentUser, getCurrencyRate, updateProfile } from '@/lib/clientStore';
+import { settingsApi } from '@/lib/api/settings.api';
+import { usersApi } from '@/lib/api/users.api';
+import { tokenStorage } from '@/lib/api/tokenStorage';
 
 interface PreferencesContextType {
   currency: CurrencyCode;
@@ -51,43 +53,41 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setLanguageState(savedLanguage);
     }
 
-    // Get exchange rate from clientStore
-    const rate = getCurrencyRate();
-    if (rate && rate > 0) {
-      setExchangeRate(rate);
-    }
-
-    // Check user preference from clientStore
-    const user = getCurrentUser();
-    if (user) {
-      if (user.preferredCurrency) {
-        setCurrencyState(user.preferredCurrency as CurrencyCode);
-        setCookie('ghurabo_currency', user.preferredCurrency);
-      }
-      if (user.preferredLanguage) {
-        setLanguageState(user.preferredLanguage as LanguageCode);
-        setCookie('ghurabo_lang', user.preferredLanguage);
-      }
-    }
+    // Fetch dynamic exchange rate from backend settings
+    settingsApi
+      .getSettingByKey('USD_TO_BDT_RATE')
+      .then((setting) => {
+        if (setting && setting.value) {
+          const rate = Number(setting.value);
+          if (rate > 0) {
+            setExchangeRate(rate);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch USD_TO_BDT_RATE from backend, using default:', err);
+      });
   }, []);
 
   const setCurrency = (c: CurrencyCode) => {
     setCurrencyState(c);
     setCookie('ghurabo_currency', c);
-    // Sync with user profile if logged in
-    const user = getCurrentUser();
-    if (user) {
-      updateProfile(user.id, { preferredCurrency: c });
+    // Sync with backend profile if logged in
+    if (tokenStorage.getAccessToken()) {
+      usersApi.updateMe({ preferredCurrency: c }).catch(() => {
+        // Non-blocking preference sync
+      });
     }
   };
 
   const setLanguage = (l: LanguageCode) => {
     setLanguageState(l);
     setCookie('ghurabo_lang', l);
-    // Sync with user profile if logged in
-    const user = getCurrentUser();
-    if (user) {
-      updateProfile(user.id, { preferredLanguage: l });
+    // Sync with backend profile if logged in
+    if (tokenStorage.getAccessToken()) {
+      usersApi.updateMe({ preferredLanguage: l === 'bn' ? 'BN' : 'EN' }).catch(() => {
+        // Non-blocking preference sync
+      });
     }
   };
 

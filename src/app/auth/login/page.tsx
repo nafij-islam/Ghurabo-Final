@@ -4,7 +4,8 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock } from 'lucide-react';
-import { loginUser } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { normalizeApiErrorMessage } from '@/lib/api/apiError';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function LoginForm() {
@@ -14,6 +15,7 @@ function LoginForm() {
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   const redirectTarget = searchParams.get('redirect') || '/dashboard';
 
@@ -23,17 +25,16 @@ function LoginForm() {
     setError('');
 
     try {
-      const result = loginUser(email, password);
-      if (result.success) {
-        router.refresh();
-        router.push(redirectTarget);
-      } else {
-        setError(result.error || 'Invalid email or password');
-      }
+      await login({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      router.push(redirectTarget);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error during sign in');
+      setError(normalizeApiErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -99,7 +100,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all cursor-pointer"
+          className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>

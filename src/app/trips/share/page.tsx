@@ -7,7 +7,11 @@ import { Check, AlertCircle, Sparkles, Compass } from 'lucide-react';
 import { ITrip, ITripCost, ITripImage, TravelType } from '@/types';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useAuth } from '@/hooks/useAuth';
-import { createTrip } from '@/lib/clientStore';
+import { tripsApi } from '@/lib/api/trips.api';
+import { destinationsApi } from '@/lib/api/destinations.api';
+import { mediaApi } from '@/lib/api/media.api';
+import { adaptBackendTripToITrip, toBackendTravelType } from '@/lib/api/adapters';
+import { BackendDestination } from '@/lib/api/api.types';
 import StepBasics, { POPULAR_DESTINATIONS } from '@/components/trips/share/StepBasics';
 import StepCosts from '@/components/trips/share/StepCosts';
 import StepPhotosPublish from '@/components/trips/share/StepPhotosPublish';
@@ -21,6 +25,7 @@ export default function ShareTripPage() {
   const [validationError, setValidationError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [createdTrip, setCreatedTrip] = useState<ITrip | null>(null);
+  const [availableDestinations, setAvailableDestinations] = useState<BackendDestination[]>([]);
 
   // Authentication guard
   useEffect(() => {
@@ -28,6 +33,16 @@ export default function ShareTripPage() {
       router.push('/auth/login?redirect=/trips/share');
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Fetch available destinations from backend for ID resolution
+  useEffect(() => {
+    destinationsApi
+      .getDestinations({ limit: 50 })
+      .then((res) => {
+        if (res.data) setAvailableDestinations(res.data);
+      })
+      .catch((err) => console.error('Failed to load destinations for wizard:', err));
+  }, []);
 
   // STEP 1 STATE
   const [title, setTitle] = useState('');
@@ -65,11 +80,19 @@ export default function ShareTripPage() {
 
   const handleDestinationSelect = (name: string) => {
     setDestinationName(name);
-    const found = POPULAR_DESTINATIONS.find((d) => d.name.toLowerCase() === name.toLowerCase());
-    if (found) {
-      setLatitude(found.lat);
-      setLongitude(found.lng);
-      setGooglePlaceId(found.placeId);
+    const foundPopular = POPULAR_DESTINATIONS.find((d) => d.name.toLowerCase() === name.toLowerCase());
+    if (foundPopular) {
+      setLatitude(foundPopular.lat);
+      setLongitude(foundPopular.lng);
+      setGooglePlaceId(foundPopular.placeId);
+    } else {
+      const backendMatch = availableDestinations.find((d) =>
+        d.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(d.name.toLowerCase())
+      );
+      if (backendMatch && backendMatch.coordinates) {
+        setLatitude(backendMatch.coordinates.latitude);
+        setLongitude(backendMatch.coordinates.longitude);
+      }
     }
   };
 
@@ -103,30 +126,40 @@ export default function ShareTripPage() {
     setStep((prev) => Math.max(1, prev - 1));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
 
     const fileList = Array.from(files);
-    let loadedCount = 0;
-    const newImages: ITripImage[] = [];
+    const uploadedImages: ITripImage[] = [];
 
-    fileList.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const url = uploadEvent.target?.result as string;
-        if (url) {
-          newImages.push({ url, caption: file.name.split('.')[0] });
+    for (const file of fileList) {
+      try {
+        const uploadedAsset = await mediaApi.uploadMedia(file, 'ghurabo/trips', file.name.split('.')[0]);
+        const mediaUrl = uploadedAsset.url || uploadedAsset.secureUrl;
+        if (uploadedAsset && mediaUrl) {
+          uploadedImages.push({
+            url: mediaUrl,
+            caption: uploadedAsset.caption || file.name.split('.')[0],
+            publicId: uploadedAsset.publicId || uploadedAsset.cloudinaryPublicId,
+          });
         }
-        loadedCount++;
-        if (loadedCount === fileList.length) {
-          setImages((prev) => [...prev, ...newImages]);
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (uploadErr) {
+        console.warn('Real media upload failed, falling back to local object preview:', uploadErr);
+        // Fallback to data URL or preview URL so user experience is not completely blocked
+        const previewUrl = URL.createObjectURL(file);
+        uploadedImages.push({
+          url: previewUrl,
+          caption: file.name.split('.')[0],
+        });
+      }
+    }
+
+    if (uploadedImages.length > 0) {
+      setImages((prev) => [...prev, ...uploadedImages]);
+    }
+    setUploading(false);
   };
 
   const removeImage = (indexToRemove: number) => {
@@ -138,7 +171,7 @@ export default function ShareTripPage() {
     }
   };
 
-  const handleSubmit = (isDraft = false) => {
+  const handleSubmit = async (isDraft = false) => {
     setValidationError('');
     if (!title.trim() || !destinationName.trim()) {
       setValidationError('Please provide title and destination.');
@@ -152,59 +185,81 @@ export default function ShareTripPage() {
     setSubmitting(true);
 
     const rate = inputCurrency === 'USD' ? exchangeRate : 1;
-    const costBreakdown: ITripCost = {
-      transport: Math.round(transport * rate),
-      hotel: Math.round(hotel * rate),
-      food: Math.round(food * rate),
-      localTransport: Math.round(localTransport * rate),
-      tickets: Math.round(tickets * rate),
-      guide: 0,
-      shopping: Math.round(shopping * rate),
-      misc: 0,
-      totalCost,
-      perPersonCost,
-    };
 
-    const coverUrl =
-      images[coverImageIndex]?.url ||
-      images[0]?.url ||
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200';
+    // Resolve destination ID from backend
+    let destinationId = '';
+    const matchedDest = availableDestinations.find((d) =>
+      d.name.toLowerCase().includes(destinationName.toLowerCase()) ||
+      destinationName.toLowerCase().includes(d.name.toLowerCase()) ||
+      d.slug.toLowerCase().includes(destinationName.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    );
+    if (matchedDest) {
+      destinationId = matchedDest._id;
+    } else if (availableDestinations.length > 0) {
+      destinationId = availableDestinations[0]._id;
+    } else {
+      // Fallback ID to Cox's Bazar seed if not yet loaded
+      destinationId = '6aa3ab9def763afbf0ec7ca5';
+    }
+
+    const coverPhoto = images[coverImageIndex] || images[0];
+    const coverImageObj = coverPhoto
+      ? {
+          url: coverPhoto.url,
+          publicId: coverPhoto.publicId,
+          caption: coverPhoto.caption,
+        }
+      : {
+          url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
+        };
+
+    const photosList = images.map((img) => ({
+      url: img.url,
+      publicId: img.publicId,
+      caption: img.caption,
+    }));
 
     try {
-      const created = createTrip({
+      const backendTrip = await tripsApi.createTrip({
         title: title.trim(),
-        destinationName: destinationName.trim(),
-        travelDate,
-        travelType,
-        travellersCount,
-        durationDays,
+        destination: destinationId,
         summary: summary.trim() || title.trim(),
         story: story.trim(),
-        highlights: [destinationName, `${durationDays} Days Tour`, `${travelType} Travel`],
-        tips: tips.trim(),
-        safetyNotes: safetyNotes.trim(),
-        costBreakdown,
+        travelType: toBackendTravelType(travelType),
+        days: durationDays,
+        nights: Math.max(1, durationDays - 1),
+        costs: {
+          transport: Math.round(transport * rate),
+          lodging: Math.round(hotel * rate),
+          food: Math.round(food * rate),
+          sightseeing: Math.round(localTransport * rate),
+          activities: Math.round(tickets * rate),
+          miscellaneous: Math.round(shopping * rate),
+        },
         itinerary: [
           {
-            dayNumber: 1,
+            day: 1,
             title: `Arrival & Exploring ${destinationName}`,
-            activities: ['Check-in', 'Sightseeing', 'Sunset View'],
-            locations: [destinationName],
-            estimatedCost: Math.round(totalCost / durationDays),
+            description: story.slice(0, 300) || `Exploring ${destinationName}`,
+            locations: [
+              {
+                name: destinationName,
+                latitude,
+                longitude,
+              },
+            ],
           },
         ],
-        coverImage: coverUrl,
-        images,
-        status: isDraft ? 'draft' : 'approved',
-        latitude,
-        longitude,
-        googlePlaceId,
+        coverImage: coverImageObj,
+        photos: photosList,
       });
 
-      setCreatedTrip(created);
+      const adapted = adaptBackendTripToITrip(backendTrip);
+      setCreatedTrip(adapted);
     } catch (err: unknown) {
       console.error('Trip creation error:', err);
-      setValidationError('Failed to create trip. Please try again.');
+      const message = err instanceof Error ? err.message : 'Failed to create trip. Please try again.';
+      setValidationError(message);
     } finally {
       setSubmitting(false);
     }

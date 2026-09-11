@@ -6,28 +6,61 @@ import Image from 'next/image';
 import LightboxModal from '@/components/gallery/LightboxModal';
 import { IGalleryItem } from '@/types';
 import { Camera, Search, Eye, User, ArrowUpRight } from 'lucide-react';
-import { getGallery } from '@/lib/clientStore';
+import { galleryApi } from '@/lib/api/gallery.api';
+import { adaptBackendGalleryToIGalleryItem } from '@/lib/api/adapters';
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<IGalleryItem[]>(() => getGallery());
+  const [items, setItems] = useState<IGalleryItem[]>([]);
   const [travelType, setTravelType] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const list = getGallery();
-    setItems(list);
-  }, []);
+    const controller = new AbortController();
+    setLoading(true);
+
+    const backendTravelType = travelType !== 'All' ? travelType.toUpperCase() : undefined;
+
+    galleryApi
+      .getGallery(
+        {
+          travelType: backendTravelType,
+          search: search.trim() || undefined,
+          limit: 60,
+        },
+        controller.signal
+      )
+      .then((res) => {
+        if (res?.data) {
+          const adapted = res.data.map(adaptBackendGalleryToIGalleryItem);
+          setItems(adapted);
+        }
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to load gallery items:', err);
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [travelType, search]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      const matchesCategory = travelType === 'All' || item.travelType === travelType;
+      const matchesCategory = travelType === 'All' || item.travelType.toLowerCase() === travelType.toLowerCase();
+      const s = search.toLowerCase();
       const matchesSearch =
-        item.destinationName.toLowerCase().includes(search.toLowerCase()) ||
-        item.photographerName.toLowerCase().includes(search.toLowerCase()) ||
-        (item.tripTitle && item.tripTitle.toLowerCase().includes(search.toLowerCase())) ||
-        (item.caption && item.caption.toLowerCase().includes(search.toLowerCase()));
+        !s ||
+        item.destinationName.toLowerCase().includes(s) ||
+        item.photographerName.toLowerCase().includes(s) ||
+        (item.tripTitle && item.tripTitle.toLowerCase().includes(s)) ||
+        (item.caption && item.caption.toLowerCase().includes(s));
       return matchesCategory && matchesSearch;
     });
   }, [items, travelType, search]);

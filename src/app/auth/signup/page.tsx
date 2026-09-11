@@ -3,7 +3,8 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signupUser } from '@/lib/clientStore';
+import { useAuth } from '@/hooks/useAuth';
+import { normalizeApiErrorMessage } from '@/lib/api/apiError';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function SignupForm() {
@@ -16,6 +17,7 @@ function SignupForm() {
   const [error, setError] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { signup } = useAuth();
 
   const redirectTarget = searchParams.get('redirect') || '/dashboard';
 
@@ -24,18 +26,25 @@ function SignupForm() {
     setLoading(true);
     setError('');
 
+    const cleanEmail = email.trim().toLowerCase();
+    const baseUsername = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    const username = `${baseUsername}_${Math.random().toString(36).slice(2, 6)}`;
+
     try {
-      const result = signupUser({ name, email, password, preferredStyle, location });
-      if (result.success) {
-        router.refresh();
-        router.push(redirectTarget);
-      } else {
-        setError(result.error || 'Registration failed');
-      }
+      await signup({
+        fullName: name.trim(),
+        username,
+        email: cleanEmail,
+        password,
+        preferredCurrency: 'BDT',
+        preferredLanguage: 'EN',
+      });
+      router.push(redirectTarget);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during signup');
+      setError(normalizeApiErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -134,7 +143,7 @@ function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all cursor-pointer"
+          className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
@@ -158,7 +167,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <div className="w-full min-h-screen pt-28 pb-20 bg-slate-50 flex items-center justify-center px-4">
-      <Suspense fallback={<div className="text-center text-xs text-slate-400 font-semibold animate-pulse">Loading signup form...</div>}>
+      <Suspense fallback={<div className="text-center text-xs text-slate-400 font-semibold animate-pulse">Loading registration...</div>}>
         <SignupForm />
       </Suspense>
     </div>
