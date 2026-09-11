@@ -2,20 +2,30 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import TripCard from '@/components/cards/TripCard';
 import { getTripByIdOrSlug } from '@/lib/clientStore';
 import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
 import { TripCostDisplay } from '@/components/trips/TripCostDisplay';
-import GoogleTripMap from '@/components/trips/GoogleTripMap';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { MapPin, Calendar, Clock, ShieldCheck, Star, Lightbulb, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { ITrip } from '@/types';
+import { ITrip, IItineraryDay } from '@/types';
+
+const GoogleTripMap = dynamic(() => import('@/components/trips/GoogleTripMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 rounded-2xl bg-slate-900 border border-white/10 animate-pulse flex items-center justify-center my-8">
+      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Loading Interactive Map...</p>
+    </div>
+  ),
+});
 
 export default function TripDetailsPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const [trip, setTrip] = useState<ITrip | null>(null);
-  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initialData = slug ? getTripByIdOrSlug(slug) : { trip: null, relatedTrips: [] };
+  const [trip, setTrip] = useState<ITrip | null>(() => initialData.trip);
+  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>(() => initialData.relatedTrips);
+  const [loading, setLoading] = useState(() => !initialData.trip);
 
   useEffect(() => {
     if (slug) {
@@ -185,7 +195,7 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
           </h2>
 
           <div className="space-y-6">
-            {trip.itinerary?.map((day: any) => (
+            {trip.itinerary?.map((day: IItineraryDay) => (
               <div key={day.dayNumber} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 relative pl-12">
                 <div className="absolute left-4 top-6 w-6 h-6 rounded-full bg-brand-500 text-white font-bold text-xs flex items-center justify-center">
                   {day.dayNumber}
@@ -312,7 +322,7 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
         </div>
 
         {/* Comments Section */}
-        <CommentsSection tripId={trip.id || (trip as any)._id} />
+        <CommentsSection tripId={trip.id} />
 
         {/* Related Trips */}
         {relatedTrips.length > 0 && (
@@ -321,8 +331,8 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
               More Community Trips
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {relatedTrips.map((rt: any) => (
-                <TripCard key={rt.id || rt._id} trip={rt} />
+              {relatedTrips.map((rt: ITrip) => (
+                <TripCard key={rt.id} trip={rt} />
               ))}
             </div>
           </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import SplitHero from '@/components/hero/SplitHero';
 import DestinationCard from '@/components/cards/DestinationCard';
 import TripCard from '@/components/cards/TripCard';
@@ -11,20 +12,15 @@ import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
 import { getDestinations, getTrips, getGallery } from '@/lib/clientStore';
 
 export default function HomePage() {
-  const [destinations, setDestinations] = useState<IDestination[]>([]);
-  const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
-  const [trips, setTrips] = useState<ITrip[]>([]);
-  const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
-  const [stats, setStats] = useState({
-    totalTrips: 0,
-    totalUsers: 0,
-    totalHelpfulVotes: 0,
-    totalDestinations: 0,
-  });
+  const [destinations, setDestinations] = useState<IDestination[]>(() => getDestinations());
+  const [popularTrips, setPopularTrips] = useState<ITrip[]>(() => getTrips({ popular: true }));
+  const [trips, setTrips] = useState<ITrip[]>(() => getTrips());
+  const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>(() => getGallery());
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [maxBudget, setMaxBudget] = useState<number>(50000);
 
   useEffect(() => {
+    // Keep in sync with clientStore
     const destList = getDestinations();
     const tripList = getTrips();
     const popList = getTrips({ popular: true });
@@ -34,21 +30,25 @@ export default function HomePage() {
     setTrips(tripList);
     setPopularTrips(popList);
     setGalleryItems(galList);
-
-    const totalHelpful = tripList.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
-    setStats({
-      totalDestinations: destList.length,
-      totalTrips: tripList.length,
-      totalUsers: 3,
-      totalHelpfulVotes: totalHelpful,
-    });
   }, []);
 
-  const filteredTrips = trips.filter((t) => {
-    const matchesCategory = activeCategory === 'All' || t.travelType === activeCategory;
-    const matchesBudget = (t.costBreakdown?.perPersonCost || 0) <= maxBudget;
-    return matchesCategory && matchesBudget;
-  });
+  const stats = useMemo(() => {
+    const totalHelpful = trips.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
+    return {
+      totalDestinations: destinations.length,
+      totalTrips: trips.length,
+      totalUsers: 3,
+      totalHelpfulVotes: totalHelpful,
+    };
+  }, [destinations.length, trips]);
+
+  const filteredTrips = useMemo(() => {
+    return trips.filter((t) => {
+      const matchesCategory = activeCategory === 'All' || t.travelType === activeCategory;
+      const matchesBudget = (t.costBreakdown?.perPersonCost || 0) <= maxBudget;
+      return matchesCategory && matchesBudget;
+    });
+  }, [trips, activeCategory, maxBudget]);
 
   return (
     <div className="w-full bg-slate-50">
@@ -78,8 +78,8 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {popularTrips.length > 0
-            ? popularTrips.slice(0, 6).map((trip) => <TripCard key={trip.id || (trip as any)._id} trip={trip} />)
-            : destinations.slice(0, 6).map((dest) => <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />)}
+            ? popularTrips.slice(0, 6).map((trip) => <TripCard key={trip.id} trip={trip} />)
+            : destinations.slice(0, 6).map((dest) => <DestinationCard key={dest.id} destination={dest} />)}
         </div>
       </section>
 
@@ -150,7 +150,7 @@ export default function HomePage() {
           {filteredTrips.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredTrips.slice(0, 6).map((trip) => (
-                <TripCard key={trip.id || (trip as any)._id} trip={trip} />
+                <TripCard key={trip.id} trip={trip} />
               ))}
             </div>
           ) : (
@@ -207,16 +207,18 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {galleryItems.slice(0, 6).map((item) => (
               <Link
-                key={item.id || (item as any)._id}
+                key={item.id}
                 href={`/trips/${item.tripSlug || item.tripId}`}
                 className="group relative h-48 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
               >
-                <img
+                <Image
                   src={item.url}
                   alt={item.caption || item.destinationName}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white z-10">
                   <p className="text-[11px] font-bold truncate">{item.photographerName}</p>
                   <p className="text-[10px] text-cyan-300 font-semibold truncate">{item.tripTitle}</p>
                   <p className="text-[9px] text-white/70 truncate">{item.destinationName} • {item.travelType}</p>

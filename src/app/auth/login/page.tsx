@@ -30,8 +30,8 @@ function LoginForm() {
       } else {
         setError(result.error || 'Invalid email or password');
       }
-    } catch (err: any) {
-      setError(err?.message || 'Error during sign in');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error during sign in');
     }
     setLoading(false);
   };

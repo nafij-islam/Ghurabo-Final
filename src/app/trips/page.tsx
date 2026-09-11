@@ -3,48 +3,35 @@
 import React, { useState, useEffect } from 'react';
 import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
-import { ITrip } from '@/types';
+import { ITrip, TravelType } from '@/types';
 import { Search, Compass, SlidersHorizontal } from 'lucide-react';
-
 import { getTrips } from '@/lib/clientStore';
+import { useTripFilters, TripSortOption } from '@/hooks/useTripFilters';
 
 export default function AllTripsPage() {
-  const [trips, setTrips] = useState<ITrip[]>([]);
-  const [search, setSearch] = useState('');
-  const [travelType, setTravelType] = useState('All');
-  const [sortOption, setSortOption] = useState('newest');
-  const [maxBudget, setMaxBudget] = useState(100000);
-  const [loading, setLoading] = useState(true);
+  const [allTrips, setAllTrips] = useState<ITrip[]>(() => getTrips());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchTrips();
-  }, [travelType, sortOption, maxBudget]);
+    // Keep in sync with clientStore
+    const list = getTrips();
+    setAllTrips(list);
+  }, []);
 
-  const fetchTrips = () => {
-    setLoading(true);
-    let list = getTrips({
-      travelType,
-      sort: sortOption,
-      maxBudget,
-    });
-
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.destinationName.toLowerCase().includes(q) ||
-          t.summary.toLowerCase().includes(q)
-      );
-    }
-
-    setTrips(list);
-    setLoading(false);
-  };
+  const {
+    travelType,
+    setTravelType,
+    searchQuery,
+    setSearchQuery,
+    maxBudget,
+    setMaxBudget,
+    sortBy,
+    setSortBy,
+    filteredTrips,
+  } = useTripFilters(allTrips);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchTrips();
   };
 
   return (
@@ -74,8 +61,8 @@ export default function AllTripsPage() {
               <input
                 type="text"
                 placeholder="Search trip title, summary, or destination..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
@@ -96,7 +83,7 @@ export default function AllTripsPage() {
               </label>
               <select
                 value={travelType}
-                onChange={(e) => setTravelType(e.target.value)}
+                onChange={(e) => setTravelType(e.target.value as TravelType | 'All')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none"
               >
                 <option value="All">All Categories</option>
@@ -113,8 +100,8 @@ export default function AllTripsPage() {
                 Sort By
               </label>
               <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as TripSortOption)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none"
               >
                 <option value="newest">Newest Published</option>
@@ -150,10 +137,10 @@ export default function AllTripsPage() {
               <TripCardSkeleton key={i} />
             ))}
           </div>
-        ) : trips.length > 0 ? (
+        ) : filteredTrips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {trips.map((trip) => (
-              <TripCard key={trip.id || (trip as any)._id} trip={trip} />
+            {filteredTrips.map((trip) => (
+              <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
         ) : (

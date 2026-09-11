@@ -61,11 +61,11 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     const user = getCurrentUser();
     if (user) {
       if (user.preferredCurrency) {
-        setCurrencyState(user.preferredCurrency as any);
+        setCurrencyState(user.preferredCurrency as CurrencyCode);
         setCookie('ghurabo_currency', user.preferredCurrency);
       }
       if (user.preferredLanguage) {
-        setLanguageState(user.preferredLanguage as any);
+        setLanguageState(user.preferredLanguage as LanguageCode);
         setCookie('ghurabo_lang', user.preferredLanguage);
       }
     }

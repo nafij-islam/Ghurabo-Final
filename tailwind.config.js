@@ -33,8 +33,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        display: ["Oswald", "Bebas Neue", "sans-serif"],
-        body: ["Inter", "Plus Jakarta Sans", "sans-serif"],
+        display: ["var(--font-display)", "Oswald", "Bebas Neue", "sans-serif"],
+        body: ["var(--font-body)", "var(--font-sans)", "Inter", "Plus Jakarta Sans", "sans-serif"],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

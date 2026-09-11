@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2 } from 'lucide-react';
-import { ITrip, IComment } from '@/types';
+import { ITrip, IComment, IUser } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import {
   getCurrentUser,
@@ -28,10 +28,10 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
   const [savesCount, setSavesCount] = useState(trip.savesCount || 0);
   const [helpfulCount, setHelpfulCount] = useState(initialHelpfulCount || trip.helpfulVotesCount || 0);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const router = useRouter();
 
-  const tripIdOrSlug = trip.id || (trip as any)._id || trip.slug;
+  const tripIdOrSlug = trip.id || trip.slug;
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -114,7 +114,7 @@ export function CommentsSection({ tripId }: { tripId: string }) {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const router = useRouter();
 
   useEffect(() => {

@@ -1,33 +1,35 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DestinationCard from '@/components/cards/DestinationCard';
 import { DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination } from '@/types';
 import { Search, MapPin, Compass } from 'lucide-react';
-
 import { getDestinations } from '@/lib/clientStore';
 
 export default function DestinationsPage() {
-  const [destinations, setDestinations] = useState<IDestination[]>([]);
+  const [destinations, setDestinations] = useState<IDestination[]>(() => getDestinations());
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const list = getDestinations();
     setDestinations(list);
-    setLoading(false);
   }, []);
 
-  const filtered = destinations.filter((dest) => {
-    const matchesCategory = selectedCategory === 'All' || dest.category.toLowerCase() === selectedCategory.toLowerCase();
-    const matchesSearch =
-      dest.name.toLowerCase().includes(search.toLowerCase()) ||
-      dest.country.toLowerCase().includes(search.toLowerCase()) ||
-      dest.description.toLowerCase().includes(search.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filtered = useMemo(() => {
+    return destinations.filter((dest) => {
+      const matchesCategory =
+        selectedCategory === 'All' ||
+        dest.category.toLowerCase() === selectedCategory.toLowerCase();
+      const matchesSearch =
+        dest.name.toLowerCase().includes(search.toLowerCase()) ||
+        dest.country.toLowerCase().includes(search.toLowerCase()) ||
+        dest.description.toLowerCase().includes(search.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [destinations, selectedCategory, search]);
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
@@ -92,7 +94,7 @@ export default function DestinationsPage() {
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filtered.map((dest) => (
-              <DestinationCard key={dest.id || (dest as any)._id} destination={dest} />
+              <DestinationCard key={dest.id} destination={dest} />
             ))}
           </div>
         ) : (

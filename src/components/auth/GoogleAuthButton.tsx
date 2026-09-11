@@ -28,7 +28,7 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
 
       router.refresh();
       router.push(redirectTarget);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Google sign-in error:', err);
       if (onError) onError('Failed to authenticate with Google.');
     } finally {

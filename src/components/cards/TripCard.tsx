@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Bookmark, Star, ShieldCheck, MapPin, Clock, Heart } from 'lucide-react';
 import { ITrip } from '@/types';
@@ -56,11 +57,12 @@ export default function TripCard({ trip }: TripCardProps) {
     <div className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-card-hover border border-slate-100 transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1">
       {/* Top Image Section */}
       <div className="relative h-60 w-full overflow-hidden bg-slate-100">
-        <img
+        <Image
           src={getOptimizedImageUrl(trip.coverImage, { width: 600, height: 400 })}
           alt={trip.title}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
 
         {/* Dark Gradient Overlay */}

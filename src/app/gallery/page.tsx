@@ -1,35 +1,36 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import LightboxModal from '@/components/gallery/LightboxModal';
 import { IGalleryItem } from '@/types';
-import { Camera, Search, Compass, Eye, User, ArrowUpRight } from 'lucide-react';
-
+import { Camera, Search, Eye, User, ArrowUpRight } from 'lucide-react';
 import { getGallery } from '@/lib/clientStore';
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<IGalleryItem[]>([]);
+  const [items, setItems] = useState<IGalleryItem[]>(() => getGallery());
   const [travelType, setTravelType] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const list = getGallery();
     setItems(list);
-    setLoading(false);
   }, []);
 
-  const filtered = items.filter((item) => {
-    const matchesCategory = travelType === 'All' || item.travelType === travelType;
-    const matchesSearch =
-      item.destinationName.toLowerCase().includes(search.toLowerCase()) ||
-      item.photographerName.toLowerCase().includes(search.toLowerCase()) ||
-      (item.tripTitle && item.tripTitle.toLowerCase().includes(search.toLowerCase())) ||
-      (item.caption && item.caption.toLowerCase().includes(search.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  const filtered = useMemo(() => {
+    return items.filter((item) => {
+      const matchesCategory = travelType === 'All' || item.travelType === travelType;
+      const matchesSearch =
+        item.destinationName.toLowerCase().includes(search.toLowerCase()) ||
+        item.photographerName.toLowerCase().includes(search.toLowerCase()) ||
+        (item.tripTitle && item.tripTitle.toLowerCase().includes(search.toLowerCase())) ||
+        (item.caption && item.caption.toLowerCase().includes(search.toLowerCase()));
+      return matchesCategory && matchesSearch;
+    });
+  }, [items, travelType, search]);
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
@@ -91,7 +92,7 @@ export default function GalleryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map((item, index) => (
               <div
-                key={item.id || (item as any)._id}
+                key={item.id}
                 className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Photo container with hover gradient */}
@@ -99,15 +100,16 @@ export default function GalleryPage() {
                   onClick={() => setSelectedIndex(index)}
                   className="relative h-72 w-full overflow-hidden bg-slate-900 cursor-pointer"
                 >
-                  <img
+                  <Image
                     src={item.url}
                     alt={item.caption || item.destinationName}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
                   />
 
                   {/* Gradient Overlay for Desktop Hover & Mobile Touch */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-5 flex flex-col justify-between text-white">
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-5 flex flex-col justify-between text-white z-10">
                     <div className="flex justify-end">
                       <span className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all">
                         <Eye className="w-4 h-4" />

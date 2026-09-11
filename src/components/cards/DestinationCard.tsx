@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, Star, Compass, DollarSign, Calendar } from 'lucide-react';
+import Image from 'next/image';
+import { MapPin, Star, Compass } from 'lucide-react';
 import { IDestination } from '@/types';
 
 interface DestinationCardProps {
@@ -16,10 +15,12 @@ export default function DestinationCard({ destination }: DestinationCardProps) {
       className="group relative rounded-3xl overflow-hidden bg-slate-900 shadow-md hover:shadow-card-hover transition-all duration-500 flex flex-col justify-end min-h-[340px] transform hover:-translate-y-1"
     >
       {/* Background Image */}
-      <img
+      <Image
         src={destination.image}
         alt={destination.name}
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
       />
 
       {/* Gradient Mask Overlays */}

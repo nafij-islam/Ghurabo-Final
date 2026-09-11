@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePreferences } from '@/context/PreferencesContext';
+import { TranslationKey } from '@/locales/en';
 
 interface TripCostDisplayProps {
   amountBDT: number;
@@ -13,7 +14,7 @@ export function TripCostDisplay({ amountBDT, className }: TripCostDisplayProps) 
   return <span className={className}>{formatCost(amountBDT)}</span>;
 }
 
-export function TranslatedText({ k, fallback }: { k: any; fallback?: string }) {
+export function TranslatedText({ k, fallback }: { k: TranslationKey; fallback?: string }) {
   const { t } = usePreferences();
   return <>{t(k, fallback)}</>;
 }

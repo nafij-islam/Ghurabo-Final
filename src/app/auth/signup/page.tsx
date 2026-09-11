@@ -32,8 +32,8 @@ function SignupForm() {
       } else {
         setError(result.error || 'Registration failed');
       }
-    } catch (err: any) {
-      setError(err?.message || 'An error occurred during signup');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during signup');
     }
     setLoading(false);
   };
