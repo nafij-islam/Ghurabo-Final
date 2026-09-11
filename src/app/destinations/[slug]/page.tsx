@@ -7,6 +7,8 @@ import TripCard from '@/components/cards/TripCard';
 import { IDestination, ITrip } from '@/types';
 import { MapPin, Calendar, Compass, ShieldAlert, Bus, Star, DollarSign, Users, ArrowRight } from 'lucide-react';
 
+import { getDestinationBySlug } from '@/lib/clientStore';
+
 export default function DestinationDetailsPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -23,18 +25,13 @@ export default function DestinationDetailsPage() {
 
   useEffect(() => {
     if (slug) {
-      fetch(`/api/destinations/${slug}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setDestination(data.destination);
-            setTrips(data.trips || []);
-            if (data.dynamicCostStats) {
-              setCostStats(data.dynamicCostStats);
-            }
-          }
-          setLoading(false);
-        });
+      const data = getDestinationBySlug(slug);
+      setDestination(data.destination);
+      setTrips(data.trips);
+      if (data.dynamicCostStats) {
+        setCostStats(data.dynamicCostStats);
+      }
+      setLoading(false);
     }
   }, [slug]);
 

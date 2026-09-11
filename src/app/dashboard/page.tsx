@@ -7,6 +7,8 @@ import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser } from '@/types';
 import { Compass, User, Clock, FileText, Bookmark, Heart, ShieldCheck, PlusCircle, Edit3 } from 'lucide-react';
 
+import { getCurrentUser, getTrips, getSavedTrips } from '@/lib/clientStore';
+
 export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
@@ -18,46 +20,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          const user = data.user as IUser;
-          setCurrentUser(user);
+    const user = getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+      const all = getTrips({ status: 'all' });
+      const myTrips = all.filter(
+        (t) =>
+          t.userId === user.id ||
+          t.userName.toLowerCase() === user.name.toLowerCase() ||
+          t.userName.toLowerCase() === user.email.toLowerCase()
+      );
+      setPublishedTrips(myTrips.filter((t) => t.status === 'approved'));
+      setPendingTrips(myTrips.filter((t) => t.status === 'pending'));
+      setDrafts(myTrips.filter((t) => t.status === 'draft'));
 
-          // Fetch user's own trips
-          fetch(`/api/trips?status=all&userId=${encodeURIComponent(user.id)}`)
-            .then((res) => res.json())
-            .then((tripData) => {
-              if (tripData.success) {
-                const all = (tripData.trips || []) as ITrip[];
-                const myTrips = all.filter(
-                  (t) =>
-                    t.userId === user.id ||
-                    t.userName.toLowerCase() === user.name.toLowerCase() ||
-                    t.userName.toLowerCase() === user.email.toLowerCase()
-                );
-
-                setPublishedTrips(myTrips.filter((t) => t.status === 'approved'));
-                setPendingTrips(myTrips.filter((t) => t.status === 'pending'));
-                setDrafts(myTrips.filter((t) => t.status === 'draft'));
-              }
-            });
-
-          // Fetch user's saved trips from MongoDB Atlas
-          fetch('/api/users/saved-trips')
-            .then((res) => res.json())
-            .then((savedData) => {
-              if (savedData.success && Array.isArray(savedData.savedTrips)) {
-                setSavedTrips(savedData.savedTrips);
-              }
-              setLoading(false);
-            })
-            .catch(() => setLoading(false));
-        } else {
-          setLoading(false);
-        }
-      });
+      const saved = getSavedTrips(user.id);
+      setSavedTrips(saved);
+    }
+    setLoading(false);
   }, []);
 
   return (

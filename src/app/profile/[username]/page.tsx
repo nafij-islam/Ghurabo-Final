@@ -8,9 +8,12 @@ import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser, IGalleryItem } from '@/types';
 import { MapPin, Award, Users, Compass, ThumbsUp, Heart, Edit3 } from 'lucide-react';
 
+import { getCurrentUser, getUserProfile, getTrips } from '@/lib/clientStore';
+
 export default function ProfilePage() {
   const params = useParams();
-  const username = params.username as string;
+  const rawParam = params?.slug || params?.username || '';
+  const username = (Array.isArray(rawParam) ? rawParam[0] : rawParam) as string;
 
   const [userProfile, setUserProfile] = useState<IUser | null>(null);
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
@@ -20,40 +23,21 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check logged in user
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-        }
-      });
+    const cur = getCurrentUser();
+    setCurrentUser(cur);
 
-    // Fetch target user profile from MongoDB Atlas / API
-    fetch(`/api/users/profile?id=${encodeURIComponent(username)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setUserProfile(data.user);
-        }
-      });
+    const profile = getUserProfile(username);
+    setUserProfile(profile || cur);
 
-    // Fetch author's published trips
-    fetch('/api/trips')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          const allTrips = (data.trips || []) as ITrip[];
-          const authorTrips = allTrips.filter(
-            (t) =>
-              t.userId === username ||
-              t.userName.toLowerCase().replace(/\s+/g, '-') === username.toLowerCase() ||
-              t.userName.toLowerCase() === username.toLowerCase()
-          );
-          setUserTrips(authorTrips);
-        }
-        setLoading(false);
-      });
+    const allTrips = getTrips({ status: 'all' });
+    const authorTrips = allTrips.filter(
+      (t) =>
+        t.userId === username ||
+        t.userName.toLowerCase().replace(/\s+/g, '-') === username.toLowerCase() ||
+        t.userName.toLowerCase() === username.toLowerCase()
+    );
+    setUserTrips(authorTrips);
+    setLoading(false);
   }, [username]);
 
   const activeUser = userProfile || currentUser;

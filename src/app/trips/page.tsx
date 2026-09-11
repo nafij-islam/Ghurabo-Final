@@ -6,6 +6,8 @@ import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip } from '@/types';
 import { Search, Compass, SlidersHorizontal } from 'lucide-react';
 
+import { getTrips } from '@/lib/clientStore';
+
 export default function AllTripsPage() {
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [search, setSearch] = useState('');
@@ -20,18 +22,24 @@ export default function AllTripsPage() {
 
   const fetchTrips = () => {
     setLoading(true);
-    let url = `/api/trips?travelType=${travelType}&sort=${sortOption}&maxBudget=${maxBudget}`;
+    let list = getTrips({
+      travelType,
+      sort: sortOption,
+      maxBudget,
+    });
+
     if (search.trim()) {
-      url += `&q=${encodeURIComponent(search.trim())}`;
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.destinationName.toLowerCase().includes(q) ||
+          t.summary.toLowerCase().includes(q)
+      );
     }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setTrips(data.trips || []);
-        }
-        setLoading(false);
-      });
+
+    setTrips(list);
+    setLoading(false);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {

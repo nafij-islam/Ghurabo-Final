@@ -1,7 +1,7 @@
 export type UserRole = 'traveller' | 'admin';
 export type TravelType = 'Solo' | 'Couple' | 'Family' | 'Group';
 export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected';
-export type CategoryType = 'Beach' | 'Mountain' | 'Resort' | 'Historical' | 'City' | 'Island';
+export type CategoryType = 'Beach' | 'Mountain' | 'Resort' | 'Historical' | 'City' | 'Island' | 'Nature' | 'Wildlife';
 export type CurrencyCode = 'BDT' | 'USD';
 export type LanguageCode = 'en' | 'bn';
 
@@ -110,6 +110,9 @@ export interface ITrip {
   savesCount: number;
   helpfulVotesCount: number;
   commentsCount: number;
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string;
   ratings: {
     overall: number;
     safety: number;

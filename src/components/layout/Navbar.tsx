@@ -5,17 +5,17 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Compass, Menu, X, User, PlusCircle, ShieldCheck, LogOut, Globe, DollarSign, ChevronDown } from 'lucide-react';
-import { SessionUser } from '@/lib/auth/session';
-import { AUTH_CHANGE_EVENT, notifyAuthChange } from '@/lib/auth/authEvent';
+import { IUser } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { usePreferences } from '@/context/PreferencesContext';
+import { getCurrentUser, logoutUser, AUTH_CHANGE_EVENT, notifyAuthChange } from '@/lib/clientStore';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMenuAnimate, setMobileMenuAnimate] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
@@ -42,16 +42,8 @@ export default function Navbar() {
   }, []);
 
   const checkAuth = () => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-        } else {
-          setCurrentUser(null);
-        }
-      })
-      .catch(() => setCurrentUser(null));
+    const user = getCurrentUser();
+    setCurrentUser(user as any);
   };
 
   useEffect(() => {
@@ -137,11 +129,10 @@ export default function Navbar() {
     } catch (err) {
       // Ignore if Firebase wasn't initialized or active
     }
-    await fetch('/api/auth/logout', { method: 'POST' });
+    logoutUser();
     setCurrentUser(null);
     setUserDropdownOpen(false);
     closeMobileMenu();
-    notifyAuthChange();
     router.refresh();
     router.push('/');
   };

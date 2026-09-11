@@ -8,6 +8,8 @@ import { ITrip } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { usePreferences } from '@/context/PreferencesContext';
 
+import { getCurrentUser, toggleLikeTrip, toggleSaveTrip, isTripSaved } from '@/lib/clientStore';
+
 interface TripCardProps {
   trip: ITrip;
 }
@@ -15,58 +17,37 @@ interface TripCardProps {
 export default function TripCard({ trip }: TripCardProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => isTripSaved(trip.id));
   const { formatCost, t } = usePreferences();
   const router = useRouter();
 
-  const verifyAuth = async (): Promise<boolean> => {
-    try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-      if (data.success && data.user) return true;
-    } catch (e) {}
-    return false;
-  };
-
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const isAuthed = await verifyAuth();
-    if (!isAuthed) {
+    const user = getCurrentUser();
+    if (!user) {
       router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
       return;
     }
 
-    setLiked(!liked);
-    setLikesCount(liked ? likesCount - 1 : likesCount + 1);
-    try {
-      await fetch(`/api/trips/${trip.id || (trip as any)._id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ action: 'like' }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (err) {}
+    const res = toggleLikeTrip(trip.id);
+    setLiked(res.liked);
+    setLikesCount(res.count);
   };
 
-  const handleSave = async (e: React.MouseEvent) => {
+  const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const isAuthed = await verifyAuth();
-    if (!isAuthed) {
+    const user = getCurrentUser();
+    if (!user) {
       router.push(`/auth/login?redirect=${encodeURIComponent(`/trips/${trip.slug || trip.id}`)}`);
       return;
     }
 
-    setSaved(!saved);
-    try {
-      await fetch(`/api/trips/${trip.id || (trip as any)._id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ action: 'save' }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (err) {}
+    const nowSaved = toggleSaveTrip(trip.id);
+    setSaved(nowSaved);
   };
 
   const perPersonCostBDT = trip.costBreakdown?.perPersonCost || trip.costBreakdown?.totalCost || 0;

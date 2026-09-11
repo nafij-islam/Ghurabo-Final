@@ -4,6 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShieldCheck, CheckCircle, XCircle, Clock, Compass, AlertTriangle, UserCheck, ShieldAlert, Star, MapPin } from 'lucide-react';
 import { ITrip, IUser, IDestination } from '@/types';
+import {
+  getCurrentUser,
+  getTrips,
+  getDestinations,
+  adminApproveTrip,
+  adminRejectTrip,
+  adminTogglePopularTrip,
+  adminToggleVerifyTrip,
+  adminTogglePopularDestination,
+  setCurrencyRate,
+} from '@/lib/clientStore';
 
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<IUser | null>(null);
@@ -21,69 +32,47 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check logged in user from /api/auth/me (MongoDB Atlas real-time check)
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-          if (data.user.role === 'admin') {
-            fetchAdminData();
-          }
-        }
-        setCheckingAuth(false);
-      })
-      .catch(() => setCheckingAuth(false));
+    const user = getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+      if (user.role === 'admin') {
+        fetchAdminData();
+      }
+    }
+    setCheckingAuth(false);
   }, []);
 
   const fetchAdminData = () => {
     setLoading(true);
-    fetch('/api/admin/trips')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setPendingTrips(data.pendingTrips || []);
-          setPublishedTrips(data.publishedTrips || []);
-          if (data.stats) setStats(data.stats);
-        }
-        setLoading(false);
-      });
+    const allTrips = getTrips({ status: 'all' });
+    const pending = allTrips.filter((t) => t.status === 'pending');
+    const published = allTrips.filter((t) => t.status === 'approved');
+    const dests = getDestinations();
 
-    fetch('/api/admin/destinations')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setDestinations(data.destinations || []);
-        }
-      });
+    setPendingTrips(pending);
+    setPublishedTrips(published);
+    setDestinations(dests);
+    setStats({
+      totalTrips: published.length,
+      pendingApprovals: pending.length,
+      totalUsers: 3,
+      totalDestinations: dests.length,
+      totalGalleryImages: 6,
+    });
+    setLoading(false);
   };
 
-  const handleAction = async (tripId: string, action: 'approve' | 'reject' | 'verify' | 'togglePopular') => {
-    try {
-      const res = await fetch('/api/admin/trips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tripId, action }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchAdminData();
-      }
-    } catch (err) {}
+  const handleAction = (tripId: string, action: 'approve' | 'reject' | 'verify' | 'togglePopular') => {
+    if (action === 'approve') adminApproveTrip(tripId);
+    if (action === 'reject') adminRejectTrip(tripId);
+    if (action === 'togglePopular') adminTogglePopularTrip(tripId);
+    if (action === 'verify') adminToggleVerifyTrip(tripId);
+    fetchAdminData();
   };
 
-  const togglePopularDestination = async (destinationId: string, currentPopular: boolean) => {
-    try {
-      const res = await fetch('/api/admin/destinations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ destinationId, isPopular: !currentPopular }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchAdminData();
-      }
-    } catch (err) {}
+  const togglePopularDestination = (destinationId: string, currentPopular: boolean) => {
+    adminTogglePopularDestination(destinationId);
+    fetchAdminData();
   };
 
   if (checkingAuth) {
@@ -238,21 +227,11 @@ export default function AdminPage() {
           </div>
 
           <form
-            onSubmit={async (e) => {
+            onSubmit={(e) => {
               e.preventDefault();
-              try {
-                const targetRate = Number((e.currentTarget.elements.namedItem('rate') as HTMLInputElement).value);
-                const targetMode = (e.currentTarget.elements.namedItem('mode') as HTMLSelectElement).value;
-                const res = await fetch('/api/admin/currency', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ rate: targetRate, mode: targetMode }),
-                });
-                const data = await res.json();
-                if (data.success) {
-                  alert(`Exchange rate updated! 1 USD = ৳${data.rate}`);
-                }
-              } catch (err) {}
+              const targetRate = Number((e.currentTarget.elements.namedItem('rate') as HTMLInputElement).value);
+              setCurrencyRate(targetRate);
+              alert(`Exchange rate updated! 1 USD = ৳${targetRate}`);
             }}
             className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end bg-slate-50 p-6 rounded-2xl border border-slate-200"
           >

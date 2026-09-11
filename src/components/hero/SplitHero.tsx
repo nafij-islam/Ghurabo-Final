@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin, PlusCircle } from 'lucide-react';
 
+import { getCurrentUser, AUTH_CHANGE_EVENT } from '@/lib/clientStore';
+
 const HERO_SLIDES = [
   {
     image: '/banner-one.png',
@@ -41,14 +43,17 @@ export default function SplitHero() {
   const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setIsAuthenticated(true);
-        }
-      })
-      .catch(() => setIsAuthenticated(false));
+    const user = getCurrentUser();
+    setIsAuthenticated(!!user);
+
+    const handleAuth = () => {
+      setIsAuthenticated(!!getCurrentUser());
+    };
+
+    window.addEventListener(AUTH_CHANGE_EVENT, handleAuth);
+    return () => {
+      window.removeEventListener(AUTH_CHANGE_EVENT, handleAuth);
+    };
   }, []);
 
   const slide = HERO_SLIDES[currentSlideIndex];

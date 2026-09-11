@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { notifyAuthChange } from '@/lib/auth/authEvent';
+import { signupUser } from '@/lib/clientStore';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function SignupForm() {
@@ -25,18 +25,12 @@ function SignupForm() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, preferredStyle, location }),
-      });
-      const data = await res.json().catch(() => ({ success: false, error: 'Server connection error' }));
-      if (res.ok && data.success) {
-        notifyAuthChange();
+      const result = signupUser({ name, email, password, preferredStyle, location });
+      if (result.success) {
         router.refresh();
         router.push(redirectTarget);
       } else {
-        setError(data.error || 'Registration failed');
+        setError(result.error || 'Registration failed');
       }
     } catch (err: any) {
       setError(err?.message || 'An error occurred during signup');

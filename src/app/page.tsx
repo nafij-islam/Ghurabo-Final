@@ -8,6 +8,8 @@ import TripCard from '@/components/cards/TripCard';
 import { IDestination, ITrip, IGalleryItem } from '@/types';
 import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
 
+import { getDestinations, getTrips, getGallery } from '@/lib/clientStore';
+
 export default function HomePage() {
   const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
@@ -23,33 +25,23 @@ export default function HomePage() {
   const [maxBudget, setMaxBudget] = useState<number>(50000);
 
   useEffect(() => {
-    // Parallelize all initial homepage data requests from MongoDB Atlas
-    Promise.all([
-      fetch('/api/destinations').then((res) => res.json()),
-      fetch('/api/trips?popular=true').then((res) => res.json()),
-      fetch('/api/trips').then((res) => res.json()),
-      fetch('/api/gallery').then((res) => res.json()),
-    ])
-      .then(([destData, popData, tripData, galData]) => {
-        if (destData.success) {
-          const destList = destData.destinations || [];
-          setDestinations(destList);
-          setStats((prev) => ({ ...prev, totalDestinations: destList.length }));
-        }
-        if (popData.success) setPopularTrips(popData.trips || []);
-        if (tripData.success) {
-          const tripList = tripData.trips || [];
-          setTrips(tripList);
-          const totalHelpful = tripList.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
-          setStats((prev) => ({
-            ...prev,
-            totalTrips: tripData.total || tripList.length,
-            totalHelpfulVotes: totalHelpful,
-          }));
-        }
-        if (galData.success) setGalleryItems(galData.gallery || []);
-      })
-      .catch((err) => console.warn('Homepage data load error:', err));
+    const destList = getDestinations();
+    const tripList = getTrips();
+    const popList = getTrips({ popular: true });
+    const galList = getGallery();
+
+    setDestinations(destList);
+    setTrips(tripList);
+    setPopularTrips(popList);
+    setGalleryItems(galList);
+
+    const totalHelpful = tripList.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
+    setStats({
+      totalDestinations: destList.length,
+      totalTrips: tripList.length,
+      totalUsers: 3,
+      totalHelpfulVotes: totalHelpful,
+    });
   }, []);
 
   const filteredTrips = trips.filter((t) => {

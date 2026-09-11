@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { Camera, Image as ImageIcon, User, MapPin, Sparkles, Check, X, Upload } from 'lucide-react';
-import { IUser } from '@/types';
+import { IUser, TravelType } from '@/types';
+
+import { updateProfile } from '@/lib/clientStore';
 
 interface EditProfileModalProps {
   user: IUser;
@@ -16,60 +18,49 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
   const [coverImage, setCoverImage] = useState(user.coverImage || '');
   const [bio, setBio] = useState(user.bio || '');
   const [location, setLocation] = useState(user.location || '');
-  const [preferredStyle, setPreferredStyle] = useState<string>(user.preferredStyle || 'Solo');
+  const [preferredStyle, setPreferredStyle] = useState<TravelType>((user.preferredStyle as TravelType) || 'Solo');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileUpload = async (file: File, type: 'avatar' | 'cover') => {
+  const handleFileUpload = (file: File, type: 'avatar' | 'cover') => {
     if (type === 'avatar') setUploadingAvatar(true);
     else setUploadingCover(true);
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
-        if (type === 'avatar') setAvatar(data.url);
-        else setCoverImage(data.url);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target?.result as string;
+      if (url) {
+        if (type === 'avatar') setAvatar(url);
+        else setCoverImage(url);
       }
-    } catch (err) {
-      console.warn('Image upload failed:', err);
-    }
-
-    if (type === 'avatar') setUploadingAvatar(false);
-    else setUploadingCover(false);
+      if (type === 'avatar') setUploadingAvatar(false);
+      else setUploadingCover(false);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError('');
 
     try {
-      const res = await fetch('/api/users/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          avatar,
-          coverImage,
-          bio,
-          location,
-          preferredStyle,
-        }),
+      const updated = updateProfile(user.id, {
+        name,
+        avatar,
+        coverImage,
+        bio,
+        location,
+        preferredStyle,
       });
-      const data = await res.json();
-      if (data.success && data.user) {
-        onSuccess(data.user);
+
+      if (updated) {
+        onSuccess(updated);
         onClose();
       } else {
-        setError(data.error || 'Failed to update profile.');
+        setError('Failed to update profile.');
       }
     } catch (err) {
       setError('An error occurred updating profile.');
@@ -215,7 +206,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
               <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Preferred Travel Style</label>
               <select
                 value={preferredStyle}
-                onChange={(e) => setPreferredStyle(e.target.value)}
+                onChange={(e) => setPreferredStyle(e.target.value as TravelType)}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
               >
                 <option value="Solo">Solo Explorer</option>

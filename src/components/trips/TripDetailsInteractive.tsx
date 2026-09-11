@@ -6,6 +6,15 @@ import { useRouter } from 'next/navigation';
 import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2 } from 'lucide-react';
 import { ITrip, IComment } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
+import {
+  getCurrentUser,
+  toggleLikeTrip,
+  toggleSaveTrip,
+  toggleHelpfulVote,
+  isTripSaved,
+  getComments,
+  addComment,
+} from '@/lib/clientStore';
 
 interface Props {
   trip: ITrip;
@@ -25,31 +34,12 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   const tripIdOrSlug = trip.id || (trip as any)._id || trip.slug;
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-        }
-      })
-      .catch(() => {});
-
-    fetch(`/api/trips/${tripIdOrSlug}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          if (data.isLiked !== undefined) setLiked(data.isLiked);
-          if (data.isSaved !== undefined) setSaved(data.isSaved);
-          if (data.isHelpful !== undefined) setHelpful(data.isHelpful);
-          if (data.trip) {
-            setLikesCount(data.trip.likesCount || 0);
-            setSavesCount(data.trip.savesCount || 0);
-            setHelpfulCount(data.trip.helpfulVotesCount || initialHelpfulCount || 0);
-          }
-        }
-      })
-      .catch(() => {});
-  }, [tripIdOrSlug]);
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    if (trip.id) {
+      setSaved(isTripSaved(trip.id));
+    }
+  }, [trip.id]);
 
   const requireAuth = () => {
     if (!currentUser) {
@@ -60,49 +50,25 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
     return true;
   };
 
-  const handleLike = async () => {
+  const handleLike = () => {
     if (!requireAuth()) return;
-    const newLiked = !liked;
-    setLiked(newLiked);
-    setLikesCount((prev) => (newLiked ? prev + 1 : Math.max(0, prev - 1)));
-
-    try {
-      await fetch(`/api/trips/${tripIdOrSlug}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: newLiked ? 'like' : 'unlike' }),
-      });
-    } catch (err) {}
+    const res = toggleLikeTrip(trip.id);
+    setLiked(res.liked);
+    setLikesCount(res.count);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!requireAuth()) return;
-    const newSaved = !saved;
-    setSaved(newSaved);
-    setSavesCount((prev) => (newSaved ? prev + 1 : Math.max(0, prev - 1)));
-
-    try {
-      await fetch(`/api/trips/${tripIdOrSlug}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: newSaved ? 'save' : 'unsave' }),
-      });
-    } catch (err) {}
+    const nowSaved = toggleSaveTrip(trip.id);
+    setSaved(nowSaved);
+    setSavesCount((prev) => (nowSaved ? prev + 1 : Math.max(0, prev - 1)));
   };
 
-  const handleHelpfulVote = async () => {
+  const handleHelpfulVote = () => {
     if (!requireAuth()) return;
-    const newHelpful = !helpful;
-    setHelpful(newHelpful);
-    setHelpfulCount((prev) => (newHelpful ? prev + 1 : Math.max(0, prev - 1)));
-
-    try {
-      await fetch(`/api/trips/${tripIdOrSlug}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: newHelpful ? 'helpful' : 'unhelpful' }),
-      });
-    } catch (err) {}
+    const res = toggleHelpfulVote(trip.id);
+    setHelpful(res.voted);
+    setHelpfulCount(res.count);
   };
 
   return (
@@ -152,27 +118,14 @@ export function CommentsSection({ tripId }: { tripId: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-        }
-      })
-      .catch(() => {});
-
-    fetch(`/api/trips/${tripId}/comments`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.comments)) {
-          setComments(data.comments);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    const list = getComments(tripId);
+    setComments(list);
+    setLoading(false);
   }, [tripId]);
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
@@ -183,31 +136,16 @@ export function CommentsSection({ tripId }: { tripId: string }) {
     }
 
     setSubmitting(true);
-    try {
-      const res = await fetch(`/api/trips/${tripId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment.trim() }),
-      });
-      const data = await res.json();
-      if (data.success && data.comment) {
-        setComments([data.comment, ...comments]);
-        setNewComment('');
-      }
-    } catch (err) {}
+    const added = addComment(tripId, newComment);
+    if (added) {
+      setComments([added, ...comments]);
+      setNewComment('');
+    }
     setSubmitting(false);
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      const res = await fetch(`/api/trips/${tripId}/comments?commentId=${commentId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success) {
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
-      }
-    } catch (err) {}
+  const handleDeleteComment = (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
   };
 
   return (

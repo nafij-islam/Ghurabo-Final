@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { firebaseAuth, googleProvider, signInWithPopup } from '@/lib/firebase/client';
-import { notifyAuthChange } from '@/lib/auth/authEvent';
+import { googleLoginUser } from '@/lib/clientStore';
 
 interface GoogleAuthButtonProps {
   redirectTarget?: string;
@@ -23,35 +23,16 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
       const result = await signInWithPopup(firebaseAuth, googleProvider);
       const user = result.user;
 
-      // 2. Obtain Firebase ID token
-      const idToken = await user.getIdToken();
-
-      // 3. Post Token to /api/auth/google for verification & MongoDB matching
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
+      // 2. Client-side authentication via clientStore
+      googleLoginUser({
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
       });
 
-      let data: any = {};
-      try {
-        data = await res.json();
-      } catch (e) {
-        data = {
-          success: false,
-          error: res.status === 404
-            ? 'Authentication route not found (/api/auth/google).'
-            : `Server response error (HTTP ${res.status}).`,
-        };
-      }
-
-      if (data.success) {
-        notifyAuthChange();
-        router.refresh();
-        router.push(redirectTarget);
-      } else {
-        if (onError) onError(data.error || 'Google authentication failed.');
-      }
+      router.refresh();
+      router.push(redirectTarget);
     } catch (err: any) {
       // Handle graceful popup cancellation without scary banners
       if (

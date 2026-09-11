@@ -1,66 +1,38 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import mongoose from 'mongoose';
 import TripCard from '@/components/cards/TripCard';
-import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
-import { TripModel } from '@/lib/db/models';
+import { getTripByIdOrSlug } from '@/lib/clientStore';
 import { AuthorActions, CommentsSection } from '@/components/trips/TripDetailsInteractive';
 import { TripCostDisplay } from '@/components/trips/TripCostDisplay';
 import GoogleTripMap from '@/components/trips/GoogleTripMap';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { MapPin, Calendar, Clock, ShieldCheck, Star, Lightbulb, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ITrip } from '@/types';
 
-const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt';
-
-async function getTripData(idOrSlug: string) {
-  try {
-    const conn = await connectToDatabase();
-
-    if (conn) {
-      const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
-      const query = isObjectId
-        ? { $or: [{ id: idOrSlug }, { slug: idOrSlug }, { _id: idOrSlug }] }
-        : { $or: [{ id: idOrSlug }, { slug: idOrSlug }] };
-
-      const trip = (await TripModel.findOne(query).lean()) as any;
-
-      if (trip) {
-        const relatedTrips = (await TripModel.find({
-          id: { $ne: trip.id },
-          status: 'approved',
-          $or: [{ destinationId: trip.destinationId }, { travelType: trip.travelType }],
-        })
-          .select(TRIP_CARD_FIELDS)
-          .limit(3)
-          .sort({ createdAt: -1 })
-          .lean()) as any[];
-
-        return { trip, relatedTrips };
-      }
-    }
-
-    // In-Memory Fallback
-    const db = getMemoryDb();
-    const trip =
-      db.trips.find((t) => t.id === idOrSlug || t.slug === idOrSlug) ||
-      db.pendingApprovals.find((t) => t.id === idOrSlug || t.slug === idOrSlug) ||
-      db.drafts.find((t) => t.id === idOrSlug || t.slug === idOrSlug);
-
-    if (!trip) return { trip: null, relatedTrips: [] };
-
-    const relatedTrips = db.trips
-      .filter((t) => t.id !== trip.id && (t.destinationId === trip.destinationId || t.travelType === trip.travelType))
-      .slice(0, 3);
-
-    return { trip, relatedTrips };
-  } catch (error) {
-    return { trip: null, relatedTrips: [] };
-  }
-}
-
-export default async function TripDetailsPage({ params }: { params: { slug: string } }) {
+export default function TripDetailsPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const { trip, relatedTrips } = await getTripData(slug);
+  const [trip, setTrip] = useState<ITrip | null>(null);
+  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (slug) {
+      const data = getTripByIdOrSlug(slug);
+      setTrip(data.trip);
+      setRelatedTrips(data.relatedTrips);
+      setLoading(false);
+    }
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="pt-32 pb-20 text-center text-slate-500 font-medium">
+        Loading trip story...
+      </div>
+    );
+  }
 
   if (!trip) {
     return (

@@ -6,6 +6,8 @@ import LightboxModal from '@/components/gallery/LightboxModal';
 import { IGalleryItem } from '@/types';
 import { Camera, Search, Compass, Eye, User, ArrowUpRight } from 'lucide-react';
 
+import { getGallery } from '@/lib/clientStore';
+
 export default function GalleryPage() {
   const [items, setItems] = useState<IGalleryItem[]>([]);
   const [travelType, setTravelType] = useState('All');
@@ -14,14 +16,9 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/gallery')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setItems(data.gallery || []);
-        }
-        setLoading(false);
-      });
+    const list = getGallery();
+    setItems(list);
+    setLoading(false);
   }, []);
 
   const filtered = items.filter((item) => {

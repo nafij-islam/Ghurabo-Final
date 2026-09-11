@@ -5,6 +5,7 @@ import { CurrencyCode, LanguageCode } from '@/types';
 import en, { TranslationKey } from '@/locales/en';
 import bn from '@/locales/bn';
 import { formatCurrency, FormatCurrencyOptions, DEFAULT_BDT_PER_USD } from '@/lib/currency/formatCurrency';
+import { getCurrentUser, getCurrencyRate, updateProfile } from '@/lib/clientStore';
 
 interface PreferencesContextType {
   currency: CurrencyCode;
@@ -39,7 +40,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_BDT_PER_USD);
 
   useEffect(() => {
-    // Read stored cookies
+    // Read stored cookies / preferences
     const savedCurrency = getCookie('ghurabo_currency') as CurrencyCode | null;
     const savedLanguage = getCookie('ghurabo_lang') as LanguageCode | null;
 
@@ -50,54 +51,44 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setLanguageState(savedLanguage);
     }
 
-    // Fetch exchange rate from API
-    fetch('/api/currency/rate')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && typeof data.rate === 'number' && data.rate > 0) {
-          setExchangeRate(data.rate);
-        }
-      })
-      .catch(() => {});
+    // Get exchange rate from clientStore
+    const rate = getCurrencyRate();
+    if (rate && rate > 0) {
+      setExchangeRate(rate);
+    }
 
-    // Check user preference from /api/auth/me
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          if (data.user.preferredCurrency) {
-            setCurrencyState(data.user.preferredCurrency);
-            setCookie('ghurabo_currency', data.user.preferredCurrency);
-          }
-          if (data.user.preferredLanguage) {
-            setLanguageState(data.user.preferredLanguage);
-            setCookie('ghurabo_lang', data.user.preferredLanguage);
-          }
-        }
-      })
-      .catch(() => {});
+    // Check user preference from clientStore
+    const user = getCurrentUser();
+    if (user) {
+      if (user.preferredCurrency) {
+        setCurrencyState(user.preferredCurrency as any);
+        setCookie('ghurabo_currency', user.preferredCurrency);
+      }
+      if (user.preferredLanguage) {
+        setLanguageState(user.preferredLanguage as any);
+        setCookie('ghurabo_lang', user.preferredLanguage);
+      }
+    }
   }, []);
 
   const setCurrency = (c: CurrencyCode) => {
     setCurrencyState(c);
     setCookie('ghurabo_currency', c);
     // Sync with user profile if logged in
-    fetch('/api/users/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preferredCurrency: c }),
-    }).catch(() => {});
+    const user = getCurrentUser();
+    if (user) {
+      updateProfile(user.id, { preferredCurrency: c });
+    }
   };
 
   const setLanguage = (l: LanguageCode) => {
     setLanguageState(l);
     setCookie('ghurabo_lang', l);
     // Sync with user profile if logged in
-    fetch('/api/users/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preferredLanguage: l }),
-    }).catch(() => {});
+    const user = getCurrentUser();
+    if (user) {
+      updateProfile(user.id, { preferredLanguage: l });
+    }
   };
 
   const t = (key: TranslationKey, fallback?: string): string => {

@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock } from 'lucide-react';
-import { notifyAuthChange } from '@/lib/auth/authEvent';
+import { loginUser } from '@/lib/clientStore';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 
 function LoginForm() {
@@ -23,21 +23,15 @@ function LoginForm() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-      const data = await res.json().catch(() => ({ success: false, error: 'Network error communicating with server.' }));
-      if (data.success) {
-        notifyAuthChange();
+      const result = loginUser(email, password);
+      if (result.success) {
         router.refresh();
         router.push(redirectTarget);
       } else {
-        setError(data.error || 'Invalid email or password');
+        setError(result.error || 'Invalid email or password');
       }
     } catch (err: any) {
-      setError(err?.message || 'Network error during sign in');
+      setError(err?.message || 'Error during sign in');
     }
     setLoading(false);
   };

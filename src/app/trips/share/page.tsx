@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { ITripCost, IItineraryDay } from '@/types';
 import { usePreferences } from '@/context/PreferencesContext';
+import { getCurrentUser, createTrip } from '@/lib/clientStore';
 
 const POPULAR_DESTINATIONS = [
   { name: "Cox's Bazar Beach", lat: 21.4272, lng: 92.0058, placeId: 'ChIJjT0bX66SVDcRLB2a89Ww30s' },
@@ -28,19 +29,13 @@ export default function ShareTripPage() {
   const { currency: globalCurrency, exchangeRate } = usePreferences();
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setCurrentUser(data.user);
-          setCheckingAuth(false);
-        } else {
-          window.location.href = '/auth/login?redirect=/trips/share';
-        }
-      })
-      .catch(() => {
-        window.location.href = '/auth/login?redirect=/trips/share';
-      });
+    const user = getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+      setCheckingAuth(false);
+    } else {
+      window.location.href = '/auth/login?redirect=/trips/share';
+    }
   }, []);
 
   // STEP 1 — TRIP BASICS
@@ -178,23 +173,15 @@ export default function ShareTripPage() {
     setValidationError('');
 
     for (let i = 0; i < files.length; i++) {
-      const formData = new FormData();
-      formData.append('file', files[i]);
-
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        if (data.success && data.url) {
-          setImages((prev) => [...prev, { url: data.url, caption: files[i].name }]);
-        } else {
-          setValidationError(data.error || 'Upload failed');
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const url = event.target?.result as string;
+        if (url) {
+          setImages((prev) => [...prev, { url, caption: file.name }]);
         }
-      } catch (err) {
-        setValidationError('Failed to upload image');
-      }
+      };
+      reader.readAsDataURL(file);
     }
     setUploading(false);
   };
@@ -228,40 +215,32 @@ export default function ShareTripPage() {
     const selectedCover = images[coverImageIndex]?.url || images[0]?.url || '/banner-one.png';
 
     try {
-      const res = await fetch('/api/trips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          destinationName,
-          latitude,
-          longitude,
-          googlePlaceId,
-          travelDate,
-          travelType,
-          travellersCount,
-          durationDays,
-          summary: summary || story.slice(0, 160) + '...',
-          story,
-          tips,
-          safetyNotes,
-          costBreakdown,
-          inputCurrency,
-          itinerary,
-          images,
-          coverImage: selectedCover,
-          status: isDraft ? 'draft' : 'pending',
-        }),
+      const newTrip = createTrip({
+        title,
+        destinationName,
+        latitude,
+        longitude,
+        googlePlaceId,
+        travelDate,
+        travelType,
+        travellersCount,
+        durationDays,
+        summary: summary || story.slice(0, 160) + '...',
+        story,
+        tips,
+        safetyNotes,
+        costBreakdown,
+        itinerary,
+        images,
+        coverImage: selectedCover,
+        status: isDraft ? 'draft' : 'approved',
       });
 
-      const data = await res.json();
-      if (data.success) {
+      if (newTrip) {
         setSubmittedSuccess(true);
-      } else {
-        setValidationError(data.error || 'Failed to submit trip');
       }
-    } catch (err) {
-      setValidationError('An unexpected error occurred during submission');
+    } catch (err: any) {
+      setValidationError('Failed to save trip: ' + (err?.message || 'Error'));
     }
     setSubmitting(false);
   };

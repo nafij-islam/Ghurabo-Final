@@ -6,6 +6,8 @@ import { DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination } from '@/types';
 import { Search, MapPin, Compass } from 'lucide-react';
 
+import { getDestinations } from '@/lib/clientStore';
+
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [search, setSearch] = useState('');
@@ -13,14 +15,9 @@ export default function DestinationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/destinations')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setDestinations(data.destinations || []);
-        }
-        setLoading(false);
-      });
+    const list = getDestinations();
+    setDestinations(list);
+    setLoading(false);
   }, []);
 
   const filtered = destinations.filter((dest) => {
