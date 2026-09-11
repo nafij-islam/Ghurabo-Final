@@ -3,6 +3,8 @@ import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { TripModel, GalleryModel, DestinationModel, UserModel } from '@/lib/db/models';
 import { getCurrentUser } from '@/lib/auth/session';
 
+export const dynamic = 'force-dynamic';
+
 // Card field projections for listing optimization
 const TRIP_CARD_FIELDS = 'id slug title coverImage destinationId destinationName travelType travellersCount durationDays costBreakdown ratings isVerified isPopular status userName userAvatar summary createdAt';
 

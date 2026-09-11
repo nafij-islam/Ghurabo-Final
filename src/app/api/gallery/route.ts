@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { GalleryModel, TripModel } from '@/lib/db/models';
 
+export const dynamic = 'force-dynamic';
+
 const GALLERY_FIELDS = 'id url caption tripId tripTitle tripSlug destinationName travelType photographerName photographerAvatar photographerId likesCount createdAt';
 
 export async function GET(request: Request) {

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase, getMemoryDb } from '@/lib/db/mongodb';
 import { DestinationModel, TripModel } from '@/lib/db/models';
 
+export const dynamic = 'force-dynamic';
+
 const DESTINATION_FIELDS = 'id name slug country division category image heroImage isPopular avgCostSolo avgRating totalTrips description';
 
 export async function GET(request: Request) {
