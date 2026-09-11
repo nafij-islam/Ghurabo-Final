@@ -7,7 +7,8 @@ try {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
 } catch (e) {}
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const rawMongoUri = process.env.MONGODB_URI || process.env.NONGODB_URI || '';
+const MONGODB_URI = rawMongoUri.trim().replace(/^["']|["']$/g, '');
 
 interface MongooseCache {
   conn: typeof mongoose | null;

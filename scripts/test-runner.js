@@ -4,7 +4,7 @@
  */
 
 const PORT = process.env.PORT || 3000;
-let activeUrl = 'http://localhost:3000';
+let activeUrl = process.env.TEST_BASE_URL || 'https://ghurabo-final.vercel.app';
 
 async function runTests() {
   console.log('====================================================');
@@ -24,15 +24,14 @@ async function runTests() {
     }
   }
 
-  let activeUrl = 'http://localhost:3000';
+  let activeUrl = process.env.TEST_BASE_URL || 'https://ghurabo-final.vercel.app';
   try {
-    const ping = await fetch('http://localhost:3000/api/trips');
-    if (!ping.ok) activeUrl = 'http://localhost:3001';
+    const ping = await fetch(`${activeUrl}/api/trips`);
+    if (!ping.ok) {
+      activeUrl = 'http://localhost:3000';
+    }
   } catch (e) {
-    try {
-      const ping2 = await fetch('http://localhost:3001/api/trips');
-      if (ping2.ok) activeUrl = 'http://localhost:3001';
-    } catch (err) {}
+    activeUrl = 'http://localhost:3000';
   }
 
   // 1. Invalid Route & Health Check
