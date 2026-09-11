@@ -87,16 +87,25 @@ export default function TripCard({ trip }: TripCardProps) {
 
   const perPersonCostBDT = trip.costBreakdown?.perPersonCost || trip.costBreakdown?.totalCost || 0;
 
+  const fallbackCover = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=800';
+  const [cardImg, setCardImg] = useState(() => getOptimizedImageUrl(trip.coverImage, { width: 600, height: 400 }));
+
+  React.useEffect(() => {
+    setCardImg(getOptimizedImageUrl(trip.coverImage, { width: 600, height: 400 }));
+  }, [trip.coverImage]);
+
   return (
     <div className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-card-hover border border-slate-100 transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1">
       {/* Top Image Section */}
       <div className="relative h-60 w-full overflow-hidden bg-slate-100">
         <Image
-          src={getOptimizedImageUrl(trip.coverImage, { width: 600, height: 400 })}
+          src={cardImg}
           alt={trip.title}
           fill
+          unoptimized
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={() => setCardImg(fallbackCover)}
         />
 
         {/* Dark Gradient Overlay */}
@@ -155,6 +164,9 @@ export default function TripCard({ trip }: TripCardProps) {
                 src={getOptimizedImageUrl(trip.userAvatar, { width: 100, height: 100 })}
                 alt={trip.userName}
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120';
+                }}
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
               />
               <span className="font-medium text-slate-700 truncate max-w-[120px]">{trip.userName}</span>

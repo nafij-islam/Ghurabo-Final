@@ -202,21 +202,26 @@ export default function ShareTripPage() {
       destinationId = '6aa3ab9def763afbf0ec7ca5';
     }
 
-    const coverPhoto = images[coverImageIndex] || images[0];
-    const coverImageObj = coverPhoto
-      ? {
-          url: coverPhoto.url,
-          publicId: coverPhoto.publicId,
-          caption: coverPhoto.caption,
-        }
-      : {
-          url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
-        };
+    const defaultCover = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200';
+    const selectedPhoto = images[coverImageIndex] || images[0];
+    const isBlobUrl = (u?: string) => !u || u.startsWith('blob:') || u.startsWith('data:');
 
-    const photosList = images.map((img) => ({
-      url: img.url,
-      publicId: img.publicId,
-      caption: img.caption,
+    // Find first non-blob photo if selected is a blob
+    const validPhoto = !isBlobUrl(selectedPhoto?.url) 
+      ? selectedPhoto 
+      : images.find((img) => !isBlobUrl(img.url));
+
+    const coverUrl = validPhoto?.url || defaultCover;
+    const coverImageObj = {
+      url: coverUrl,
+      publicId: validPhoto?.publicId || '',
+      caption: validPhoto?.caption || title.trim(),
+    };
+
+    const photosList = images.map((img, idx) => ({
+      url: !isBlobUrl(img.url) ? img.url : coverUrl,
+      publicId: img.publicId || '',
+      caption: img.caption || `Photo ${idx + 1}`,
     }));
 
     try {

@@ -140,16 +140,44 @@ export function adaptBackendDestinationToIDestination(dest: BackendDestination):
   };
 }
 
+const DEFAULT_TRIP_COVERS = [
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
+  'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200',
+  'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&q=80&w=1200',
+];
+
+function isCleanImageUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('blob:') || trimmed.startsWith('data:') || trimmed === '') return false;
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/');
+}
+
+function resolveValidCoverImage(trip: BackendTrip): string {
+  if (isCleanImageUrl(trip.coverImage?.url)) {
+    return trip.coverImage!.url;
+  }
+  if (Array.isArray(trip.photos)) {
+    const validPhoto = trip.photos.find((p) => isCleanImageUrl(p?.url));
+    if (validPhoto?.url) {
+      return validPhoto.url;
+    }
+  }
+  const key = trip.title || trip.destination?.name || 'Ghurabo';
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash + key.charCodeAt(i)) % DEFAULT_TRIP_COVERS.length;
+  return DEFAULT_TRIP_COVERS[hash];
+}
+
 export function adaptBackendTripToITrip(trip: BackendTrip): ITrip {
   const authorName = trip.author?.fullName || trip.author?.username || 'Ghurabo Explorer';
   const authorAvatar =
-    trip.author?.avatar?.url ||
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80';
+    isCleanImageUrl(trip.author?.avatar?.url)
+      ? trip.author!.avatar!.url
+      : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80';
 
-  const coverImageUrl =
-    trip.coverImage?.url ||
-    (trip.photos && trip.photos[0]?.url) ||
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200';
+  const coverImageUrl = resolveValidCoverImage(trip);
 
   const costs = trip.costs || {
     transport: 0,
@@ -216,7 +244,11 @@ export function adaptBackendTripToITrip(trip: BackendTrip): ITrip {
     tips: 'Pack light, respect local culture, and book transport in advance.',
     safetyNotes: 'Local guides recommended for remote hill trekking.',
     coverImage: coverImageUrl,
-    images: (trip.photos || []).map((p) => ({ url: p.url, caption: p.caption, publicId: p.publicId })),
+    images: (trip.photos || []).map((p, idx) => ({
+      url: isCleanImageUrl(p.url) ? p.url : DEFAULT_TRIP_COVERS[idx % DEFAULT_TRIP_COVERS.length],
+      caption: p.caption,
+      publicId: p.publicId,
+    })),
     costBreakdown,
     itinerary,
     status,

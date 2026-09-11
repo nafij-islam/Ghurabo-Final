@@ -119,6 +119,9 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
           src={getOptimizedImageUrl(trip.coverImage, { width: 1400, height: 800, quality: 'auto' })}
           alt={trip.title}
           className="w-full h-full object-cover opacity-85"
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1400';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
@@ -169,6 +172,9 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
               src={getOptimizedImageUrl(trip.userAvatar, { width: 120, height: 120 })}
               alt={trip.userName}
               className="w-14 h-14 rounded-full object-cover border-2 border-brand-500"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
+              }}
             />
             <div>
               <Link href={`/profile/${trip.userId}`} className="font-display text-lg font-bold text-slate-900 hover:text-brand-600">

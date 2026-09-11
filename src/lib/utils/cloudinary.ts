@@ -11,38 +11,63 @@ interface ImageOptions {
   crop?: 'fill' | 'fit' | 'scale' | 'thumb';
 }
 
+const DEFAULT_FALLBACK =
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=800';
+
 export function getOptimizedImageUrl(
-  originalUrl: string,
+  originalUrl?: string | null,
   options: ImageOptions = {}
 ): string {
   if (!originalUrl || typeof originalUrl !== 'string') {
-    return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=800';
+    return DEFAULT_FALLBACK;
   }
 
-  // Handle Cloudinary URLs
-  if (originalUrl.includes('cloudinary.com') && originalUrl.includes('/upload/')) {
-    const {
-      width = 600,
-      height = 400,
-      quality = 'auto',
-      format = 'auto',
-      crop = 'fill',
-    } = options;
+  const trimmed = originalUrl.trim();
 
-    const transformSegment = `c_${crop},w_${width},h_${height},q_${quality},f_${format}`;
-    return originalUrl.replace('/upload/', `/upload/${transformSegment}/`);
+  // If URL is an unrenderable blob or empty, return default fallback
+  if (trimmed.startsWith('blob:') || trimmed.startsWith('data:') || trimmed === '') {
+    return DEFAULT_FALLBACK;
   }
 
-  // Handle Unsplash URLs
-  if (originalUrl.includes('unsplash.com')) {
-    const { width = 600, quality = 80 } = options;
-    const url = new URL(originalUrl);
-    url.searchParams.set('auto', 'format');
-    url.searchParams.set('fit', 'crop');
-    url.searchParams.set('w', width.toString());
-    url.searchParams.set('q', quality.toString());
-    return url.toString();
+  // Pass through relative local static assets (e.g. /logo-ghurabo.png, /banner-one.png)
+  if (trimmed.startsWith('/')) {
+    return trimmed;
   }
 
-  return originalUrl;
+  try {
+    // Handle Cloudinary URLs
+    if (trimmed.includes('cloudinary.com') && trimmed.includes('/upload/')) {
+      // If already transformed with c_ or w_, don't add redundant segments
+      if (trimmed.includes('/upload/c_') || trimmed.includes('/upload/w_')) {
+        return trimmed;
+      }
+
+      const {
+        width = 600,
+        height = 400,
+        quality = 'auto',
+        format = 'auto',
+        crop = 'fill',
+      } = options;
+
+      const transformSegment = `c_${crop},w_${width},h_${height},q_${quality},f_${format}`;
+      return trimmed.replace('/upload/', `/upload/${transformSegment}/`);
+    }
+
+    // Handle Unsplash URLs
+    if (trimmed.includes('unsplash.com')) {
+      const { width = 600, quality = 80 } = options;
+      const url = new URL(trimmed);
+      url.searchParams.set('auto', 'format');
+      url.searchParams.set('fit', 'crop');
+      url.searchParams.set('w', width.toString());
+      url.searchParams.set('q', quality.toString());
+      return url.toString();
+    }
+  } catch {
+    // If URL parsing fails, return original or fallback safely
+    return trimmed.startsWith('http') ? trimmed : DEFAULT_FALLBACK;
+  }
+
+  return trimmed;
 }
