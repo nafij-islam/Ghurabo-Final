@@ -38,23 +38,20 @@ const HERO_SLIDES = [
 
 export default function SplitHero() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const { isAuthenticated } = useAuth();
 
   // Touch Swipe State for Mobile Slider
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Auto-play interval: smooth transition every 2 seconds
+  // Auto-play interval: smooth transition every 4 seconds continuously
   useEffect(() => {
-    if (isPaused) return;
-
     const timer = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 2000);
+    }, 4000);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, []);
 
   const handleNext = () => {
     setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -95,8 +92,6 @@ export default function SplitHero() {
           1. DESKTOP HERO PRESENTATION (>= 768px) - ULTRA SMOOTH AUTO-FADE SLIDER
          ========================================================================= */}
       <section
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
         className="hidden md:flex relative w-full min-h-screen bg-brand-500 overflow-hidden items-center pt-20 lg:pt-0"
       >
         {/* Background Split Layout */}
@@ -268,8 +263,6 @@ export default function SplitHero() {
           2. DEDICATED MOBILE HERO PRESENTATION (< 768px) - AUTO-FADE SLIDER
          ========================================================================= */}
       <section
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
         className="block md:hidden relative w-full pt-16 bg-slate-950 overflow-hidden"
       >
         <div
