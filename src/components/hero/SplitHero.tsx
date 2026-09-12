@@ -26,7 +26,7 @@ const HERO_SLIDES = [
     slug: 'sajek-valley-hilltop',
   },
   {
-    image: '/banner-one.png',
+    image: '/banner-three.jpg',
     title: 'CRYSTAL PARADISE',
     subtitle: 'UNSPOILED ISLAND ADVENTURES',
     description:
@@ -134,11 +134,10 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`transition-all duration-500 ease-in-out flex flex-col justify-center ${
-                      isActive
+                    className={`transition-all duration-500 ease-in-out flex flex-col justify-center ${isActive
                         ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
                         : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
-                    }`}
+                      }`}
                   >
                     {/* Tagline */}
                     <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-widest mb-4 w-fit">
@@ -195,11 +194,10 @@ export default function SplitHero() {
               return (
                 <div
                   key={idx}
-                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                    isActive
+                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${isActive
                       ? 'opacity-100 scale-100 pointer-events-auto z-10'
                       : 'opacity-0 scale-105 pointer-events-none z-0'
-                  }`}
+                    }`}
                 >
                   <Image
                     src={s.image}
@@ -249,11 +247,10 @@ export default function SplitHero() {
               key={idx}
               onClick={() => setCurrentSlideIndex(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`h-2.5 rounded-full transition-all duration-500 cursor-pointer ${
-                currentSlideIndex === idx
+              className={`h-2.5 rounded-full transition-all duration-500 cursor-pointer ${currentSlideIndex === idx
                   ? 'w-10 bg-cyan-300 shadow-lg'
                   : 'w-2.5 bg-white/40 hover:bg-white/75'
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -277,11 +274,10 @@ export default function SplitHero() {
             return (
               <div
                 key={idx}
-                className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                  isActive
+                className={`absolute inset-0 transition-all duration-700 ease-in-out ${isActive
                     ? 'opacity-100 scale-100 pointer-events-auto z-0'
                     : 'opacity-0 scale-105 pointer-events-none z-0'
-                }`}
+                  }`}
               >
                 <Image
                   src={s.image}
@@ -324,11 +320,10 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`transition-all duration-500 ease-in-out flex flex-col items-start space-y-2 ${
-                      isActive
+                    className={`transition-all duration-500 ease-in-out flex flex-col items-start space-y-2 ${isActive
                         ? 'opacity-100 translate-y-0 pointer-events-auto relative'
                         : 'opacity-0 -translate-y-3 pointer-events-none absolute inset-0'
-                    }`}
+                      }`}
                   >
                     {/* Small Eyebrow Tag */}
                     <span className="px-3 py-0.5 bg-brand-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
@@ -367,11 +362,10 @@ export default function SplitHero() {
                   key={idx}
                   onClick={() => setCurrentSlideIndex(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
-                  className={`transition-all duration-500 rounded-full cursor-pointer ${
-                    currentSlideIndex === idx
+                  className={`transition-all duration-500 rounded-full cursor-pointer ${currentSlideIndex === idx
                       ? 'w-6 h-2 bg-cyan-300 shadow'
                       : 'w-2 h-2 bg-white/40 hover:bg-white/70'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
