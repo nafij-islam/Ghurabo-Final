@@ -38,12 +38,12 @@ export default function EditTripModal({ trip, onClose, onSuccess }: EditTripModa
       setError('Title must be at least 3 characters.');
       return;
     }
-    if (summary.trim().length < 10) {
-      setError('Summary must be at least 10 characters.');
+    if (summary.trim().length === 0) {
+      setError('Please provide a trip summary.');
       return;
     }
-    if (story.trim().length < 20) {
-      setError('Travel story must be at least 20 characters.');
+    if (story.trim().length === 0) {
+      setError('Please provide your travel story.');
       return;
     }
 
