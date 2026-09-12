@@ -4,54 +4,52 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import SplitHero from '@/components/hero/SplitHero';
-import DestinationCard from '@/components/cards/DestinationCard';
 import TripCard from '@/components/cards/TripCard';
-import { TripCardSkeleton, DestinationCardSkeleton } from '@/components/ui/Skeletons';
-import { IDestination, ITrip, IGalleryItem } from '@/types';
+import { TripCardSkeleton } from '@/components/ui/Skeletons';
+import { ITrip, IGalleryItem } from '@/types';
 import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
 import { destinationsApi, tripsApi, galleryApi } from '@/lib/api';
 import {
-  adaptBackendDestinationToIDestination,
   adaptBackendTripToITrip,
   adaptBackendGalleryToIGalleryItem,
 } from '@/lib/api/adapters';
 
 export default function HomePage() {
-  const [destinations, setDestinations] = useState<IDestination[]>([]);
+  const [totalDestinations, setTotalDestinations] = useState<number>(0);
   const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [maxBudget, setMaxBudget] = useState<number>(50000);
-  const [loadingDestinations, setLoadingDestinations] = useState(true);
+  const [loadingPopularTrips, setLoadingPopularTrips] = useState(true);
   const [loadingTrips, setLoadingTrips] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    // Fetch popular destinations
+    // Fetch total destinations for stats
     destinationsApi
-      .getDestinations({ limit: 6 })
+      .getDestinations({ limit: 1 })
       .then((res) => {
         if (mounted) {
-          setDestinations(res.data.map(adaptBackendDestinationToIDestination));
-          setLoadingDestinations(false);
+          setTotalDestinations(res.meta?.total || (res.data ? res.data.length : 0));
         }
       })
-      .catch(() => {
-        if (mounted) setLoadingDestinations(false);
-      });
+      .catch(() => {});
 
-    // Fetch popular trips (for spotlight)
+    // Fetch popular trips (Admin-selected featured trips ONLY)
     tripsApi
       .getTrips({ featured: true, limit: 6 })
       .then((res) => {
         if (mounted) {
           const adapted = res.data.map(adaptBackendTripToITrip);
           setPopularTrips(adapted);
+          setLoadingPopularTrips(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (mounted) setLoadingPopularTrips(false);
+      });
 
     // Fetch recent community trips
     tripsApi
@@ -60,8 +58,6 @@ export default function HomePage() {
         if (mounted) {
           const adapted = res.data.map(adaptBackendTripToITrip);
           setTrips(adapted);
-          // If no explicitly featured trips, use popular trips from recent
-          setPopularTrips((prev) => (prev.length > 0 ? prev : adapted.slice(0, 6)));
           setLoadingTrips(false);
         }
       })
@@ -87,11 +83,11 @@ export default function HomePage() {
   const stats = useMemo(() => {
     const totalHelpful = trips.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
     return {
-      totalDestinations: destinations.length,
+      totalDestinations: totalDestinations || 6,
       totalTrips: trips.length,
       totalHelpfulVotes: totalHelpful,
     };
-  }, [destinations.length, trips]);
+  }, [totalDestinations, trips]);
 
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
@@ -106,7 +102,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <SplitHero />
 
-      {/* Popular Destinations / Popular Trips Section */}
+      {/* Popular Trips Section (Admin-selected) */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
@@ -115,29 +111,37 @@ export default function HomePage() {
               <span>EXPLORE THE UNTOUCHED</span>
             </div>
             <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-slate-900 uppercase">
-              Popular Destinations
+              Popular Trips
             </h2>
           </div>
           <Link
-            href="/destinations"
+            href="/trips"
             className="mt-4 md:mt-0 inline-flex items-center space-x-2 text-sm font-bold text-brand-600 hover:text-brand-800 transition-colors"
           >
-            <span>View All Destinations</span>
+            <span>View All Trips</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        {loadingDestinations ? (
+        {loadingPopularTrips ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <DestinationCardSkeleton key={i} />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <TripCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : popularTrips.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {popularTrips.slice(0, 6).map((trip) => (
+              <TripCard key={trip.id} trip={trip} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {destinations.slice(0, 6).map((dest) => (
-              <DestinationCard key={dest.id} destination={dest} />
-            ))}
+          <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
+            <Compass className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="font-display text-base font-bold text-slate-700">No Popular Trips Yet</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              Our editorial team is hand-curating the best itineraries. Check back soon!
+            </p>
           </div>
         )}
       </section>

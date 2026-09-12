@@ -13,6 +13,17 @@ export default function PublishedTripsDirectory({
   publishedTrips,
   onAction,
 }: PublishedTripsDirectoryProps) {
+  const [processingId, setProcessingId] = React.useState<string | null>(null);
+
+  const handleAction = async (tripId: string, action: 'verify' | 'togglePopular') => {
+    setProcessingId(tripId + action);
+    try {
+      await onAction(tripId, action);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   return (
     <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
       <h2 className="font-display text-2xl font-bold text-slate-900 uppercase mb-6 flex items-center space-x-2">
@@ -34,8 +45,9 @@ export default function PublishedTripsDirectory({
               <span>{trip.userName}</span>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => onAction(trip.id, 'verify')}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer ${
+                  onClick={() => handleAction(trip.id, 'verify')}
+                  disabled={processingId === trip.id + 'verify'}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer disabled:opacity-50 transition-all ${
                     trip.isVerified
                       ? 'bg-amber-100 text-amber-800'
                       : 'bg-slate-200 text-slate-700 hover:bg-amber-100'
@@ -45,14 +57,15 @@ export default function PublishedTripsDirectory({
                 </button>
 
                 <button
-                  onClick={() => onAction(trip.id, 'togglePopular')}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer ${
+                  onClick={() => handleAction(trip.id, 'togglePopular')}
+                  disabled={processingId === trip.id + 'togglePopular'}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-full cursor-pointer disabled:opacity-50 transition-all ${
                     trip.isPopular
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'bg-slate-200 text-slate-700 hover:bg-purple-100'
                   }`}
                 >
-                  {trip.isPopular ? '★ Popular' : '+ Popular'}
+                  {trip.isPopular ? '★ Popular' : 'Mark Popular'}
                 </button>
               </div>
             </div>

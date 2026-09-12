@@ -21,6 +21,7 @@ import {
   Clock,
   ShieldCheck,
   AlertOctagon,
+  Star,
 } from 'lucide-react';
 import { ITrip } from '@/types';
 import { adminApi } from '@/lib/api/admin.api';
@@ -140,6 +141,33 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
     } catch (err) {
       console.error('Failed to unsuspend trip:', err);
       setFeedback({ type: 'error', message: 'Failed to reactivate trip' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Handle Popular Toggle
+  const handleTogglePopular = async (trip: ITrip) => {
+    setActionLoading(trip.id);
+    const nextPopular = !trip.isPopular;
+    try {
+      await adminApi.toggleTripFeatured(trip.id, nextPopular);
+      setFeedback({
+        type: 'success',
+        message: nextPopular
+          ? `Trip "${trip.title}" marked as Popular. It will now appear in the homepage Popular Trips section.`
+          : `Trip "${trip.title}" removed from Popular Trips.`,
+      });
+      setTrips((prev) =>
+        prev.map((t) => (t.id === trip.id ? { ...t, isPopular: nextPopular } : t))
+      );
+      onDataChanged?.();
+    } catch (err: any) {
+      console.error('Failed to toggle popular trip:', err);
+      setFeedback({
+        type: 'error',
+        message: err?.message || 'Failed to update popular status.',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -477,6 +505,23 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
                       {/* Admin Actions */}
                       <td className="py-4 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center space-x-2">
+                          {/* Popular Toggle for Approved Trips */}
+                          {trip.status === 'approved' && !isSuspended && (
+                            <button
+                              onClick={() => handleTogglePopular(trip)}
+                              disabled={actionLoading === trip.id}
+                              className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer disabled:opacity-50 ${
+                                trip.isPopular
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
+                                  : 'bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200'
+                              }`}
+                              title={trip.isPopular ? 'Remove from Popular Trips' : 'Mark as Popular Trip'}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${trip.isPopular ? 'fill-current' : ''}`} />
+                              <span>{trip.isPopular ? '★ Popular' : 'Mark Popular'}</span>
+                            </button>
+                          )}
+
                           {/* Suspend / Unsuspend Button */}
                           {isSuspended ? (
                             <button
