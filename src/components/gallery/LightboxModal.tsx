@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { X, ChevronLeft, ChevronRight, Heart, MapPin, ExternalLink, Camera } from 'lucide-react';
 import { IGalleryItem } from '@/types';
@@ -21,6 +21,28 @@ export default function LightboxModal({
   onNext,
 }: LightboxModalProps) {
   const item = items[currentIndex];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft') {
+        onPrev();
+      } else if (e.key === 'ArrowRight') {
+        onNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onClose, onPrev, onNext]);
+
   if (!item) return null;
 
   return (

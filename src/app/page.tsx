@@ -13,6 +13,7 @@ import {
   adaptBackendTripToITrip,
   adaptBackendGalleryToIGalleryItem,
 } from '@/lib/api/adapters';
+import CommunityGallerySpotlight from '@/components/home/CommunityGallerySpotlight';
 
 export default function HomePage() {
   const [totalDestinations, setTotalDestinations] = useState<number>(0);
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [maxBudget, setMaxBudget] = useState<number>(50000);
   const [loadingPopularTrips, setLoadingPopularTrips] = useState(true);
   const [loadingTrips, setLoadingTrips] = useState(true);
+  const [loadingGallery, setLoadingGallery] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -71,9 +73,12 @@ export default function HomePage() {
       .then((res) => {
         if (mounted) {
           setGalleryItems(res.data.map(adaptBackendGalleryToIGalleryItem));
+          setLoadingGallery(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (mounted) setLoadingGallery(false);
+      });
 
     return () => {
       mounted = false;
@@ -258,49 +263,7 @@ export default function HomePage() {
       </div>
 
       {/* Dynamic Community Photo Gallery Spotlight */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <div className="inline-flex items-center space-x-2 text-brand-600 text-xs font-bold uppercase tracking-widest mb-2">
-            <Camera className="w-4 h-4" />
-            <span>AUTO-SYNCED PHOTO FEED</span>
-          </div>
-          <h2 className="font-display text-4xl font-extrabold text-slate-900 uppercase">
-            Community Gallery Spotlight
-          </h2>
-          <p className="text-slate-600 text-sm font-light mt-2">
-            Every photo uploaded inside an approved trip automatically appears in our public gallery.
-          </p>
-        </div>
-
-        {galleryItems.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {galleryItems.slice(0, 6).map((item) => (
-              <Link
-                key={item.id}
-                href={`/trips/${item.tripSlug || item.tripId}`}
-                className="group relative h-48 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
-              >
-                <Image
-                  src={item.url}
-                  alt={item.caption || item.destinationName}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end text-white z-10">
-                  <p className="text-[11px] font-bold truncate">{item.photographerName}</p>
-                  <p className="text-[10px] text-cyan-300 font-semibold truncate">{item.tripTitle}</p>
-                  <p className="text-[9px] text-white/70 truncate">{item.destinationName} • {item.travelType}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-white rounded-3xl border border-slate-100 text-slate-500 text-xs font-medium">
-            No gallery photos uploaded yet. Photos from approved community trips will appear here automatically!
-          </div>
-        )}
-      </section>
+      <CommunityGallerySpotlight items={galleryItems} loading={loadingGallery} />
 
       {/* Real Live Database Community Stats Section */}
       <section className="py-16 bg-darkslate-900 text-white">

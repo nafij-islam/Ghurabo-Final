@@ -5,20 +5,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import LightboxModal from '@/components/gallery/LightboxModal';
 import { IGalleryItem } from '@/types';
-import { Camera, Search, Eye, User, ArrowUpRight } from 'lucide-react';
+import { Camera, Search, Eye, User, ArrowUpRight, X, AlertCircle, Compass, MapPin } from 'lucide-react';
 import { galleryApi } from '@/lib/api/gallery.api';
 import { adaptBackendGalleryToIGalleryItem } from '@/lib/api/adapters';
 
+const TRAVEL_CATEGORIES = ['All', 'Solo', 'Couple', 'Family', 'Group'] as const;
+
 export default function GalleryPage() {
   const [items, setItems] = useState<IGalleryItem[]>([]);
-  const [travelType, setTravelType] = useState('All');
+  const [travelType, setTravelType] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const fetchGallery = (signal?: AbortSignal) => {
     setLoading(true);
+    setError(null);
 
     const backendTravelType = travelType !== 'All' ? travelType.toUpperCase() : undefined;
 
@@ -29,7 +32,7 @@ export default function GalleryPage() {
           search: search.trim() || undefined,
           limit: 60,
         },
-        controller.signal
+        signal
       )
       .then((res) => {
         if (res?.data) {
@@ -38,13 +41,19 @@ export default function GalleryPage() {
         }
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') {
+        if (err?.name !== 'AbortError') {
           console.error('Failed to load gallery items:', err);
+          setError('Failed to load community photos. Please check your connection.');
         }
       })
       .finally(() => {
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchGallery(controller.signal);
 
     return () => {
       controller.abort();
@@ -53,8 +62,9 @@ export default function GalleryPage() {
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      const matchesCategory = travelType === 'All' || item.travelType.toLowerCase() === travelType.toLowerCase();
-      const s = search.toLowerCase();
+      const matchesCategory =
+        travelType === 'All' || item.travelType.toLowerCase() === travelType.toLowerCase();
+      const s = search.toLowerCase().trim();
       const matchesSearch =
         !s ||
         item.destinationName.toLowerCase().includes(s) ||
@@ -65,6 +75,11 @@ export default function GalleryPage() {
     });
   }, [items, travelType, search]);
 
+  const clearFilters = () => {
+    setSearch('');
+    setTravelType('All');
+  };
+
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
       {/* Header Banner */}
@@ -74,61 +89,101 @@ export default function GalleryPage() {
             <Camera className="w-4 h-4" />
             <span>AUTO-SYNCED COMMUNITY PHOTO STREAM</span>
           </div>
-          <h1 className="font-display text-4xl sm:text-6xl font-extrabold uppercase mb-4">
+          <h1 className="font-display text-4xl sm:text-6xl font-extrabold uppercase mb-4 tracking-tight">
             Community Gallery
           </h1>
           <p className="text-slate-300 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            Explore authentic travel photography captured by community members during verified solo, couple, family, and group trips.
+            Explore authentic travel photography captured by real travelers during verified solo, couple, family, and group trips across Bangladesh.
           </p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Filters */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+        {/* Polished Filter & Search Container */}
+        <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 mb-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          {/* Search Input with Clear Button */}
+          <div className="relative w-full md:w-84 flex-shrink-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by trip, traveller, destination..."
+              placeholder="Search trip, destination, photographer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-slate-800 placeholder:text-slate-400"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200 transition-colors"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {['All', 'Solo', 'Couple', 'Family', 'Group'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setTravelType(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase transition-all cursor-pointer ${
-                  travelType === cat
-                    ? 'bg-brand-500 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {cat === 'All' ? 'All Photos' : cat}
-              </button>
-            ))}
+          {/* Travel Category Filter Chips (Horizontally scrollable on mobile without overflow) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 md:pb-0 scrollbar-none sm:flex-wrap">
+            {TRAVEL_CATEGORIES.map((cat) => {
+              const isActive = travelType === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setTravelType(cat)}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all duration-200 flex-shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
+                      : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-transparent hover:border-slate-200'
+                  }`}
+                >
+                  {cat === 'All' ? 'All Photos' : cat}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Responsive Grid */}
+        {/* Error State */}
+        {error && !loading && (
+          <div className="p-6 bg-rose-50 border border-rose-200 rounded-3xl text-center space-y-3 mb-10 max-w-md mx-auto">
+            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+            <p className="text-xs text-rose-700 font-medium">{error}</p>
+            <button
+              onClick={() => fetchGallery()}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-rose-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Content: Loading Skeleton, Grid, or Empty State */}
         {loading ? (
+          /* Responsive Loading Skeletons */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-80 bg-slate-200 animate-pulse rounded-3xl" />
+              <div
+                key={i}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm animate-pulse flex flex-col"
+              >
+                <div className="h-72 bg-slate-200/90 w-full" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3.5 bg-slate-200 rounded w-2/3" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         ) : filtered.length > 0 ? (
+          /* Redesigned Gallery Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map((item, index) => (
               <div
                 key={item.id}
-                className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 flex flex-col justify-between"
+                className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-200/80 hover:border-brand-500/40 transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between"
               >
-                {/* Photo container with hover gradient */}
+                {/* Image Container with Hover Overlay */}
                 <div
                   onClick={() => setSelectedIndex(index)}
                   className="relative h-72 w-full overflow-hidden bg-slate-900 cursor-pointer"
@@ -138,12 +193,16 @@ export default function GalleryPage() {
                     alt={item.caption || item.destinationName}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 motion-reduce:transform-none"
                   />
 
-                  {/* Gradient Overlay for Desktop Hover & Mobile Touch */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-5 flex flex-col justify-between text-white z-10">
-                    <div className="flex justify-end">
+                  {/* Gradient Overlay for Desktop Hover & Touch Interaction */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col justify-between text-white z-10">
+                    <div className="flex justify-between items-start">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-[10px] font-bold text-cyan-300 uppercase tracking-wider border border-white/10">
+                        <Compass className="w-3 h-3" />
+                        <span>{item.travelType}</span>
+                      </span>
                       <span className="p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all">
                         <Eye className="w-4 h-4" />
                       </span>
@@ -167,14 +226,15 @@ export default function GalleryPage() {
                         {item.tripTitle || item.caption || item.destinationName || 'Community Photo'}
                       </Link>
 
-                      <p className="text-[11px] text-cyan-200 font-medium truncate">
-                        {item.destinationName} • {item.travelType} Trip
+                      <p className="text-[11px] text-cyan-200/90 font-medium truncate flex items-center space-x-1">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span>{item.destinationName}</span>
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Mobile / Permanent Information Footer */}
+                {/* Permanent Bottom Info Card */}
                 <div className="p-4 bg-white flex items-center justify-between border-t border-slate-100">
                   <div className="truncate pr-2">
                     <Link
@@ -183,15 +243,15 @@ export default function GalleryPage() {
                     >
                       {item.photographerName}
                     </Link>
-                    <span className="text-[11px] text-slate-500 block truncate">
+                    <span className="text-[11px] text-slate-500 block truncate font-light">
                       {item.destinationName} • {item.travelType}
                     </span>
                   </div>
 
                   <Link
                     href={`/trips/${item.tripSlug || item.tripId}`}
-                    className="p-2 rounded-full bg-slate-100 text-brand-600 hover:bg-brand-500 hover:text-white transition-all flex-shrink-0"
-                    title="View Trip Details"
+                    className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-brand-500 hover:text-white transition-all flex-shrink-0 group-hover:bg-brand-500 group-hover:text-white"
+                    title="View Full Trip Story"
                   >
                     <ArrowUpRight className="w-4 h-4" />
                   </Link>
@@ -200,10 +260,30 @@ export default function GalleryPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-3xl border border-slate-100">
-            <Camera className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="font-display text-2xl font-bold text-slate-800 uppercase">No Gallery Photos</h3>
-            <p className="text-slate-500 text-xs mt-1">Try adjusting search or travel type filters.</p>
+          /* Empty State */
+          <div className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm max-w-lg mx-auto space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Camera className="w-7 h-7" />
+            </div>
+            <h3 className="font-display text-2xl font-bold text-slate-800 uppercase">
+              No Photos Match Filters
+            </h3>
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs mx-auto">
+              {search || travelType !== 'All'
+                ? 'We could not find any community photos matching your current search or category filter.'
+                : 'No community photos have been uploaded yet. Photos from approved trips will appear here automatically.'}
+            </p>
+            {(search || travelType !== 'All') && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-all cursor-pointer"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -214,8 +294,16 @@ export default function GalleryPage() {
           items={filtered}
           currentIndex={selectedIndex}
           onClose={() => setSelectedIndex(null)}
-          onPrev={() => setSelectedIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : filtered.length - 1))}
-          onNext={() => setSelectedIndex((prev) => (prev !== null && prev < filtered.length - 1 ? prev + 1 : 0))}
+          onPrev={() =>
+            setSelectedIndex((prev) =>
+              prev !== null && prev > 0 ? prev - 1 : filtered.length - 1
+            )
+          }
+          onNext={() =>
+            setSelectedIndex((prev) =>
+              prev !== null && prev < filtered.length - 1 ? prev + 1 : 0
+            )
+          }
         />
       )}
     </div>

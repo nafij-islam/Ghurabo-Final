@@ -56,13 +56,14 @@ export default function NewsletterModal() {
 
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    }
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
-    };
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = originalOverflow;
+      };
+    }
   }, [isOpen, closeModal]);
 
   if (!isOpen) return null;
@@ -124,7 +125,7 @@ export default function NewsletterModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="newsletter-modal-title"
@@ -138,61 +139,61 @@ export default function NewsletterModal() {
       {/* Modal Dialog Card */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col md:flex-row z-10 animate-scaleUp"
+        className="relative w-[calc(100vw-24px)] sm:w-[calc(100vw-32px)] max-w-2xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-y-auto border border-slate-200/90 flex flex-col md:flex-row z-10 animate-scaleUp scrollbar-thin"
       >
-        {/* Close Button */}
+        {/* Sticky/Fixed Close Button */}
         <button
           onClick={() => closeModal(true)}
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
           aria-label="Close newsletter popup"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
-        {/* Left Column: Visual Aesthetic Card (Desktop) */}
-        <div className="relative md:w-5/12 bg-gradient-to-br from-darkslate-950 via-darkslate-900 to-brand-950 text-white p-8 flex flex-col justify-between overflow-hidden">
-          {/* Decorative Travel Background Blur & Glow */}
+        {/* Left Column: Visual Aesthetic Side (Full on Desktop, Compact on Small Mobile) */}
+        <div className="relative md:w-5/12 bg-gradient-to-br from-darkslate-950 via-darkslate-900 to-brand-950 text-white p-5 sm:p-6 md:p-8 flex flex-col justify-between overflow-hidden shrink-0">
+          {/* Decorative Travel Background Blur & Pattern */}
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/20 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute top-0 left-0 w-full h-full opacity-15 bg-[radial-gradient(#06b6d4_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
           {/* Top Brand Tag */}
           <div className="relative z-10">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-[11px] font-bold uppercase tracking-wider border border-brand-500/30">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border border-brand-500/30">
               <Compass className="w-3.5 h-3.5" />
               <span>GHURABO INSIDER</span>
             </div>
           </div>
 
           {/* Center Visual Content */}
-          <div className="relative z-10 my-6 md:my-0 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 border border-brand-400/30 flex items-center justify-center text-brand-300 shadow-inner">
-              <Sparkles className="w-6 h-6" />
+          <div className="relative z-10 my-3 sm:my-6 md:my-0 space-y-2 sm:space-y-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-brand-500/10 border border-brand-400/30 flex items-center justify-center text-brand-300 shadow-inner">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-white leading-tight">
+            <h3 className="font-display text-lg sm:text-2xl font-bold uppercase tracking-wide text-white leading-tight">
               Real Trips.<br />Real Costs.<br />Zero Fluff.
             </h3>
-            <p className="text-xs text-slate-300 font-light leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-300 font-light leading-relaxed hidden sm:block">
               Join 10,000+ travelers discovering Bangladesh's hidden trails, transparent budgets, and local stories.
             </p>
           </div>
 
           {/* Bottom Trust Badge */}
-          <div className="relative z-10 pt-4 border-t border-white/10 flex items-center space-x-2 text-[11px] text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>100% Community-Verified Travel Guides</span>
+          <div className="relative z-10 pt-3 md:pt-4 border-t border-white/10 flex items-center space-x-2 text-[10px] sm:text-[11px] text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+            <span>100% Community-Verified Guides</span>
           </div>
         </div>
 
         {/* Right Column: Interactive Form & Feedback Area */}
-        <div className="p-8 md:w-7/12 flex flex-col justify-center">
+        <div className="p-5 sm:p-7 md:p-8 md:w-7/12 flex flex-col justify-center">
           {successStatus !== 'idle' ? (
             /* Success State */
-            <div className="text-center py-6 space-y-4 animate-fadeIn">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-                <CheckCircle2 className="w-8 h-8" />
+            <div className="text-center py-4 sm:py-6 space-y-4 animate-fadeIn">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+                <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
               </div>
-              <div className="space-y-2">
-                <h4 className="font-display text-2xl font-bold uppercase text-slate-900 tracking-wide">
+              <div className="space-y-1.5">
+                <h4 className="font-display text-xl sm:text-2xl font-bold uppercase text-slate-900 tracking-wide">
                   {successStatus === 'alreadySubscribed'
                     ? "YOU'RE ALREADY ON THE LIST!"
                     : "YOU'RE ON THE LIST!"}
@@ -214,14 +215,14 @@ export default function NewsletterModal() {
             </div>
           ) : (
             /* Subscription Form */
-            <div className="space-y-5">
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-brand-600 block">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="space-y-1">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-600 block">
                   GHURABO TRAVEL COMMUNITY
                 </span>
                 <h2
                   id="newsletter-modal-title"
-                  className="font-display text-2xl sm:text-3xl font-extrabold uppercase text-slate-900 tracking-tight"
+                  className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold uppercase text-slate-900 tracking-tight leading-snug"
                 >
                   DISCOVER YOUR NEXT ADVENTURE
                 </h2>
@@ -230,8 +231,8 @@ export default function NewsletterModal() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
+              <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
+                <div className="space-y-1">
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <Mail className="w-4 h-4" />
@@ -247,7 +248,7 @@ export default function NewsletterModal() {
                       }}
                       disabled={loading}
                       placeholder="Enter your email address"
-                      className={`w-full pl-10 pr-4 py-3 bg-slate-50 border text-slate-900 text-xs rounded-xl transition-all focus:bg-white focus:outline-none focus:ring-2 ${
+                      className={`w-full pl-10 pr-4 py-3 bg-slate-50 border text-slate-900 text-xs sm:text-sm rounded-xl transition-all focus:bg-white focus:outline-none focus:ring-2 ${
                         validationError || errorMessage
                           ? 'border-rose-400 focus:ring-rose-400'
                           : 'border-slate-200 focus:border-brand-500 focus:ring-brand-500/20'
@@ -283,7 +284,7 @@ export default function NewsletterModal() {
               </form>
 
               {/* Trust Subtext */}
-              <div className="pt-1 text-center">
+              <div className="pt-0.5 text-center">
                 <p className="text-[11px] text-slate-400 font-light">
                   No spam. Unsubscribe anytime with one click.
                 </p>

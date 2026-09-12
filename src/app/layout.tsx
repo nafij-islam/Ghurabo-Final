@@ -8,6 +8,7 @@ import { PreferencesProvider } from '@/context/PreferencesContext';
 import { NewsletterModalProvider } from '@/context/NewsletterModalContext';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 import NewsletterModal from '@/components/newsletter/NewsletterModal';
+import FloatingShareTripCTA from '@/components/layout/FloatingShareTripCTA';
 
 
 const oswald = Oswald({
@@ -65,6 +66,7 @@ export default function RootLayout({
               <FloatingSocialBar />
               <main className="flex-1 w-full">{children}</main>
               <Footer />
+              <FloatingShareTripCTA />
               <NewsletterModal />
             </SmoothScrollProvider>
           </NewsletterModalProvider>
