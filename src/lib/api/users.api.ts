@@ -8,6 +8,8 @@ import {
   BackendUser,
   BackendUserPublicProfile,
   BackendTrip,
+  FollowToggleResult,
+  FollowUserItem,
   StandardResponse,
   PaginatedResponse,
 } from './api.types';
@@ -44,9 +46,36 @@ export const usersApi = {
   },
 
   async getPublicProfile(username: string): Promise<BackendUserPublicProfile> {
-    const res = await api.get<StandardResponse<BackendUserPublicProfile>>(API_ENDPOINTS.USERS_PROFILE(username), {
-      skipAuth: true,
-    });
+    const res = await api.get<StandardResponse<BackendUserPublicProfile>>(
+      API_ENDPOINTS.USERS_PROFILE(username)
+    );
     return res.data;
+  },
+
+  async toggleFollow(username: string): Promise<FollowToggleResult> {
+    const res = await api.post<StandardResponse<FollowToggleResult>>(
+      API_ENDPOINTS.USERS_FOLLOW(username)
+    );
+    return res.data;
+  },
+
+  async getFollowers(
+    username: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<PaginatedResponse<FollowUserItem>> {
+    return api.get<PaginatedResponse<FollowUserItem>>(
+      API_ENDPOINTS.USERS_FOLLOWERS(username),
+      { params }
+    );
+  },
+
+  async getFollowing(
+    username: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<PaginatedResponse<FollowUserItem>> {
+    return api.get<PaginatedResponse<FollowUserItem>>(
+      API_ENDPOINTS.USERS_FOLLOWING(username),
+      { params }
+    );
   },
 };

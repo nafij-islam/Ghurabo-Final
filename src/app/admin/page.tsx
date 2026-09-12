@@ -15,6 +15,7 @@ import DestinationsModerationCard from '@/components/admin/DestinationsModeratio
 import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
 import PublishedTripsDirectory from '@/components/admin/PublishedTripsDirectory';
 import AllTripsManager from '@/components/admin/AllTripsManager';
+import AllUsersManager from '@/components/admin/AllUsersManager';
 
 export default function AdminPage() {
   const { user, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
@@ -226,6 +227,9 @@ export default function AdminPage() {
 
         {/* Complete All Trips Management Panel (Search, Filter, Suspend, Delete) */}
         <AllTripsManager onDataChanged={fetchAdminData} />
+
+        {/* User Directory & Moderation (Search, Filter, Detail Modal) */}
+        <AllUsersManager />
 
         {/* Currency Exchange Rate Control Card */}
         <CurrencyControlCard />

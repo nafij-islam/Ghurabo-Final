@@ -16,11 +16,20 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip }: TripCardProps) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(() => trip.isLiked ?? trip.viewerState?.hasLiked ?? false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => trip.isSaved ?? trip.viewerState?.hasSaved ?? false);
   const [submittingLike, setSubmittingLike] = useState(false);
   const [submittingSave, setSubmittingSave] = useState(false);
+
+  React.useEffect(() => {
+    if (trip.viewerState) {
+      setLiked(!!trip.viewerState.hasLiked);
+      setSaved(!!trip.viewerState.hasSaved);
+    } else if (typeof trip.isLiked === 'boolean') {
+      setLiked(trip.isLiked);
+    }
+  }, [trip.viewerState, trip.isLiked, trip.isSaved]);
   const { formatCost, t } = usePreferences();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -159,7 +168,11 @@ export default function TripCard({ trip }: TripCardProps) {
         <div>
           {/* Author info & Duration */}
           <div className="flex items-center justify-between mb-3 text-xs text-slate-500">
-            <div className="flex items-center space-x-2">
+            <Link
+              href={`/profile/${trip.authorUsername || trip.userName}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center space-x-2 group/author hover:opacity-80 transition-opacity"
+            >
               <img
                 src={getOptimizedImageUrl(trip.userAvatar, { width: 100, height: 100 })}
                 alt={trip.userName}
@@ -169,8 +182,8 @@ export default function TripCard({ trip }: TripCardProps) {
                 }}
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
               />
-              <span className="font-medium text-slate-700 truncate max-w-[120px]">{trip.userName}</span>
-            </div>
+              <span className="font-medium text-slate-700 truncate max-w-[120px] group-hover/author:text-brand-600 transition-colors">{trip.userName}</span>
+            </Link>
             <div className="flex items-center space-x-1 font-medium text-slate-500">
               <Clock className="w-3.5 h-3.5 text-brand-500" />
               <span>{trip.durationDays} {t('trip.days')}</span>

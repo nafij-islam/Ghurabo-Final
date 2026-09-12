@@ -71,9 +71,7 @@ export const tripsApi = {
   },
 
   async getTripBySlug(slug: string): Promise<BackendTrip> {
-    const res = await api.get<StandardResponse<BackendTrip>>(API_ENDPOINTS.TRIP_BY_SLUG(slug), {
-      skipAuth: true,
-    });
+    const res = await api.get<StandardResponse<BackendTrip>>(API_ENDPOINTS.TRIP_BY_SLUG(slug));
     return res.data;
   },
 

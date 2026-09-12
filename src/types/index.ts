@@ -110,6 +110,15 @@ export interface ITrip {
   savesCount: number;
   helpfulVotesCount: number;
   commentsCount: number;
+  authorUsername?: string;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  isHelpful?: boolean;
+  viewerState?: {
+    hasLiked?: boolean;
+    hasSaved?: boolean;
+    hasHelpful?: boolean;
+  };
   latitude?: number;
   longitude?: number;
   googlePlaceId?: string;
@@ -153,6 +162,7 @@ export interface IComment {
   tripId: string;
   userId: string;
   userName: string;
+  authorUsername?: string;
   userAvatar: string;
   content: string;
   parentId?: string;

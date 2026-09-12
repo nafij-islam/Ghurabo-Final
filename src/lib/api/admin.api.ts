@@ -11,6 +11,7 @@ import {
   StandardResponse,
   TripStats,
   AdminTripsResponse,
+  AdminUserItem,
 } from './api.types';
 
 export const adminApi = {
@@ -97,4 +98,21 @@ export const adminApi = {
     );
     return res.data;
   },
+
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    sort?: string;
+  }): Promise<PaginatedResponse<AdminUserItem>> {
+    return api.get<PaginatedResponse<AdminUserItem>>(API_ENDPOINTS.ADMIN_USERS, { params });
+  },
+
+  async getUserById(id: string): Promise<AdminUserItem> {
+    const res = await api.get<StandardResponse<AdminUserItem>>(API_ENDPOINTS.ADMIN_USER_BY_ID(id));
+    return res.data;
+  },
 };
+

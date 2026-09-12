@@ -56,8 +56,20 @@ export interface BackendUser {
   updatedAt?: string;
 }
 
+export interface UserProfileStats {
+  followersCount: number;
+  followingCount: number;
+  tripsCount: number;
+}
+
+export interface UserViewerState {
+  isFollowing: boolean;
+  isOwnProfile: boolean;
+}
+
 export interface BackendUserPublicProfile {
   id: string;
+  _id?: string;
   fullName: string;
   username: string;
   avatar?: BackendImage;
@@ -67,6 +79,44 @@ export interface BackendUserPublicProfile {
   travelStyle?: string;
   preferredLanguage?: string;
   createdAt?: string;
+  stats?: UserProfileStats;
+  viewerState?: UserViewerState;
+  followersCount?: number;
+  followingCount?: number;
+  tripsCount?: number;
+  isFollowing?: boolean;
+}
+
+export interface FollowToggleResult {
+  isFollowing: boolean;
+  followersCount: number;
+}
+
+export interface FollowUserItem {
+  _id: string;
+  id?: string;
+  fullName: string;
+  username: string;
+  avatar?: BackendImage;
+  bio?: string;
+}
+
+export interface AdminUserItem {
+  _id: string;
+  id?: string;
+  fullName: string;
+  username: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+  accountStatus: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  avatar?: BackendImage;
+  coverImage?: BackendImage;
+  bio?: string;
+  location?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+  tripsCount?: number;
+  followersCount?: number;
 }
 
 export interface BackendDestination {
@@ -139,6 +189,14 @@ export interface BackendTrip {
   savesCount: number;
   helpfulCount: number;
   commentsCount: number;
+  viewerState?: {
+    hasLiked?: boolean;
+    hasSaved?: boolean;
+    hasHelpful?: boolean;
+  };
+  isLiked?: boolean;
+  isSaved?: boolean;
+  isHelpful?: boolean;
   createdAt: string;
   updatedAt?: string;
 }

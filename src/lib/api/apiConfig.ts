@@ -28,6 +28,9 @@ export const API_ENDPOINTS = {
   USERS_ME_TRIPS: `${API_V1_PREFIX}/users/me/trips`,
   USERS_ME_SAVED_TRIPS: `${API_V1_PREFIX}/users/me/saved-trips`,
   USERS_PROFILE: (username: string) => `${API_V1_PREFIX}/users/${encodeURIComponent(username)}`,
+  USERS_FOLLOW: (username: string) => `${API_V1_PREFIX}/users/${encodeURIComponent(username)}/follow`,
+  USERS_FOLLOWERS: (username: string) => `${API_V1_PREFIX}/users/${encodeURIComponent(username)}/followers`,
+  USERS_FOLLOWING: (username: string) => `${API_V1_PREFIX}/users/${encodeURIComponent(username)}/following`,
 
   // Destinations
   DESTINATIONS: `${API_V1_PREFIX}/destinations`,
@@ -71,4 +74,6 @@ export const API_ENDPOINTS = {
   ADMIN_DESTINATION_FEATURED: (id: string) =>
     `${API_V1_PREFIX}/admin/destinations/${encodeURIComponent(id)}/featured`,
   ADMIN_SETTINGS_CURRENCY: `${API_V1_PREFIX}/admin/settings/currency`,
+  ADMIN_USERS: `${API_V1_PREFIX}/admin/users`,
+  ADMIN_USER_BY_ID: (id: string) => `${API_V1_PREFIX}/admin/users/${encodeURIComponent(id)}`,
 } as const;

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2, Edit3, Check, X } from 'lucide-react';
 import { ITrip, IComment } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,9 +16,9 @@ interface Props {
 }
 
 export function AuthorActions({ trip, initialHelpfulCount }: Props) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [helpful, setHelpful] = useState(false);
+  const [liked, setLiked] = useState(() => trip.isLiked ?? trip.viewerState?.hasLiked ?? false);
+  const [saved, setSaved] = useState(() => trip.isSaved ?? trip.viewerState?.hasSaved ?? false);
+  const [helpful, setHelpful] = useState(() => trip.isHelpful ?? trip.viewerState?.hasHelpful ?? false);
   const [likesCount, setLikesCount] = useState(trip.likesCount || 0);
   const [savesCount, setSavesCount] = useState(trip.savesCount || 0);
   const [helpfulCount, setHelpfulCount] = useState(initialHelpfulCount || trip.helpfulVotesCount || 0);
@@ -25,8 +26,17 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   const [submittingSave, setSubmittingSave] = useState(false);
   const [submittingHelpful, setSubmittingHelpful] = useState(false);
 
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
+
+  // Keep interaction state in sync when trip prop updates
+  useEffect(() => {
+    if (trip.viewerState) {
+      setLiked(!!trip.viewerState.hasLiked);
+      setSaved(!!trip.viewerState.hasSaved);
+      setHelpful(!!trip.viewerState.hasHelpful);
+    }
+  }, [trip.viewerState]);
 
   const requireAuth = () => {
     if (!isAuthenticated) {
@@ -113,8 +123,9 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
     <div className="flex flex-wrap items-center gap-2.5">
       <button
         type="button"
+        disabled={submittingLike}
         onClick={handleLike}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
           liked ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-600'
         }`}
       >
@@ -124,8 +135,9 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
 
       <button
         type="button"
+        disabled={submittingSave}
         onClick={handleSave}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
           saved ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-600'
         }`}
       >
@@ -135,8 +147,9 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
 
       <button
         type="button"
+        disabled={submittingHelpful}
         onClick={handleHelpfulVote}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer ${
+        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-60 ${
           helpful ? 'bg-emerald-600 text-white' : 'bg-brand-500 text-white hover:bg-brand-600'
         }`}
       >
@@ -147,11 +160,20 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   );
 }
 
-export function CommentsSection({ tripId }: { tripId: string }) {
+export function CommentsSection({
+  tripId,
+  onCommentCountChange,
+}: {
+  tripId: string;
+  onCommentCountChange?: (count: number) => void;
+}) {
   const [comments, setComments] = useState<IComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -163,8 +185,12 @@ export function CommentsSection({ tripId }: { tripId: string }) {
     commentsApi
       .getTripComments(tripId)
       .then((res) => {
-        if (mounted) {
-          setComments(res.data.map(adaptBackendCommentToIComment));
+        if (mounted && res?.data) {
+          const adapted = res.data.map(adaptBackendCommentToIComment);
+          setComments(adapted);
+          if (onCommentCountChange) {
+            onCommentCountChange(adapted.length);
+          }
         }
       })
       .catch((err) => console.error('Failed to load comments:', err))
@@ -175,7 +201,7 @@ export function CommentsSection({ tripId }: { tripId: string }) {
     return () => {
       mounted = false;
     };
-  }, [tripId]);
+  }, [tripId, onCommentCountChange]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +217,11 @@ export function CommentsSection({ tripId }: { tripId: string }) {
     try {
       const created = await commentsApi.createComment(tripId, newComment.trim());
       const adapted = adaptBackendCommentToIComment(created);
-      setComments((prev) => [adapted, ...prev]);
+      setComments((prev) => {
+        const next = [adapted, ...prev];
+        if (onCommentCountChange) onCommentCountChange(next.length);
+        return next;
+      });
       setNewComment('');
     } catch (err) {
       console.error('Failed to post comment:', err);
@@ -200,10 +230,43 @@ export function CommentsSection({ tripId }: { tripId: string }) {
     }
   };
 
+  const handleStartEdit = (comment: IComment) => {
+    setEditingId(comment.id || comment._id || '');
+    setEditContent(comment.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editContent.trim()) return;
+    setSavingEdit(true);
+    try {
+      const updated = await commentsApi.updateComment(commentId, editContent.trim());
+      const adapted = adaptBackendCommentToIComment(updated);
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId || c._id === commentId ? adapted : c))
+      );
+      setEditingId(null);
+      setEditContent('');
+    } catch (err) {
+      console.error('Failed to edit comment:', err);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
     try {
       await commentsApi.deleteComment(commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId && c._id !== commentId));
+      setComments((prev) => {
+        const next = prev.filter((c) => c.id !== commentId && c._id !== commentId);
+        if (onCommentCountChange) onCommentCountChange(next.length);
+        return next;
+      });
     } catch (err) {
       console.error('Failed to delete comment:', err);
     }
@@ -236,45 +299,117 @@ export function CommentsSection({ tripId }: { tripId: string }) {
       </form>
 
       {loading ? (
-        <div className="py-6 text-center text-xs text-slate-400 font-semibold animate-pulse">
-          Loading discussion comments...
+        <div className="space-y-4 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start space-x-3">
+              <div className="w-9 h-9 rounded-full bg-slate-200 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-28 bg-slate-200 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="py-6 text-center text-xs text-slate-400 font-light italic">
+        <div className="py-12 text-center text-xs text-slate-400 font-light italic bg-slate-50 rounded-2xl border border-slate-100">
           No comments yet. Be the first to start the conversation!
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map((c) => (
-            <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between space-x-3">
-              <div className="flex space-x-3">
-                <img
-                  src={getOptimizedImageUrl(c.userAvatar, { width: 100, height: 100 })}
-                  alt={c.userName}
-                  loading="lazy"
-                  className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
-                />
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-xs text-slate-900">{c.userName}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1 font-light">{c.content}</p>
-                </div>
-              </div>
+          {comments.map((c) => {
+            const commentId = c.id || c._id || '';
+            const isOwner = user && (user.id === c.userId || (user as any)._id === c.userId);
+            const isAdmin = user?.role === 'admin';
+            const isEditing = editingId === commentId;
+            const authorSlug = c.authorUsername || c.userName;
 
-              {user && (user.id === c.userId || user.role === 'admin') && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteComment(c.id)}
-                  className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
-                  title="Delete comment"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ))}
+            return (
+              <div key={commentId} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between space-x-3">
+                <div className="flex space-x-3 flex-1">
+                  <Link href={`/profile/${authorSlug}`}>
+                    <img
+                      src={getOptimizedImageUrl(c.userAvatar, { width: 100, height: 100 })}
+                      alt={c.userName}
+                      loading="lazy"
+                      className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 hover:opacity-80 transition-opacity"
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <Link
+                        href={`/profile/${authorSlug}`}
+                        className="font-bold text-xs text-slate-900 hover:text-brand-600 transition-colors"
+                      >
+                        {c.userName}
+                      </Link>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-2 mt-2">
+                        <textarea
+                          rows={2}
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            disabled={savingEdit}
+                            onClick={() => handleSaveEdit(commentId)}
+                            className="px-3 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold flex items-center space-x-1"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Cancel</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-600 mt-1 font-light leading-relaxed whitespace-pre-line">
+                        {c.content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {!isEditing && (
+                  <div className="flex items-center space-x-1 shrink-0">
+                    {isOwner && (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(c)}
+                        className="p-1.5 text-slate-400 hover:text-brand-600 transition-colors"
+                        title="Edit comment"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {(isOwner || isAdmin) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteComment(commentId)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                        title="Delete comment"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
