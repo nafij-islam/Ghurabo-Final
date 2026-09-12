@@ -120,16 +120,16 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
       <button
         type="button"
         disabled={submittingLike}
         onClick={handleLike}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
           liked ? 'bg-rose-500 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-600'
         }`}
       >
-        <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
+        <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${liked ? 'fill-current' : ''}`} />
         <span>{liked ? 'Liked' : 'Like'} ({likesCount})</span>
       </button>
 
@@ -137,11 +137,11 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
         type="button"
         disabled={submittingSave}
         onClick={handleSave}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold transition-all cursor-pointer disabled:opacity-60 ${
           saved ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-600'
         }`}
       >
-        <Bookmark className={`w-4 h-4 ${saved ? 'fill-current' : ''}`} />
+        <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${saved ? 'fill-current' : ''}`} />
         <span>{saved ? 'Saved' : 'Save'} ({savesCount})</span>
       </button>
 
@@ -149,11 +149,11 @@ export function AuthorActions({ trip, initialHelpfulCount }: Props) {
         type="button"
         disabled={submittingHelpful}
         onClick={handleHelpfulVote}
-        className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-60 ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-60 ${
           helpful ? 'bg-emerald-600 text-white' : 'bg-brand-500 text-white hover:bg-brand-600'
         }`}
       >
-        <ThumbsUp className={`w-4 h-4 ${helpful ? 'fill-current' : ''}`} />
+        <ThumbsUp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${helpful ? 'fill-current' : ''}`} />
         <span>Helpful ({helpfulCount})</span>
       </button>
     </div>
@@ -273,9 +273,9 @@ export function CommentsSection({
   };
 
   return (
-    <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-100 mb-12">
-      <h2 className="font-display text-3xl font-bold text-slate-900 uppercase mb-6 flex items-center space-x-2">
-        <MessageSquare className="w-6 h-6 text-brand-500" />
+    <div className="bg-white p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 mb-8 sm:mb-12">
+      <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 uppercase mb-5 sm:mb-6 flex items-center space-x-2">
+        <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-brand-500 shrink-0" />
         <span>Community Discussion ({comments.length})</span>
       </h2>
 

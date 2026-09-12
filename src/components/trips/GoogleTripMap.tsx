@@ -36,7 +36,7 @@ export default function GoogleTripMap({
       )}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
-    <div className="w-full bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 my-8">
+    <div className="w-full bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 my-6 sm:my-8">
       {/* Map Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div>
@@ -44,8 +44,8 @@ export default function GoogleTripMap({
             <MapIcon className="w-3 h-3" />
             <span>Interactive Google Map Location</span>
           </div>
-          <h3 className="font-display text-2xl font-bold text-white uppercase flex items-center space-x-2">
-            <MapPin className="w-6 h-6 text-brand-400" />
+          <h3 className="font-display text-xl sm:text-2xl font-bold text-white uppercase flex items-center space-x-2">
+            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-brand-400 shrink-0" />
             <span>{destinationName}</span>
           </h3>
           <p className="text-slate-400 text-xs mt-0.5">
@@ -54,12 +54,12 @@ export default function GoogleTripMap({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <a
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all"
           >
             <Navigation className="w-3.5 h-3.5" />
             <span>Get Directions</span>
@@ -68,7 +68,7 @@ export default function GoogleTripMap({
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider border border-white/20 rounded-xl transition-all"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider border border-white/20 rounded-xl transition-all"
           >
             <span>Open in Maps</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -77,7 +77,7 @@ export default function GoogleTripMap({
       </div>
 
       {/* Lazy Loaded Interactive Map Container */}
-      <div className="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden bg-slate-950 border border-white/10">
+      <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-950 border border-white/10">
         {!mapLoaded && (
           <div className="absolute inset-0 bg-slate-900 animate-pulse flex flex-col items-center justify-center space-y-3 z-10">
             <MapPin className="w-8 h-8 text-brand-400 animate-bounce" />
