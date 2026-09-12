@@ -74,6 +74,17 @@ export const adminApi = {
     await api.delete(API_ENDPOINTS.ADMIN_TRIP_DELETE(id));
   },
 
+  async convertTripToDestination(
+    id: string,
+    data?: Partial<BackendDestination>
+  ): Promise<BackendDestination> {
+    const res = await api.post<StandardResponse<BackendDestination>>(
+      API_ENDPOINTS.ADMIN_TRIP_CONVERT_DESTINATION(id),
+      data || {}
+    );
+    return res.data;
+  },
+
   async createDestination(data: Partial<BackendDestination>): Promise<BackendDestination> {
     const res = await api.post<StandardResponse<BackendDestination>>(API_ENDPOINTS.ADMIN_DESTINATIONS, data);
     return res.data;

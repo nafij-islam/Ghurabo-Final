@@ -69,6 +69,8 @@ export const API_ENDPOINTS = {
   ADMIN_TRIP_VERIFIED: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/verified`,
   ADMIN_TRIP_FEATURED: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/featured`,
   ADMIN_TRIP_DELETE: (id: string) => `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}`,
+  ADMIN_TRIP_CONVERT_DESTINATION: (id: string) =>
+    `${API_V1_PREFIX}/admin/trips/${encodeURIComponent(id)}/convert-to-destination`,
   ADMIN_DESTINATIONS: `${API_V1_PREFIX}/admin/destinations`,
   ADMIN_DESTINATION_BY_ID: (id: string) => `${API_V1_PREFIX}/admin/destinations/${encodeURIComponent(id)}`,
   ADMIN_DESTINATION_FEATURED: (id: string) =>

@@ -27,6 +27,7 @@ import { ITrip } from '@/types';
 import { adminApi } from '@/lib/api/admin.api';
 import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 import { TripStats } from '@/lib/api/api.types';
+import ConvertTripToDestinationModal from './ConvertTripToDestinationModal';
 
 interface AllTripsManagerProps {
   onDataChanged?: () => void;
@@ -62,6 +63,7 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
   const [tripToDelete, setTripToDelete] = useState<ITrip | null>(null);
   const [tripToSuspend, setTripToSuspend] = useState<ITrip | null>(null);
   const [suspendReason, setSuspendReason] = useState<string>('');
+  const [tripToConvert, setTripToConvert] = useState<ITrip | null>(null);
 
   const fetchTrips = useCallback(async () => {
     setLoading(true);
@@ -505,6 +507,17 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
                       {/* Admin Actions */}
                       <td className="py-4 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center space-x-2">
+                          {/* Convert to Destination Button */}
+                          <button
+                            onClick={() => setTripToConvert(trip)}
+                            disabled={actionLoading === trip.id}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-xl font-bold text-[11px] transition-all cursor-pointer shadow-xs hover:shadow-sm disabled:opacity-50"
+                            title="Convert this trip to an official Destination"
+                          >
+                            <Compass className="w-3.5 h-3.5" />
+                            <span>Convert to Destination</span>
+                          </button>
+
                           {/* Popular Toggle for Approved Trips */}
                           {trip.status === 'approved' && !isSuspended && (
                             <button
@@ -728,6 +741,23 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
             </div>
           </div>
         </div>
+      )}
+
+      {/* Convert Trip to Destination Modal */}
+      {tripToConvert && (
+        <ConvertTripToDestinationModal
+          trip={tripToConvert}
+          isOpen={!!tripToConvert}
+          onClose={() => setTripToConvert(null)}
+          onSuccess={(_dest) => {
+            setFeedback({
+              type: 'success',
+              message: `Trip "${tripToConvert.title}" was successfully converted into an official Destination!`,
+            });
+            fetchTrips();
+            onDataChanged?.();
+          }}
+        />
       )}
     </div>
   );
