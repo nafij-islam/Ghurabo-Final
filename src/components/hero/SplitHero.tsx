@@ -44,11 +44,11 @@ export default function SplitHero() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Auto-play interval: smooth transition every 4 seconds continuously
+  // Auto-play interval: smooth transition every 5 seconds continuously
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 4000);
+    }, 5000);
 
     return () => clearInterval(timer);
   }, []);
