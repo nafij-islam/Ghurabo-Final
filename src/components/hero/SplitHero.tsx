@@ -5,10 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import bannerOne from '../../../public/banner-one.png';
+import bannerTwo from '../../../public/banner-two.jpg';
+import bannerThree from '../../../public/banner-three.jpg';
 
 const HERO_SLIDES = [
   {
-    image: '/banner-one.png',
+    image: bannerOne,
     title: 'EXPLORE BANGLADESH',
     subtitle: 'WORLDWIDE TRAVEL COMMUNITY',
     description:
@@ -17,7 +20,7 @@ const HERO_SLIDES = [
     slug: 'bangladesh',
   },
   {
-    image: '/banner-two.jpg',
+    image: bannerTwo,
     title: "COX'S BAZAR",
     subtitle: 'THE WORLD’S LONGEST SEA BEACH',
     description:
@@ -26,7 +29,7 @@ const HERO_SLIDES = [
     slug: 'cox-bazar',
   },
   {
-    image: '/banner-three.jpg',
+    image: bannerThree,
     title: 'SREEMANGAL GRAND SULTAN',
     subtitle: 'TEA GARDENS & NATURE ESCAPES',
     description:
@@ -205,7 +208,8 @@ export default function SplitHero() {
                     src={s.image}
                     alt={s.location}
                     fill
-                    priority
+                    priority={idx === 0}
+                    placeholder="blur"
                     className="object-cover object-center"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
@@ -286,7 +290,8 @@ export default function SplitHero() {
                   src={s.image}
                   alt={s.location}
                   fill
-                  priority
+                  priority={idx === 0}
+                  placeholder="blur"
                   className="object-cover object-center"
                   sizes="100vw"
                 />

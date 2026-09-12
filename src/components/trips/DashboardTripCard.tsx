@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Eye,
   Edit3,
@@ -72,11 +73,13 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
     <div className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
       {/* Cover Image & Badges */}
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
-        <img
+        <Image
           src={cardImg || fallbackCover}
-          alt={trip.title}
+          alt={trip.title || 'Trip cover'}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           onError={() => setCardImg(fallbackCover)}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 

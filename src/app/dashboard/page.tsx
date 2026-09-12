@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import TripCard from '@/components/cards/TripCard';
 import DashboardTripCard from '@/components/trips/DashboardTripCard';
 import EditTripModal from '@/components/trips/EditTripModal';
@@ -155,9 +156,12 @@ export default function DashboardPage() {
         {/* User Profile Header Card */}
         <div className="bg-darkslate-900 text-white p-8 rounded-3xl shadow-xl mb-10 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-6">
-            <img
+            <Image
               src={currentUser?.avatar || 'https://i.pravatar.cc/150'}
-              alt={currentUser?.name || 'User'}
+              alt={currentUser?.name || 'User Avatar'}
+              width={80}
+              height={80}
+              priority
               className="w-20 h-20 rounded-full object-cover border-4 border-brand-500 shadow-lg bg-slate-800"
             />
             <div>

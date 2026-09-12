@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X, PlusCircle } from 'lucide-react';
 import { usePreferences } from '@/context/PreferencesContext';
@@ -86,9 +87,12 @@ export default function Navbar() {
         {/* Brand Logo */}
         <div className="flex items-center">
           <Link href="/" className="flex items-center group">
-            <img
+            <Image
               src="/logo-ghurabo.png"
-              alt="Ghurabo Logo"
+              alt="Ghurabo Travel Community Logo"
+              width={843}
+              height={276}
+              priority
               className="h-10 sm:h-14 md:h-16 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-md"
             />
           </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Star } from 'lucide-react';
 import { IDestination } from '@/types';
 
@@ -43,9 +44,11 @@ export default function DestinationsModerationCard({
             }`}
           >
             <div className="flex items-center space-x-3 truncate">
-              <img
+              <Image
                 src={dest.image}
-                alt={dest.name}
+                alt={dest.name || 'Destination thumbnail'}
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded-xl object-cover border border-white shadow-sm flex-shrink-0"
               />
               <div className="truncate">

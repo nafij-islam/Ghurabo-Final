@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextImage from 'next/image';
 import { Camera, Image as ImageIcon, User, MapPin, Sparkles, Check, X, Upload } from 'lucide-react';
 import { IUser, TravelType } from '@/types';
 
@@ -113,9 +114,12 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
           {/* Avatar Upload Preview */}
           <div className="flex items-center space-x-4">
             <div className="relative group">
-              <img
+              <NextImage
                 src={avatar || 'https://i.pravatar.cc/150'}
                 alt="Avatar Preview"
+                width={80}
+                height={80}
+                unoptimized={avatar?.startsWith('data:') || avatar?.startsWith('blob:')}
                 className="w-20 h-20 rounded-full object-cover border-2 border-brand-500 shadow"
               />
               <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">

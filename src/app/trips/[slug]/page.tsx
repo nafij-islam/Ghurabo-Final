@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import TripCard from '@/components/cards/TripCard';
 import { tripsApi } from '@/lib/api/trips.api';
@@ -116,13 +117,13 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
     <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20">
       {/* Cover Image Header */}
       <div className="relative h-[360px] sm:h-[440px] md:h-[480px] w-full overflow-hidden bg-slate-950">
-        <img
+        <Image
           src={getOptimizedImageUrl(trip.coverImage, { width: 1400, height: 800, quality: 'auto' })}
           alt={trip.title}
-          className="w-full h-full object-cover opacity-85"
-          onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1400';
-          }}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-85"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
@@ -170,13 +171,12 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
         <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 mb-8 sm:mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
             <Link href={`/profile/${trip.authorUsername || trip.userName}`} className="shrink-0">
-              <img
+              <Image
                 src={getOptimizedImageUrl(trip.userAvatar, { width: 120, height: 120 })}
-                alt={trip.userName}
+                alt={trip.userName || 'Author avatar'}
+                width={56}
+                height={56}
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-brand-500 hover:opacity-80 transition-opacity"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
-                }}
               />
             </Link>
             <div className="truncate">

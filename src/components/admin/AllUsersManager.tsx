@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Users,
   Search,
@@ -294,13 +295,12 @@ export default function AllUsersManager() {
                     {/* User info */}
                     <td className="py-3.5 px-3">
                       <div className="flex items-center space-x-3">
-                        <img
+                        <Image
                           src={userAvatar}
-                          alt={u.fullName || u.username}
+                          alt={u.fullName || u.username || 'User avatar'}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full object-cover border border-slate-200 bg-slate-100 shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150';
-                          }}
                         />
                         <div className="min-w-0">
                           <Link
@@ -406,7 +406,7 @@ export default function AllUsersManager() {
             {/* Modal Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-4">
-                <img
+                <Image
                   src={
                     getOptimizedImageUrl(
                       typeof selectedUser.avatar === 'string'
@@ -415,7 +415,9 @@ export default function AllUsersManager() {
                       { width: 120, height: 120 }
                     ) || 'https://i.pravatar.cc/150'
                   }
-                  alt={selectedUser.fullName || selectedUser.username}
+                  alt={selectedUser.fullName || selectedUser.username || 'User avatar'}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full object-cover border-2 border-brand-500 bg-slate-100 shadow"
                 />
                 <div>

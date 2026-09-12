@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import TripCard from '@/components/cards/TripCard';
 import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ITrip, IUser } from '@/types';
@@ -211,13 +212,16 @@ export default function ProfilePage() {
     <div className="w-full pt-20 pb-20 bg-slate-50 min-h-screen">
       {/* Profile Cover Image Banner */}
       <div className="relative h-64 sm:h-80 w-full bg-darkslate-900 overflow-hidden">
-        <img
+        <Image
           src={
             activeUser?.coverImage ||
             'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1600'
           }
-          alt="Profile Cover"
-          className="w-full h-full object-cover opacity-75"
+          alt={`${activeUser?.name || 'User'} Profile Cover`}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-75"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
       </div>
@@ -226,13 +230,13 @@ export default function ProfilePage() {
         {/* Profile Details Card */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 mb-10 flex flex-col md:flex-row items-center md:items-end justify-between gap-6">
           <div className="flex flex-col md:flex-row items-center md:items-end space-y-4 md:space-y-0 md:space-x-6 text-center md:text-left">
-            <img
+            <Image
               src={activeUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=300'}
               alt={activeUser?.name || 'Traveller Profile'}
+              width={112}
+              height={112}
+              priority
               className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl -mt-14 md:-mt-16 bg-slate-100"
-              onError={(e) => {
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=300';
-              }}
             />
             <div>
               <div className="flex items-center space-x-3 justify-center md:justify-start">
@@ -408,13 +412,12 @@ export default function ProfilePage() {
                       className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors group"
                     >
                       <div className="flex items-center space-x-3 min-w-0">
-                        <img
+                        <Image
                           src={getOptimizedImageUrl(avatarUrl, { width: 80, height: 80 })}
-                          alt={u.fullName}
+                          alt={u.fullName || u.username || 'User avatar'}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200';
-                          }}
                         />
                         <div className="min-w-0">
                           <p className="font-bold text-xs text-slate-900 truncate group-hover:text-brand-600 transition-colors">

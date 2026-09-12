@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight, Heart, MapPin, ExternalLink, Camera } from 'lucide-react';
 import { IGalleryItem } from '@/types';
 
@@ -82,10 +83,13 @@ export default function LightboxModal({
       <div className="relative max-w-5xl w-full max-h-[85vh] flex flex-col md:flex-row bg-darkslate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10">
         {/* Left/Top: Image Container */}
         <div className="flex-1 bg-black flex items-center justify-center relative min-h-[300px] md:min-h-[500px]">
-          <img
+          <Image
             src={item.url}
-            alt={item.caption || item.destinationName}
-            className="max-h-[75vh] w-auto max-w-full object-contain"
+            alt={item.caption || item.destinationName || 'Community photo'}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 70vw"
+            className="object-contain"
           />
         </div>
 
@@ -105,9 +109,11 @@ export default function LightboxModal({
 
             {/* Photographer Badge */}
             <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-2xl border border-white/10 mb-6">
-              <img
-                src={item.photographerAvatar}
-                alt={item.photographerName}
+              <Image
+                src={item.photographerAvatar || 'https://i.pravatar.cc/150'}
+                alt={item.photographerName || 'Photographer avatar'}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover border border-cyan-400"
               />
               <div>

@@ -411,10 +411,12 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
                         <div className="flex items-start space-x-3">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
                             {trip.coverImage ? (
-                              <img
+                              <Image
                                 src={trip.coverImage}
-                                alt={trip.title}
-                                className="w-full h-full object-cover"
+                                alt={trip.title || 'Trip cover'}
+                                fill
+                                sizes="48px"
+                                className="object-cover"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -452,9 +454,11 @@ export default function AllTripsManager({ onDataChanged }: AllTripsManagerProps)
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           {trip.userAvatar ? (
-                            <img
+                            <Image
                               src={trip.userAvatar}
-                              alt={trip.userName}
+                              alt={trip.userName || 'Author avatar'}
+                              width={28}
+                              height={28}
                               className="w-7 h-7 rounded-full object-cover border border-slate-200"
                             />
                           ) : (

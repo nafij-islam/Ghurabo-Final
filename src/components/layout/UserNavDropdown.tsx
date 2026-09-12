@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User, Compass, ShieldCheck, LogOut } from 'lucide-react';
 import { IUser } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
@@ -50,9 +51,11 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
         aria-label="User Account Menu"
         className="hidden md:flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-3.5 py-1.5 rounded-full font-medium text-sm transition-all shadow-md cursor-pointer"
       >
-        <img
+        <Image
           src={getOptimizedImageUrl(user.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
-          alt={user.name}
+          alt={user.name || 'User avatar'}
+          width={24}
+          height={24}
           className="w-6 h-6 rounded-full object-cover border border-white"
         />
         <span className="max-w-[90px] truncate">{user.name}</span>
@@ -64,9 +67,11 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
         className="md:hidden flex items-center justify-center p-0.5 rounded-full border border-brand-400/60 hover:border-brand-400 transition-all"
         aria-label="Profile"
       >
-        <img
+        <Image
           src={getOptimizedImageUrl(user.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
-          alt={user.name}
+          alt={user.name || 'User avatar'}
+          width={32}
+          height={32}
           className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
         />
       </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextImage from 'next/image';
 import Link from 'next/link';
 import {
   MapPin,
@@ -341,9 +342,11 @@ export default function DestinationsManager({
                   {/* Destination Info */}
                   <td className="py-3.5 px-4 font-medium text-slate-900">
                     <div className="flex items-center space-x-3">
-                      <img
+                      <NextImage
                         src={dest.image}
-                        alt={dest.name}
+                        alt={dest.name || 'Destination image'}
+                        width={44}
+                        height={44}
                         className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
                       />
                       <div className="min-w-0">
@@ -577,9 +580,12 @@ export default function DestinationsManager({
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                   />
                   {formData.coverImageUrl && (
-                    <img
+                    <NextImage
                       src={formData.coverImageUrl}
                       alt="Preview"
+                      width={36}
+                      height={36}
+                      unoptimized={formData.coverImageUrl.startsWith('data:') || formData.coverImageUrl.startsWith('blob:')}
                       className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0"
                     />
                   )}

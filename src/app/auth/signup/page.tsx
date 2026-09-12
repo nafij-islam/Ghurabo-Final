@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { normalizeApiErrorMessage } from '@/lib/api/apiError';
@@ -50,9 +51,12 @@ function SignupForm() {
   return (
     <div className="max-w-md w-full bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-100 space-y-6">
       <div className="text-center">
-        <img
+        <Image
           src="/logo-ghurabo.png"
           alt="Ghurabo Logo"
+          width={843}
+          height={276}
+          priority
           className="h-16 sm:h-20 w-auto object-contain mx-auto mb-3"
         />
         <h1 className="font-display text-3xl font-bold uppercase text-slate-900">Join Community</h1>

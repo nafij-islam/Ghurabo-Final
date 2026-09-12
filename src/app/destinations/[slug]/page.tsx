@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination, ITrip } from '@/types';
@@ -96,10 +97,13 @@ export default function DestinationDetailsPage() {
     <div className="w-full bg-slate-50 min-h-screen pt-20">
       {/* Hero Section */}
       <div className="relative h-[450px] w-full overflow-hidden bg-slate-950">
-        <img
+        <Image
           src={destination.heroImage || destination.image}
           alt={destination.name}
-          className="w-full h-full object-cover opacity-80"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 

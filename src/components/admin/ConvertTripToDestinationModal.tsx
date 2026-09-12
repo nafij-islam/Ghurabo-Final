@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   X,
   Compass,
@@ -215,9 +216,9 @@ export default function ConvertTripToDestinationModal({
 
         {/* Source Trip Summary Banner */}
         <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center space-x-4">
-          <div className="w-16 h-14 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200">
+          <div className="relative w-16 h-14 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200">
             {trip.coverImage ? (
-              <img src={trip.coverImage} alt={trip.title} className="w-full h-full object-cover" />
+              <Image src={trip.coverImage} alt={trip.title || 'Trip cover'} fill sizes="64px" className="object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-400">
                 <Compass className="w-6 h-6" />
@@ -259,11 +260,13 @@ export default function ConvertTripToDestinationModal({
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 max-w-md mx-auto flex items-center space-x-3 text-left">
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
-                <img
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
+                <Image
                   src={createdDestination.coverImage?.url || coverImageUrl}
-                  alt={createdDestination.name}
-                  className="w-full h-full object-cover"
+                  alt={createdDestination.name || 'Destination cover'}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
                 />
               </div>
               <div className="min-w-0 flex-1">

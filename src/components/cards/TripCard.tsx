@@ -111,7 +111,6 @@ export default function TripCard({ trip }: TripCardProps) {
           src={cardImg}
           alt={trip.title}
           fill
-          unoptimized
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           onError={() => setCardImg(fallbackCover)}
@@ -173,13 +172,11 @@ export default function TripCard({ trip }: TripCardProps) {
               onClick={(e) => e.stopPropagation()}
               className="flex items-center space-x-2 group/author hover:opacity-80 transition-opacity"
             >
-              <img
+              <Image
                 src={getOptimizedImageUrl(trip.userAvatar, { width: 100, height: 100 })}
-                alt={trip.userName}
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120';
-                }}
+                alt={trip.userName || 'Author avatar'}
+                width={24}
+                height={24}
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
               />
               <span className="font-medium text-slate-700 truncate max-w-[120px] group-hover/author:text-brand-600 transition-colors">{trip.userName}</span>

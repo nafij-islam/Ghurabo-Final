@@ -74,7 +74,6 @@ export default function CommunityGallerySpotlight({
                   fill
                   sizes="(max-width: 768px) 100vw, 55vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-6 flex flex-col justify-end text-white z-10">
                   <div className="inline-flex items-center space-x-1.5 px-3 py-1 bg-brand-500 text-white rounded-full text-[10px] font-extrabold uppercase tracking-wider self-start mb-2 shadow-sm">

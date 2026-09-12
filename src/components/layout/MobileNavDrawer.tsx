@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   X,
   User,
@@ -75,7 +76,13 @@ export default function MobileNavDrawer({
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-darkslate-900/80 shrink-0">
           <Link href="/" onClick={onClose} className="flex items-center">
-            <img src="/logo-ghurabo.png" alt="Ghurabo Logo" className="h-9 w-auto object-contain" />
+            <Image
+              src="/logo-ghurabo.png"
+              alt="Ghurabo Logo"
+              width={843}
+              height={276}
+              className="h-9 w-auto object-contain"
+            />
           </Link>
           <button
             onClick={onClose}
@@ -91,9 +98,11 @@ export default function MobileNavDrawer({
           {/* Authenticated User Header Card */}
           {user && (
             <div className="flex items-center space-x-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
-              <img
+              <Image
                 src={getOptimizedImageUrl(user.avatar || 'https://i.pravatar.cc/150', { width: 100, height: 100 })}
-                alt={user.name}
+                alt={user.name || 'User avatar'}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover border-2 border-brand-400 shadow-sm shrink-0"
               />
               <div className="min-w-0 flex-1">

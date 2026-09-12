@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Compass, Send, Heart, MapPin, Mail, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useNewsletterModal } from '@/context/NewsletterModalContext';
@@ -49,9 +50,11 @@ export default function Footer() {
           {/* Col 1: Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-flex items-center group">
-              <img
+              <Image
                 src="/logo-ghurabo.png"
                 alt="Ghurabo Logo"
+                width={843}
+                height={276}
                 className="h-14 sm:h-16 w-auto object-contain group-hover:scale-105 transition-transform"
               />
             </Link>

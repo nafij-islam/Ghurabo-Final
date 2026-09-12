@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Heart, Bookmark, ThumbsUp, MessageSquare, Trash2, Edit3, Check, X } from 'lucide-react';
 import { ITrip, IComment } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
@@ -327,10 +328,11 @@ export function CommentsSection({
               <div key={commentId} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start justify-between space-x-3">
                 <div className="flex space-x-3 flex-1">
                   <Link href={`/profile/${authorSlug}`}>
-                    <img
+                    <Image
                       src={getOptimizedImageUrl(c.userAvatar, { width: 100, height: 100 })}
-                      alt={c.userName}
-                      loading="lazy"
+                      alt={c.userName || 'Commenter avatar'}
+                      width={36}
+                      height={36}
                       className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 hover:opacity-80 transition-opacity"
                     />
                   </Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Upload, Trash2, ArrowLeft, Sparkles } from 'lucide-react';
 import { ITripImage } from '@/types';
 
@@ -83,14 +84,17 @@ export default function StepPhotosPublish({
             {images.map((img, idx) => (
               <div
                 key={idx}
-                className={`relative rounded-xl overflow-hidden border-2 transition-all group ${
+                className={`relative h-32 rounded-xl overflow-hidden border-2 transition-all group ${
                   coverImageIndex === idx ? 'border-brand-400 ring-2 ring-brand-400/40' : 'border-white/10'
                 }`}
               >
-                <img
+                <Image
                   src={img.url}
                   alt={img.caption || `Trip photo ${idx + 1}`}
-                  className="w-full h-32 object-cover"
+                  fill
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  unoptimized={img.url.startsWith('blob:') || img.url.startsWith('data:')}
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
                   <button
@@ -130,9 +134,12 @@ export default function StepPhotosPublish({
         </span>
         <div className="flex items-start space-x-4">
           {images[coverImageIndex]?.url && (
-            <img
+            <Image
               src={images[coverImageIndex].url}
               alt="Cover Preview"
+              width={80}
+              height={80}
+              unoptimized={images[coverImageIndex].url.startsWith('blob:') || images[coverImageIndex].url.startsWith('data:')}
               className="w-20 h-20 rounded-xl object-cover border border-white/20 shrink-0"
             />
           )}
