@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight, Plane, MapPin, PlusCircle } from 'lucide-react';
-
 import { useAuth } from '@/hooks/useAuth';
 
 const HERO_SLIDES = [
@@ -12,7 +11,8 @@ const HERO_SLIDES = [
     image: '/banner-one.png',
     title: 'EXPLORE THE WORLD',
     subtitle: 'WORLDWIDE TRAVEL COMMUNITY',
-    description: 'Share your real travel stories, itemized budget breakdowns, day-by-day itineraries, and connect with passionate solo, couple, family, and group explorers around the globe.',
+    description:
+      'Share your real travel stories, itemized budget breakdowns, day-by-day itineraries, and connect with passionate solo, couple, family, and group explorers around the globe.',
     location: "Cox's Bazar Beach, Bangladesh",
     slug: 'coxs-bazar-beach',
   },
@@ -20,7 +20,8 @@ const HERO_SLIDES = [
     image: '/banner-two.png',
     title: 'TOUCH THE CLOUDS',
     subtitle: 'AUTHENTIC MOUNTAIN ESCAPES',
-    description: 'Discover high-altitude valleys, misty morning ridges, scenic 4x4 jeep trails, and local tribal culture with real cost insights from fellow travellers.',
+    description:
+      'Discover high-altitude valleys, misty morning ridges, scenic 4x4 jeep trails, and local tribal culture with real cost insights from fellow travellers.',
     location: 'Sajek Valley Hilltop, Rangamati',
     slug: 'sajek-valley-hilltop',
   },
@@ -28,7 +29,8 @@ const HERO_SLIDES = [
     image: '/banner-one.png',
     title: 'CRYSTAL PARADISE',
     subtitle: 'UNSPOILED ISLAND ADVENTURES',
-    description: 'Uncover crystal blue coral waters, secluded coconut palm beaches, seafood markets, and verified budget guides created by real community members.',
+    description:
+      'Uncover crystal blue coral waters, secluded coconut palm beaches, seafood markets, and verified budget guides created by real community members.',
     location: 'Saint Martin Coral Island',
     slug: 'saint-martin-coral-island',
   },
@@ -36,13 +38,23 @@ const HERO_SLIDES = [
 
 export default function SplitHero() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const { isAuthenticated } = useAuth();
 
   // Touch Swipe State for Mobile Slider
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  const slide = HERO_SLIDES[currentSlideIndex];
+  // Auto-play interval: smooth transition every 5 seconds
+  useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [isPaused]);
 
   const handleNext = () => {
     setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -80,9 +92,13 @@ export default function SplitHero() {
   return (
     <>
       {/* =========================================================================
-          1. DESKTOP HERO PRESENTATION (>= 768px) - UNCHANGED EXACT ORIGINAL LAYOUT
+          1. DESKTOP HERO PRESENTATION (>= 768px) - ULTRA SMOOTH AUTO-FADE SLIDER
          ========================================================================= */}
-      <section className="hidden md:flex relative w-full min-h-screen bg-brand-500 overflow-hidden items-center pt-20 lg:pt-0">
+      <section
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        className="hidden md:flex relative w-full min-h-screen bg-brand-500 overflow-hidden items-center pt-20 lg:pt-0"
+      >
         {/* Background Split Layout */}
         <div className="absolute inset-0 flex flex-col lg:flex-row w-full h-full">
           {/* Left Side: Vibrant Turquoise Container */}
@@ -116,63 +132,91 @@ export default function SplitHero() {
               </svg>
             </div>
 
-            {/* Left Content Column */}
-            <div className="relative z-30 max-w-xl">
-              {/* Tagline */}
-              <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-widest mb-4">
-                <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse"></span>
-                <span>{slide.subtitle}</span>
-              </div>
+            {/* Left Content Column with Smooth Cross-fade Transition */}
+            <div className="relative z-30 max-w-xl min-h-[440px] flex flex-col justify-center">
+              {HERO_SLIDES.map((s, idx) => {
+                const isActive = idx === currentSlideIndex;
+                return (
+                  <div
+                    key={idx}
+                    className={`transition-all duration-700 ease-in-out flex flex-col justify-center ${
+                      isActive
+                        ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
+                        : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
+                    }`}
+                  >
+                    {/* Tagline */}
+                    <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-widest mb-4 w-fit">
+                      <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse"></span>
+                      <span>{s.subtitle}</span>
+                    </div>
 
-              {/* Huge Display Headline */}
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-none tracking-tight text-shadow-hero mb-6">
-                {slide.title}
-              </h1>
+                    {/* Huge Display Headline */}
+                    <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-none tracking-tight text-shadow-hero mb-6">
+                      {s.title}
+                    </h1>
 
-              {/* Supporting Description */}
-              <p className="text-white/90 text-sm sm:text-base leading-relaxed mb-8 max-w-lg font-light">
-                {slide.description}
-              </p>
+                    {/* Supporting Description */}
+                    <p className="text-white/90 text-sm sm:text-base leading-relaxed mb-8 max-w-lg font-light">
+                      {s.description}
+                    </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-4">
-                <Link
-                  href="/trips"
-                  className="inline-flex items-center space-x-3 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-semibold px-7 py-3.5 rounded-full border border-white/40 transition-all shadow-lg transform hover:-translate-y-0.5"
-                >
-                  <span className="text-sm uppercase tracking-wider">Explore Trips</span>
-                  <div className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
-                    <ArrowRight className="w-3.5 h-3.5 text-white" />
+                    {/* CTA Buttons */}
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Link
+                        href="/trips"
+                        className="inline-flex items-center space-x-3 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-semibold px-7 py-3.5 rounded-full border border-white/40 transition-all shadow-lg transform hover:-translate-y-0.5"
+                      >
+                        <span className="text-sm uppercase tracking-wider">Explore Trips</span>
+                        <div className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
+                          <ArrowRight className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </Link>
+
+                      <Link
+                        href={shareTripHref}
+                        className="inline-flex items-center space-x-2 text-white font-semibold text-sm uppercase tracking-wider px-7 py-3.5 rounded-full border-2 border-white hover:bg-white hover:text-brand-700 transition-all shadow-md"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Share Your Trip</span>
+                      </Link>
+                    </div>
+
+                    {/* Location Tag */}
+                    <div className="mt-8 flex items-center space-x-2 text-white/80 text-xs font-medium">
+                      <MapPin className="w-4 h-4 text-cyan-300" />
+                      <span>Current Featured Location: {s.location}</span>
+                    </div>
                   </div>
-                </Link>
-
-                <Link
-                  href={shareTripHref}
-                  className="inline-flex items-center space-x-2 text-white font-semibold text-sm uppercase tracking-wider px-7 py-3.5 rounded-full border-2 border-white hover:bg-white hover:text-brand-700 transition-all shadow-md"
-                >
-                  <PlusCircle className="w-4 h-4" />
-                  <span>Share Your Trip</span>
-                </Link>
-              </div>
-
-              {/* Location Tag */}
-              <div className="mt-8 flex items-center space-x-2 text-white/80 text-xs font-medium">
-                <MapPin className="w-4 h-4 text-cyan-300" />
-                <span>Current Featured Location: {slide.location}</span>
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Right Side: Cinematic Photograph with Paint-Brush Mask Overlay */}
+          {/* Right Side: Cinematic Photograph Layered Cross-fade with Paint-Brush Mask */}
           <div className="w-full lg:w-1/2 h-[450px] lg:h-full relative overflow-hidden">
-            <Image
-              src={slide.image}
-              alt={slide.location}
-              fill
-              priority={currentSlideIndex === 0}
-              className="object-cover object-center transition-all duration-700 transform scale-105"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
+            {HERO_SLIDES.map((s, idx) => {
+              const isActive = idx === currentSlideIndex;
+              return (
+                <div
+                  key={idx}
+                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                    isActive
+                      ? 'opacity-100 scale-100 pointer-events-auto z-10'
+                      : 'opacity-0 scale-105 pointer-events-none z-0'
+                  }`}
+                >
+                  <Image
+                    src={s.image}
+                    alt={s.location}
+                    fill
+                    priority={idx === 0}
+                    className="object-cover object-center"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
+              );
+            })}
 
             <div className="hidden lg:block absolute -left-1 top-0 bottom-0 w-24 z-20 pointer-events-none">
               <svg
@@ -202,85 +246,135 @@ export default function SplitHero() {
         >
           <ChevronRight className="w-6 h-6" />
         </button>
+
+        {/* Desktop Pagination Indicator Dots */}
+        <div className="absolute bottom-8 left-6 sm:left-12 lg:left-16 z-40 flex items-center space-x-2.5">
+          {HERO_SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlideIndex(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              className={`h-2.5 rounded-full transition-all duration-500 cursor-pointer ${
+                currentSlideIndex === idx
+                  ? 'w-10 bg-cyan-300 shadow-lg'
+                  : 'w-2.5 bg-white/40 hover:bg-white/75'
+              }`}
+            />
+          ))}
+        </div>
       </section>
 
       {/* =========================================================================
-          2. DEDICATED MOBILE HERO PRESENTATION (< 768px) - IMAGE-FOCUSED SLIDER
+          2. DEDICATED MOBILE HERO PRESENTATION (< 768px) - AUTO-FADE SLIDER
          ========================================================================= */}
-      <section className="block md:hidden relative w-full pt-16 bg-slate-950 overflow-hidden">
+      <section
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        className="block md:hidden relative w-full pt-16 bg-slate-950 overflow-hidden"
+      >
         <div
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           className="relative w-full h-[clamp(480px,72vh,680px)] overflow-hidden bg-slate-900 shadow-2xl"
         >
-          {/* Full-width, Full-height Image Background */}
-          <Image
-            src={slide.image}
-            alt={slide.location}
-            fill
-            priority={currentSlideIndex === 0}
-            className="object-cover object-center transition-all duration-500 ease-out"
-            sizes="100vw"
-          />
+          {/* Full-width, Full-height Layered Images for Seamless Cross-fade */}
+          {HERO_SLIDES.map((s, idx) => {
+            const isActive = idx === currentSlideIndex;
+            return (
+              <div
+                key={idx}
+                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                  isActive
+                    ? 'opacity-100 scale-100 pointer-events-auto z-0'
+                    : 'opacity-0 scale-105 pointer-events-none z-0'
+                }`}
+              >
+                <Image
+                  src={s.image}
+                  alt={s.location}
+                  fill
+                  priority={idx === 0}
+                  className="object-cover object-center"
+                  sizes="100vw"
+                />
+              </div>
+            );
+          })}
 
-          {/* Minimal Dark Gradient Overlay (Transparent at top, stronger at bottom) */}
+          {/* Minimal Dark Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none z-10" />
 
-          {/* Left Arrow (Compact 40px Transparent Circle) */}
+          {/* Left Arrow */}
           <button
             onClick={handlePrev}
             aria-label="Previous Mobile Slide"
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 backdrop-blur-md border border-white/30 text-white flex items-center justify-center transition-all active:scale-95 shadow-md"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 backdrop-blur-md border border-white/30 text-white flex items-center justify-center transition-all active:scale-95 shadow-md cursor-pointer hover:bg-white hover:text-slate-900"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Right Arrow (Compact 40px Transparent Circle) */}
+          {/* Right Arrow */}
           <button
             onClick={handleNext}
             aria-label="Next Mobile Slide"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 backdrop-blur-md border border-white/30 text-white flex items-center justify-center transition-all active:scale-95 shadow-md"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 backdrop-blur-md border border-white/30 text-white flex items-center justify-center transition-all active:scale-95 shadow-md cursor-pointer hover:bg-white hover:text-slate-900"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* Content Overlay Positioned Near Bottom (Inside Slider Image) */}
-          <div className="absolute bottom-6 left-0 right-0 px-6 text-white z-20 flex flex-col items-start space-y-2">
-            {/* Small Eyebrow Tag */}
-            <span className="px-3 py-0.5 bg-brand-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
-              EXPLORE THE WORLD
-            </span>
+          {/* Content Overlay Positioned Near Bottom */}
+          <div className="absolute bottom-6 left-0 right-0 px-6 text-white z-20 flex flex-col items-start min-h-[220px] justify-end">
+            <div className="relative w-full">
+              {HERO_SLIDES.map((s, idx) => {
+                const isActive = idx === currentSlideIndex;
+                return (
+                  <div
+                    key={idx}
+                    className={`transition-all duration-700 ease-in-out flex flex-col items-start space-y-2 ${
+                      isActive
+                        ? 'opacity-100 translate-y-0 pointer-events-auto relative'
+                        : 'opacity-0 -translate-y-3 pointer-events-none absolute inset-0'
+                    }`}
+                  >
+                    {/* Small Eyebrow Tag */}
+                    <span className="px-3 py-0.5 bg-brand-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
+                      EXPLORE THE WORLD
+                    </span>
 
-            {/* Destination / Slide Title (20-26px) */}
-            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight uppercase drop-shadow-md">
-              {slide.location}
-            </h2>
+                    {/* Destination / Slide Title */}
+                    <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight uppercase drop-shadow-md">
+                      {s.location}
+                    </h2>
 
-            {/* Short Description (Max 2-3 lines) */}
-            <p className="text-white/90 text-xs font-light line-clamp-2 leading-relaxed max-w-xs drop-shadow">
-              {slide.description}
-            </p>
+                    {/* Short Description */}
+                    <p className="text-white/90 text-xs font-light line-clamp-2 leading-relaxed max-w-xs drop-shadow">
+                      {s.description}
+                    </p>
 
-            {/* Single Primary CTA Button */}
-            <div className="pt-2">
-              <Link
-                href="/trips"
-                className="inline-flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-full shadow-lg transition-all active:scale-95"
-              >
-                <span>Explore Trips</span>
-                <ArrowRight className="w-3.5 h-3.5 text-white" />
-              </Link>
+                    {/* Single Primary CTA Button */}
+                    <div className="pt-2">
+                      <Link
+                        href="/trips"
+                        className="inline-flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-full shadow-lg transition-all active:scale-95"
+                      >
+                        <span>Explore Trips</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-white" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Slider Pagination Dots */}
-            <div className="w-full flex justify-center items-center space-x-2 pt-3">
+            <div className="w-full flex justify-center items-center space-x-2 pt-4">
               {HERO_SLIDES.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentSlideIndex(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
-                  className={`transition-all rounded-full ${
+                  className={`transition-all duration-500 rounded-full cursor-pointer ${
                     currentSlideIndex === idx
                       ? 'w-6 h-2 bg-cyan-300 shadow'
                       : 'w-2 h-2 bg-white/40 hover:bg-white/70'
