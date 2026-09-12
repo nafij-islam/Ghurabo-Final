@@ -45,13 +45,13 @@ export default function SplitHero() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Auto-play interval: smooth transition every 5 seconds
+  // Auto-play interval: smooth transition every 2 seconds
   useEffect(() => {
     if (isPaused) return;
 
     const timer = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(timer);
   }, [isPaused]);
@@ -139,7 +139,7 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`transition-all duration-700 ease-in-out flex flex-col justify-center ${
+                    className={`transition-all duration-500 ease-in-out flex flex-col justify-center ${
                       isActive
                         ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
                         : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
@@ -200,7 +200,7 @@ export default function SplitHero() {
               return (
                 <div
                   key={idx}
-                  className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                     isActive
                       ? 'opacity-100 scale-100 pointer-events-auto z-10'
                       : 'opacity-0 scale-105 pointer-events-none z-0'
@@ -284,7 +284,7 @@ export default function SplitHero() {
             return (
               <div
                 key={idx}
-                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                   isActive
                     ? 'opacity-100 scale-100 pointer-events-auto z-0'
                     : 'opacity-0 scale-105 pointer-events-none z-0'
@@ -331,7 +331,7 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`transition-all duration-700 ease-in-out flex flex-col items-start space-y-2 ${
+                    className={`transition-all duration-500 ease-in-out flex flex-col items-start space-y-2 ${
                       isActive
                         ? 'opacity-100 translate-y-0 pointer-events-auto relative'
                         : 'opacity-0 -translate-y-3 pointer-events-none absolute inset-0'
