@@ -9,12 +9,17 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
   const pathname = usePathname();
 
   useEffect(() => {
-    // Respect prefers-reduced-motion preference
+    // Respect prefers-reduced-motion preference or disable completely on touch screens
     if (typeof window === 'undefined') return;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // Initialize single global Lenis instance
+    if (prefersReducedMotion || isTouchDevice) {
+      // Use native browser momentum scroll on touch devices to prevent jank
+      return;
+    }
+
+    // Initialize single global Lenis instance for desktop wheel scrolling
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth acceleration & natural momentum deceleration
@@ -22,8 +27,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-      syncTouch: false, // Keep native touch scroll responsive and natural on mobile
+      syncTouch: false,
     });
 
     lenisRef.current = lenis;

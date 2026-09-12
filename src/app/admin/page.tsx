@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 import { ITrip, IDestination } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,13 +11,34 @@ import { tripsApi } from '@/lib/api/trips.api';
 import { destinationsApi } from '@/lib/api/destinations.api';
 import { TripStats } from '@/lib/api/api.types';
 import { adaptBackendTripToITrip, adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
-import CurrencyControlCard from '@/components/admin/CurrencyControlCard';
-import DestinationsManager from '@/components/admin/DestinationsManager';
-import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
-import PublishedTripsDirectory from '@/components/admin/PublishedTripsDirectory';
-import AllTripsManager from '@/components/admin/AllTripsManager';
-import AllUsersManager from '@/components/admin/AllUsersManager';
-import NewsletterSubscribersManager from '@/components/admin/NewsletterSubscribersManager';
+
+const AdminPanelSkeleton = () => (
+  <div className="w-full h-80 rounded-2xl bg-white border border-slate-200 animate-pulse flex items-center justify-center p-8">
+    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Loading Panel...</p>
+  </div>
+);
+
+const CurrencyControlCard = dynamic(() => import('@/components/admin/CurrencyControlCard'), {
+  loading: AdminPanelSkeleton,
+});
+const DestinationsManager = dynamic(() => import('@/components/admin/DestinationsManager'), {
+  loading: AdminPanelSkeleton,
+});
+const PendingTripsQueue = dynamic(() => import('@/components/admin/PendingTripsQueue'), {
+  loading: AdminPanelSkeleton,
+});
+const PublishedTripsDirectory = dynamic(() => import('@/components/admin/PublishedTripsDirectory'), {
+  loading: AdminPanelSkeleton,
+});
+const AllTripsManager = dynamic(() => import('@/components/admin/AllTripsManager'), {
+  loading: AdminPanelSkeleton,
+});
+const AllUsersManager = dynamic(() => import('@/components/admin/AllUsersManager'), {
+  loading: AdminPanelSkeleton,
+});
+const NewsletterSubscribersManager = dynamic(() => import('@/components/admin/NewsletterSubscribersManager'), {
+  loading: AdminPanelSkeleton,
+});
 
 export default function AdminPage() {
 

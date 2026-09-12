@@ -4,8 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import TripCard from '@/components/cards/TripCard';
-import EditProfileModal from '@/components/profile/EditProfileModal';
+
+const EditProfileModal = dynamic(() => import('@/components/profile/EditProfileModal'), { ssr: false });
 import { ITrip, IUser } from '@/types';
 import {
   MapPin,

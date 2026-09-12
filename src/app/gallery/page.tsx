@@ -1,64 +1,31 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import LightboxModal from '@/components/gallery/LightboxModal';
+import dynamic from 'next/dynamic';
 import { IGalleryItem } from '@/types';
 import { Camera, Search, Eye, User, ArrowUpRight, X, AlertCircle, Compass, MapPin } from 'lucide-react';
-import { galleryApi } from '@/lib/api/gallery.api';
+import { useGallery } from '@/lib/swr/hooks';
 import { adaptBackendGalleryToIGalleryItem } from '@/lib/api/adapters';
+
+const LightboxModal = dynamic(() => import('@/components/gallery/LightboxModal'), {
+  ssr: false,
+});
 
 const TRAVEL_CATEGORIES = ['All', 'Solo', 'Couple', 'Family', 'Group'] as const;
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<IGalleryItem[]>([]);
   const [travelType, setTravelType] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchGallery = (signal?: AbortSignal) => {
-    setLoading(true);
-    setError(null);
-
-    const backendTravelType = travelType !== 'All' ? travelType.toUpperCase() : undefined;
-
-    galleryApi
-      .getGallery(
-        {
-          travelType: backendTravelType,
-          search: search.trim() || undefined,
-          limit: 60,
-        },
-        signal
-      )
-      .then((res) => {
-        if (res?.data) {
-          const adapted = res.data.map(adaptBackendGalleryToIGalleryItem);
-          setItems(adapted);
-        }
-      })
-      .catch((err) => {
-        if (err?.name !== 'AbortError') {
-          console.error('Failed to load gallery items:', err);
-          setError('Failed to load community photos. Please check your connection.');
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchGallery(controller.signal);
-
-    return () => {
-      controller.abort();
-    };
-  }, [travelType, search]);
+  const backendTravelType = travelType !== 'All' ? travelType.toUpperCase() : undefined;
+  const { items, isLoading, error, mutate } = useGallery({
+    travelType: backendTravelType,
+    search: search.trim() || undefined,
+    limit: 60,
+  });
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -145,12 +112,12 @@ export default function GalleryPage() {
         </div>
 
         {/* Error State */}
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="p-6 bg-rose-50 border border-rose-200 rounded-3xl text-center space-y-3 mb-10 max-w-md mx-auto">
             <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-            <p className="text-xs text-rose-700 font-medium">{error}</p>
+            <p className="text-xs text-rose-700 font-medium">{error?.message || 'Failed to load community photos.'}</p>
             <button
-              onClick={() => fetchGallery()}
+              onClick={() => mutate()}
               className="px-4 py-2 bg-rose-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-rose-700 transition-colors"
             >
               Retry
@@ -159,7 +126,7 @@ export default function GalleryPage() {
         )}
 
         {/* Content: Loading Skeleton, Grid, or Empty State */}
-        {loading ? (
+        {isLoading ? (
           /* Responsive Loading Skeletons */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -193,7 +160,7 @@ export default function GalleryPage() {
                     alt={item.caption || item.destinationName}
                     fill
                     priority={index < 4}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 320px"
                     className="object-cover group-hover:scale-105 transition-transform duration-500 motion-reduce:transform-none"
                   />
 

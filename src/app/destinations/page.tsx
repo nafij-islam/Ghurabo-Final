@@ -5,54 +5,26 @@ import DestinationCard from '@/components/cards/DestinationCard';
 import { DestinationCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination } from '@/types';
 import { Search, MapPin, Compass } from 'lucide-react';
-import { destinationsApi } from '@/lib/api';
-import { adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
+import { useDestinations } from '@/lib/swr/hooks';
 
 export default function DestinationsPage() {
-  const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [loading, setLoading] = useState(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Debounce search
     const timer = setTimeout(() => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      setLoading(true);
-
-      const categoryParam =
-        selectedCategory === 'All' ? undefined : selectedCategory.toUpperCase();
-
-      destinationsApi
-        .getDestinations(
-          {
-            search: search.trim() || undefined,
-            category: categoryParam,
-            limit: 50,
-          },
-          controller.signal
-        )
-        .then((res) => {
-          setDestinations(res.data.map(adaptBackendDestinationToIDestination));
-          setLoading(false);
-        })
-        .catch((err) => {
-          if (err?.name !== 'AbortError') {
-            setLoading(false);
-          }
-        });
+      setDebouncedSearch(search);
     }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [search, selectedCategory]);
+  const categoryParam = selectedCategory === 'All' ? undefined : selectedCategory.toUpperCase();
+
+  const { destinations, isLoading, error, mutate } = useDestinations({
+    search: debouncedSearch.trim() || undefined,
+    category: categoryParam,
+  });
 
   return (
     <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
@@ -107,8 +79,23 @@ export default function DestinationsPage() {
           </div>
         </div>
 
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="p-8 bg-rose-50 border border-rose-200 rounded-3xl text-center space-y-3 mb-10 max-w-md mx-auto">
+            <MapPin className="w-8 h-8 text-rose-500 mx-auto" />
+            <p className="text-sm font-bold text-rose-800">Failed to load destinations</p>
+            <p className="text-xs text-rose-600">{error?.message || 'Please check your connection and try again.'}</p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-rose-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Destination Cards Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <DestinationCardSkeleton key={i} />

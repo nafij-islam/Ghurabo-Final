@@ -8,75 +8,43 @@ import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { IDestination, ITrip } from '@/types';
 import { MapPin, Calendar, Compass, ShieldAlert, Bus, Star, DollarSign, Users, ArrowRight } from 'lucide-react';
-import { destinationsApi, tripsApi } from '@/lib/api';
-import {
-  adaptBackendDestinationToIDestination,
-  adaptBackendTripToITrip,
-} from '@/lib/api/adapters';
+import { useDestination } from '@/lib/swr/hooks';
 
 export default function DestinationDetailsPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const [destination, setDestination] = useState<IDestination | null>(null);
-  const [trips, setTrips] = useState<ITrip[]>([]);
-  const [costStats, setCostStats] = useState<{ Solo: number; Couple: number; Family: number; Group: number }>({
+  const { destination, associatedTrips: trips, isLoading, error, mutate } = useDestination(slug);
+
+  const costStats = {
     Solo: 3500,
     Couple: 6000,
     Family: 10000,
     Group: 14000,
-  });
-  const [loading, setLoading] = useState(true);
+  };
 
-  useEffect(() => {
-    if (!slug) return;
-    let mounted = true;
-    setLoading(true);
-
-    destinationsApi
-      .getDestinationBySlug(slug)
-      .then(async (backendDest) => {
-        if (!mounted) return;
-        const adaptedDest = adaptBackendDestinationToIDestination(backendDest);
-        setDestination(adaptedDest);
-
-        const daily = backendDest.averageDailyCostBDT || 3500;
-        setCostStats({
-          Solo: daily,
-          Couple: Math.round(daily * 1.8),
-          Family: Math.round(daily * 3.2),
-          Group: Math.round(daily * 4.5),
-        });
-
-        // Fetch trips for this destination
-        try {
-          const tripsRes = await tripsApi.getTrips({ destination: backendDest._id, limit: 10 });
-          if (mounted) {
-            setTrips(tripsRes.data.map(adaptBackendTripToITrip));
-          }
-        } catch {
-          // Continue if trips fetch fails
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load destination:', err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [slug]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full min-h-screen pt-36 pb-20 bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Loading Destination Details...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error && !destination) {
+    return (
+      <div className="pt-36 pb-20 text-center bg-slate-50 min-h-screen">
+        <h2 className="font-display text-3xl font-bold text-slate-900 uppercase">Unable to Load Destination</h2>
+        <p className="text-xs text-rose-600 mt-1">{error?.message || 'Network error occurred.'}</p>
+        <button
+          onClick={() => mutate()}
+          className="mt-4 inline-block px-5 py-2.5 bg-brand-500 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-sm hover:bg-brand-600 transition-all cursor-pointer"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -189,7 +157,7 @@ export default function DestinationDetailsPage() {
 
               {trips.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {trips.map((trip) => (
+                  {trips.map((trip: ITrip) => (
                     <TripCard key={trip.id} trip={trip} />
                   ))}
                 </div>

@@ -211,7 +211,7 @@ export default function SplitHero() {
                     priority={idx === 0}
                     placeholder="blur"
                     className="object-cover object-center"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes="(max-width: 1024px) 100vw, 640px"
                   />
                 </div>
               );

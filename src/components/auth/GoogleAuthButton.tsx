@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { signInWithGoogle } from '@/lib/firebase/client';
+import { triggerGoogleSignIn } from '@/lib/auth/googleAuth';
 import { normalizeApiErrorMessage } from '@/lib/api/apiError';
 
 interface GoogleAuthButtonProps {
@@ -21,23 +21,26 @@ export default function GoogleAuthButton({ redirectTarget = '/dashboard', onErro
     setLoading(true);
 
     try {
-      const googleUser = await signInWithGoogle();
+      const googleUser = await triggerGoogleSignIn();
       if (googleUser && googleUser.idToken) {
         await googleLogin({
           idToken: googleUser.idToken,
-          email: googleUser.email || undefined,
-          fullName: googleUser.displayName || undefined,
-          avatarUrl: googleUser.photoURL || undefined,
+          email: googleUser.email,
+          fullName: googleUser.fullName,
+          avatarUrl: googleUser.avatarUrl,
         });
         router.push(redirectTarget);
       }
     } catch (err: any) {
-      // Ignore user closing popup window
-      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+      // Ignore user closing popup or dismissing prompt
+      if (
+        err?.message?.includes('dismissed') ||
+        err?.message?.includes('closed') ||
+        err?.code === 'auth/popup-closed-by-user'
+      ) {
         setLoading(false);
         return;
       }
-      console.error('Firebase Google Sign-In Error:', err);
       const message = normalizeApiErrorMessage(err);
       if (onError) onError(message);
     } finally {

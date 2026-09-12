@@ -22,54 +22,21 @@ const GoogleTripMap = dynamic(() => import('@/components/trips/GoogleTripMap'), 
   ),
 });
 
+import { useTrip, useTrips } from '@/lib/swr/hooks';
+
 export default function TripDetailsPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const [trip, setTrip] = useState<ITrip | null>(null);
-  const [relatedTrips, setRelatedTrips] = useState<ITrip[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { trip, isLoading, error, mutate } = useTrip(slug);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (!slug) return;
+  const { trips: relatedCandidateTrips } = useTrips(
+    trip ? { travelType: trip.travelType, limit: 5 } : undefined
+  );
 
-    setLoading(true);
-    tripsApi
-      .getTripBySlug(slug)
-      .then(async (backendTrip) => {
-        if (!isMounted) return;
-        const adapted = adaptBackendTripToITrip(backendTrip);
-        setTrip(adapted);
+  const relatedTrips = (relatedCandidateTrips || [])
+    .filter((t) => t.id !== trip?.id && t.slug !== slug)
+    .slice(0, 3);
 
-        try {
-          const relatedRes = await tripsApi.getTrips({
-            travelType: backendTrip.travelType,
-            limit: 4,
-          });
-          if (isMounted && relatedRes?.data) {
-            const adaptedRelated = relatedRes.data
-              .map(adaptBackendTripToITrip)
-              .filter((t) => t.id !== backendTrip._id && t.slug !== slug)
-              .slice(0, 3);
-            setRelatedTrips(adaptedRelated);
-          }
-        } catch {
-          // related trips load failure is non-blocking
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load trip story:', err);
-        if (isMounted) setTrip(null);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [slug]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20 animate-pulse">
         <div className="h-[360px] sm:h-[440px] md:h-[480px] w-full bg-slate-800 relative">
@@ -84,6 +51,21 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
           <div className="h-32 bg-slate-900 rounded-2xl sm:rounded-3xl shadow-xl" />
           <div className="h-64 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100" />
         </div>
+      </div>
+    );
+  }
+
+  if (error && !trip) {
+    return (
+      <div className="pt-32 pb-20 text-center bg-slate-50 min-h-screen px-4">
+        <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 uppercase">Unable to Load Trip Story</h2>
+        <p className="text-xs text-rose-600 mt-1">{error?.message || 'Network error occurred while fetching itinerary.'}</p>
+        <button
+          onClick={() => mutate()}
+          className="mt-4 inline-block px-5 py-2.5 bg-brand-500 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-sm hover:bg-brand-600 transition-all cursor-pointer"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -382,7 +364,7 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
         <CommentsSection
           tripId={trip.id}
           onCommentCountChange={(count) =>
-            setTrip((prev) => (prev ? { ...prev, commentsCount: count } : prev))
+            mutate((prev) => (prev ? { ...prev, commentsCount: count } : prev), false)
           }
         />
 

@@ -44,36 +44,57 @@ export default function LightboxModal({
     };
   }, [onClose, onPrev, onNext]);
 
+  const touchStartXRef = React.useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        onNext();
+      } else {
+        onPrev();
+      }
+    }
+  };
+
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 sm:p-6 lg:p-8 animate-fadeIn">
-      {/* Close Button */}
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-3 sm:p-6 lg:p-8 animate-fadeIn"
+    >
+      {/* Close Button with >=44px Touch Target */}
       <button
         onClick={onClose}
         aria-label="Close Lightbox"
-        className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/20"
       >
         <X className="w-6 h-6" />
       </button>
 
-      {/* Prev Arrow */}
+      {/* Prev Arrow with >=44px Touch Target */}
       {items.length > 1 && (
         <button
           onClick={onPrev}
           aria-label="Previous Image"
-          className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all"
+          className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-white hover:text-slate-900 text-white backdrop-blur-md transition-all active:scale-95 border border-white/20 cursor-pointer"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
       )}
 
-      {/* Next Arrow */}
+      {/* Next Arrow with >=44px Touch Target */}
       {items.length > 1 && (
         <button
           onClick={onNext}
           aria-label="Next Image"
-          className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all"
+          className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-white hover:text-slate-900 text-white backdrop-blur-md transition-all active:scale-95 border border-white/20 cursor-pointer"
         >
           <ChevronRight className="w-6 h-6" />
         </button>

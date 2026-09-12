@@ -6,9 +6,13 @@ import Footer from '@/components/layout/Footer';
 import FloatingSocialBar from '@/components/layout/FloatingSocialBar';
 import { PreferencesProvider } from '@/context/PreferencesContext';
 import { NewsletterModalProvider } from '@/context/NewsletterModalContext';
+import dynamic from 'next/dynamic';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
-import NewsletterModal from '@/components/newsletter/NewsletterModal';
 import FloatingShareTripCTA from '@/components/layout/FloatingShareTripCTA';
+
+const NewsletterModal = dynamic(() => import('@/components/newsletter/NewsletterModal'), {
+  ssr: false,
+});
 
 
 const oswald = Oswald({

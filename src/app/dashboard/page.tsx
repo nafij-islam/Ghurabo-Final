@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import TripCard from '@/components/cards/TripCard';
+import dynamic from 'next/dynamic';
 import DashboardTripCard from '@/components/trips/DashboardTripCard';
-import EditTripModal from '@/components/trips/EditTripModal';
-import EditProfileModal from '@/components/profile/EditProfileModal';
+
+const EditTripModal = dynamic(() => import('@/components/trips/EditTripModal'), { ssr: false });
+const EditProfileModal = dynamic(() => import('@/components/profile/EditProfileModal'), { ssr: false });
 import { ITrip, IUser } from '@/types';
 import {
   Compass,
@@ -31,17 +33,35 @@ import { usersApi } from '@/lib/api/users.api';
 import { tripsApi } from '@/lib/api/trips.api';
 import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 
+import { useUserTrips, useSavedTrips } from '@/lib/swr/hooks';
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading, refreshAuth } = useAuth();
-  const [currentUser, setCurrentUser] = useState<IUser | null>(null);
-  const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
-  const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
-  const [drafts, setDrafts] = useState<ITrip[]>([]);
-  const [savedTrips, setSavedTrips] = useState<ITrip[]>([]);
+  const [currentUser, setCurrentUser] = useState<IUser | null>(user || null);
   const [activeTab, setActiveTab] = useState<'published' | 'pending' | 'saved' | 'drafts'>('published');
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) setCurrentUser(user);
+  }, [user]);
+
+  const {
+    trips: allUserTrips,
+    isLoading: isUserTripsLoading,
+    mutate: mutateUserTrips,
+  } = useUserTrips();
+
+  const {
+    trips: savedTrips,
+    isLoading: isSavedTripsLoading,
+    mutate: mutateSavedTrips,
+  } = useSavedTrips();
+
+  const publishedTrips = allUserTrips.filter((t) => t.status === 'approved');
+  const pendingTrips = allUserTrips.filter((t) => t.status === 'pending');
+  const drafts = allUserTrips.filter((t) => t.status === 'draft');
+  const loading = (isUserTripsLoading && allUserTrips.length === 0) || (isSavedTripsLoading && savedTrips.length === 0);
 
   // CRUD State
   const [selectedTripToEdit, setSelectedTripToEdit] = useState<ITrip | null>(null);
@@ -52,32 +72,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/auth/login?redirect=/dashboard');
-      return;
     }
-
-    if (user) {
-      setCurrentUser(user);
-      Promise.allSettled([
-        usersApi.getMyTrips({ limit: 100 }),
-        usersApi.getMySavedTrips({ limit: 100 }),
-      ])
-        .then(([tripsRes, savedRes]) => {
-          if (tripsRes.status === 'fulfilled' && tripsRes.value?.data) {
-            const adapted = tripsRes.value.data.map(adaptBackendTripToITrip);
-            setPublishedTrips(adapted.filter((t) => t.status === 'approved'));
-            setPendingTrips(adapted.filter((t) => t.status === 'pending'));
-            setDrafts(adapted.filter((t) => t.status === 'draft'));
-          }
-          if (savedRes.status === 'fulfilled' && savedRes.value?.data) {
-            const adaptedSaved = savedRes.value.data.map(adaptBackendTripToITrip);
-            setSavedTrips(adaptedSaved);
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
-  }, [authLoading, isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   // Clear feedback after 4 seconds
   useEffect(() => {
@@ -89,9 +85,7 @@ export default function DashboardPage() {
 
   // Handle Edit Success
   const handleTripUpdated = (updated: ITrip) => {
-    setPublishedTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    setPendingTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    setDrafts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    mutateUserTrips();
     setSelectedTripToEdit(null);
     setFeedback({
       type: 'success',
@@ -106,9 +100,7 @@ export default function DashboardPage() {
     try {
       await tripsApi.deleteTrip(tripToDelete.id);
       const deletedTitle = tripToDelete.title;
-      setPublishedTrips((prev) => prev.filter((t) => t.id !== tripToDelete.id));
-      setPendingTrips((prev) => prev.filter((t) => t.id !== tripToDelete.id));
-      setDrafts((prev) => prev.filter((t) => t.id !== tripToDelete.id));
+      mutateUserTrips();
       setTripToDelete(null);
       setFeedback({
         type: 'success',

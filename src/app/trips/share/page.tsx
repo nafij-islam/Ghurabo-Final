@@ -377,6 +377,9 @@ export default function ShareTripPage() {
               </div>
             ))}
           </div>
+          <p className="sm:hidden text-center text-xs font-bold text-brand-300 mt-3 pt-2 border-t border-white/5">
+            Step {step} of 3: {step === 1 ? 'Trip Basics' : step === 2 ? 'Cost & Experience' : 'Photos & Publish'}
+          </p>
         </div>
 
         {/* Validation Alert */}

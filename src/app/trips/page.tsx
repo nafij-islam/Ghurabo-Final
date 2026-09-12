@@ -6,8 +6,8 @@ import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip, TravelType } from '@/types';
 import { Search, Compass, SlidersHorizontal, MapPin, X } from 'lucide-react';
-import { tripsApi } from '@/lib/api';
-import { adaptBackendTripToITrip, toBackendTravelType } from '@/lib/api/adapters';
+import { useTrips } from '@/lib/swr/hooks';
+import { toBackendTravelType } from '@/lib/api/adapters';
 
 export type TripSortOption = 'newest' | 'popular' | 'lowest_cost' | 'highest_rating';
 
@@ -15,14 +15,12 @@ function AllTripsContent() {
   const searchParams = useSearchParams();
   const initialDestination = searchParams.get('destination') || '';
 
-  const [trips, setTrips] = useState<ITrip[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [destinationFilter, setDestinationFilter] = useState(initialDestination);
   const [travelType, setTravelType] = useState<TravelType | 'All'>('All');
   const [maxBudget, setMaxBudget] = useState<number>(100000);
   const [sortBy, setSortBy] = useState<TripSortOption>('newest');
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Sync if URL query param changes
   useEffect(() => {
@@ -30,52 +28,31 @@ function AllTripsContent() {
     setDestinationFilter(urlDest);
   }, [searchParams]);
 
+  // Debounce search query input
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      setLoading(true);
-
-      const backendSort =
-        sortBy === 'popular'
-          ? 'popular'
-          : sortBy === 'lowest_cost'
-          ? 'lowest-cost'
-          : 'newest';
-
-      const backendType = travelType === 'All' ? undefined : toBackendTravelType(travelType);
-
-      tripsApi
-        .getTrips(
-          {
-            search: searchQuery.trim() || undefined,
-            destination: destinationFilter.trim() || undefined,
-            travelType: backendType,
-            maxBudget: maxBudget < 100000 ? maxBudget : undefined,
-            sort: backendSort,
-            limit: 50,
-          },
-          controller.signal
-        )
-        .then((res) => {
-          setTrips(res.data.map(adaptBackendTripToITrip));
-          setLoading(false);
-        })
-        .catch((err) => {
-          if (err?.name !== 'AbortError') {
-            setLoading(false);
-          }
-        });
+      setDebouncedSearch(searchQuery);
     }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchQuery, destinationFilter, travelType, maxBudget, sortBy]);
+  const backendSort =
+    sortBy === 'popular'
+      ? 'popular'
+      : sortBy === 'lowest_cost'
+      ? 'lowest-cost'
+      : 'newest';
+
+  const backendType = travelType === 'All' ? undefined : toBackendTravelType(travelType);
+
+  const { trips, isLoading, error, mutate } = useTrips({
+    search: debouncedSearch.trim() || undefined,
+    destination: destinationFilter.trim() || undefined,
+    travelType: backendType,
+    maxBudget: maxBudget < 100000 ? maxBudget : undefined,
+    sort: backendSort,
+    limit: 50,
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,8 +182,23 @@ function AllTripsContent() {
           </div>
         </div>
 
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="p-8 bg-rose-50 border border-rose-200 rounded-3xl text-center space-y-3 mb-10 max-w-md mx-auto">
+            <SlidersHorizontal className="w-8 h-8 text-rose-500 mx-auto" />
+            <p className="text-sm font-bold text-rose-800">Failed to load trips</p>
+            <p className="text-xs text-rose-600">{error?.message || 'Please check your connection and try again.'}</p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-rose-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm hover:bg-rose-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Trips Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <TripCardSkeleton key={i} />

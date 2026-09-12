@@ -123,7 +123,7 @@ export default function MobileNavDrawer({
             <Link
               href="/"
               onClick={onClose}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
+              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
                 pathname === '/' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
               }`}
             >
@@ -132,7 +132,7 @@ export default function MobileNavDrawer({
             <Link
               href="/destinations"
               onClick={onClose}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
+              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
                 pathname.startsWith('/destinations') ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
               }`}
             >
@@ -141,7 +141,7 @@ export default function MobileNavDrawer({
             <Link
               href="/trips"
               onClick={onClose}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
+              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
                 pathname === '/trips' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
               }`}
             >
@@ -150,7 +150,7 @@ export default function MobileNavDrawer({
             <Link
               href="/gallery"
               onClick={onClose}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
+              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
                 pathname === '/gallery' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
               }`}
             >
@@ -159,7 +159,7 @@ export default function MobileNavDrawer({
             <Link
               href="/about"
               onClick={onClose}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-sm font-medium ${
+              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
                 pathname === '/about' ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
               }`}
             >
