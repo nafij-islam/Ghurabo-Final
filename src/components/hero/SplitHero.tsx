@@ -9,30 +9,30 @@ import { useAuth } from '@/hooks/useAuth';
 const HERO_SLIDES = [
   {
     image: '/banner-one.png',
-    title: 'EXPLORE THE WORLD',
+    title: 'EXPLORE BANGLADESH',
     subtitle: 'WORLDWIDE TRAVEL COMMUNITY',
     description:
-      'Share your real travel stories, itemized budget breakdowns, day-by-day itineraries, and connect with passionate solo, couple, family, and group explorers around the globe.',
-    location: "Cox's Bazar Beach, Bangladesh",
-    slug: 'coxs-bazar-beach',
+      'Discover the beauty of Bangladesh through real travel stories, detailed budget breakdowns, day-by-day itineraries, and authentic experiences shared by passionate travellers.',
+    location: 'Bangladesh',
+    slug: 'bangladesh',
   },
   {
     image: '/banner-two.png',
-    title: 'TOUCH THE CLOUDS',
-    subtitle: 'AUTHENTIC MOUNTAIN ESCAPES',
+    title: "COX'S BAZAR",
+    subtitle: 'THE WORLD’S LONGEST SEA BEACH',
     description:
-      'Discover high-altitude valleys, misty morning ridges, scenic 4x4 jeep trails, and local tribal culture with real cost insights from fellow travellers.',
-    location: 'Sajek Valley Hilltop, Rangamati',
-    slug: 'sajek-valley-hilltop',
+      'Explore the stunning coastline of Cox’s Bazar, enjoy beautiful sunsets, discover local seafood, and find real travel costs, itineraries, and tips shared by fellow travellers.',
+    location: "Cox's Bazar, Bangladesh",
+    slug: 'cox-bazar',
   },
   {
     image: '/banner-three.jpg',
-    title: 'CRYSTAL PARADISE',
-    subtitle: 'UNSPOILED ISLAND ADVENTURES',
+    title: 'SREEMANGAL GRAND SULTAN',
+    subtitle: 'TEA GARDENS & NATURE ESCAPES',
     description:
-      'Uncover crystal blue coral waters, secluded coconut palm beaches, seafood markets, and verified budget guides created by real community members.',
-    location: 'Saint Martin Coral Island',
-    slug: 'saint-martin-coral-island',
+      'Experience the peaceful tea gardens, lush green landscapes, scenic trails, and relaxing stays of Sreemangal with authentic travel guides, budgets, and local experiences.',
+    location: 'Sreemangal, Moulvibazar, Bangladesh',
+    slug: 'sreemangal',
   },
 ];
 
@@ -135,8 +135,8 @@ export default function SplitHero() {
                   <div
                     key={idx}
                     className={`transition-all duration-500 ease-in-out flex flex-col justify-center ${isActive
-                        ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
-                        : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
+                      ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
+                      : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
                       }`}
                   >
                     {/* Tagline */}
@@ -195,8 +195,8 @@ export default function SplitHero() {
                 <div
                   key={idx}
                   className={`absolute inset-0 transition-all duration-700 ease-in-out ${isActive
-                      ? 'opacity-100 scale-100 pointer-events-auto z-10'
-                      : 'opacity-0 scale-105 pointer-events-none z-0'
+                    ? 'opacity-100 scale-100 pointer-events-auto z-10'
+                    : 'opacity-0 scale-105 pointer-events-none z-0'
                     }`}
                 >
                   <Image
@@ -248,8 +248,8 @@ export default function SplitHero() {
               onClick={() => setCurrentSlideIndex(idx)}
               aria-label={`Go to slide ${idx + 1}`}
               className={`h-2.5 rounded-full transition-all duration-500 cursor-pointer ${currentSlideIndex === idx
-                  ? 'w-10 bg-cyan-300 shadow-lg'
-                  : 'w-2.5 bg-white/40 hover:bg-white/75'
+                ? 'w-10 bg-cyan-300 shadow-lg'
+                : 'w-2.5 bg-white/40 hover:bg-white/75'
                 }`}
             />
           ))}
@@ -275,8 +275,8 @@ export default function SplitHero() {
               <div
                 key={idx}
                 className={`absolute inset-0 transition-all duration-700 ease-in-out ${isActive
-                    ? 'opacity-100 scale-100 pointer-events-auto z-0'
-                    : 'opacity-0 scale-105 pointer-events-none z-0'
+                  ? 'opacity-100 scale-100 pointer-events-auto z-0'
+                  : 'opacity-0 scale-105 pointer-events-none z-0'
                   }`}
               >
                 <Image
@@ -321,8 +321,8 @@ export default function SplitHero() {
                   <div
                     key={idx}
                     className={`transition-all duration-500 ease-in-out flex flex-col items-start space-y-2 ${isActive
-                        ? 'opacity-100 translate-y-0 pointer-events-auto relative'
-                        : 'opacity-0 -translate-y-3 pointer-events-none absolute inset-0'
+                      ? 'opacity-100 translate-y-0 pointer-events-auto relative'
+                      : 'opacity-0 -translate-y-3 pointer-events-none absolute inset-0'
                       }`}
                   >
                     {/* Small Eyebrow Tag */}
@@ -363,8 +363,8 @@ export default function SplitHero() {
                   onClick={() => setCurrentSlideIndex(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
                   className={`transition-all duration-500 rounded-full cursor-pointer ${currentSlideIndex === idx
-                      ? 'w-6 h-2 bg-cyan-300 shadow'
-                      : 'w-2 h-2 bg-white/40 hover:bg-white/70'
+                    ? 'w-6 h-2 bg-cyan-300 shadow'
+                    : 'w-2 h-2 bg-white/40 hover:bg-white/70'
                     }`}
                 />
               ))}
