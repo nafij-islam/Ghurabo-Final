@@ -2,21 +2,45 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Compass, Send, Heart, MapPin, Mail, ShieldCheck } from 'lucide-react';
+import { Compass, Send, Heart, MapPin, Mail, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { usePreferences } from '@/context/PreferencesContext';
+import { useNewsletterModal } from '@/context/NewsletterModalContext';
+import { newsletterApi } from '@/lib/api/newsletter.api';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { t } = usePreferences();
+  const { openModal, markAsSubscribed } = useNewsletterModal();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      await newsletterApi.subscribe(trimmed, 'FOOTER');
+      markAsSubscribed();
       setSubscribed(true);
       setEmail('');
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.message || err?.message;
+      if (backendMsg && backendMsg.toLowerCase().includes('already')) {
+        markAsSubscribed();
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        setErrorMessage(backendMsg || 'Subscription failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
 
   return (
     <footer className="relative bg-darkslate-950 text-white pt-16 pb-12 overflow-hidden border-t border-white/10">
@@ -120,32 +144,56 @@ export default function Footer() {
             </p>
 
             {subscribed ? (
-              <div className="p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl text-emerald-300 text-xs font-medium">
-                ✓ Thank you for subscribing to Ghurabo!
+              <div className="p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl text-emerald-300 text-xs font-medium space-y-2">
+                <div>✓ Thank you for subscribing to Ghurabo!</div>
+                <button
+                  type="button"
+                  onClick={openModal}
+                  className="text-[11px] text-brand-300 hover:text-white underline block transition-colors"
+                >
+                  Manage or re-open newsletter modal
+                </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="space-y-2">
-                <div className="flex items-center bg-white/10 rounded-full p-1 border border-white/20">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your email..."
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-transparent text-white text-xs px-3 focus:outline-none w-full placeholder-slate-400"
-                  />
-                  <button
-                    type="submit"
-                    aria-label="Subscribe"
-                    className="w-8 h-8 rounded-full bg-brand-500 hover:bg-brand-600 flex items-center justify-center text-white transition-colors"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </form>
+              <div className="space-y-3">
+                <form onSubmit={handleSubscribe} className="space-y-2">
+                  <div className="flex items-center bg-white/10 rounded-full p-1 border border-white/20">
+                    <input
+                      type="email"
+                      required
+                      disabled={loading}
+                      placeholder="Enter your email..."
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-transparent text-white text-xs px-3 focus:outline-none w-full placeholder-slate-400 disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      aria-label="Subscribe"
+                      className="w-8 h-8 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+                    >
+                      {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  {errorMessage && (
+                    <p className="text-[11px] text-rose-400 font-medium pl-2">{errorMessage}</p>
+                  )}
+                </form>
+
+                <button
+                  type="button"
+                  onClick={openModal}
+                  className="text-xs text-brand-300 hover:text-brand-200 inline-flex items-center space-x-1 transition-colors font-medium cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Join Ghurabo Newsletter</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
+
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-4 sm:space-y-0">

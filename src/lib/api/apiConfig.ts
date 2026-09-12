@@ -76,4 +76,15 @@ export const API_ENDPOINTS = {
   ADMIN_SETTINGS_CURRENCY: `${API_V1_PREFIX}/admin/settings/currency`,
   ADMIN_USERS: `${API_V1_PREFIX}/admin/users`,
   ADMIN_USER_BY_ID: (id: string) => `${API_V1_PREFIX}/admin/users/${encodeURIComponent(id)}`,
+
+  // Newsletter
+  NEWSLETTER_SUBSCRIBE: `${API_V1_PREFIX}/newsletter/subscribe`,
+  NEWSLETTER_UNSUBSCRIBE: `${API_V1_PREFIX}/newsletter/unsubscribe`,
+  ADMIN_NEWSLETTER_SUBSCRIBERS: `${API_V1_PREFIX}/admin/newsletter/subscribers`,
+  ADMIN_NEWSLETTER_STATS: `${API_V1_PREFIX}/admin/newsletter/stats`,
+  ADMIN_NEWSLETTER_SUBSCRIBER_BY_ID: (id: string) =>
+    `${API_V1_PREFIX}/admin/newsletter/subscribers/${encodeURIComponent(id)}`,
+  ADMIN_NEWSLETTER_STATUS: (id: string) =>
+    `${API_V1_PREFIX}/admin/newsletter/subscribers/${encodeURIComponent(id)}/status`,
 } as const;
+

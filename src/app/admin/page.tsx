@@ -16,8 +16,10 @@ import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
 import PublishedTripsDirectory from '@/components/admin/PublishedTripsDirectory';
 import AllTripsManager from '@/components/admin/AllTripsManager';
 import AllUsersManager from '@/components/admin/AllUsersManager';
+import NewsletterSubscribersManager from '@/components/admin/NewsletterSubscribersManager';
 
 export default function AdminPage() {
+
   const { user, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
@@ -231,7 +233,11 @@ export default function AdminPage() {
         {/* User Directory & Moderation (Search, Filter, Detail Modal) */}
         <AllUsersManager />
 
+        {/* Newsletter Subscribers Manager (Stats, Search, Filter, Status Management) */}
+        <NewsletterSubscribersManager />
+
         {/* Currency Exchange Rate Control Card */}
+
         <CurrencyControlCard />
 
         {/* Popular Destinations Controls for Homepage */}

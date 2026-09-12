@@ -5,7 +5,10 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FloatingSocialBar from '@/components/layout/FloatingSocialBar';
 import { PreferencesProvider } from '@/context/PreferencesContext';
+import { NewsletterModalProvider } from '@/context/NewsletterModalContext';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
+import NewsletterModal from '@/components/newsletter/NewsletterModal';
+
 
 const oswald = Oswald({
   subsets: ['latin'],
@@ -56,14 +59,18 @@ export default function RootLayout({
     <html lang="en" className={`scroll-smooth ${oswald.variable} ${inter.variable} ${plusJakartaSans.variable}`}>
       <body className="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white font-body">
         <PreferencesProvider>
-          <SmoothScrollProvider>
-            <Navbar />
-            <FloatingSocialBar />
-            <main className="flex-1 w-full">{children}</main>
-            <Footer />
-          </SmoothScrollProvider>
+          <NewsletterModalProvider>
+            <SmoothScrollProvider>
+              <Navbar />
+              <FloatingSocialBar />
+              <main className="flex-1 w-full">{children}</main>
+              <Footer />
+              <NewsletterModal />
+            </SmoothScrollProvider>
+          </NewsletterModalProvider>
         </PreferencesProvider>
       </body>
+
     </html>
   );
 }

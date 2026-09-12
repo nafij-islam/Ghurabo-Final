@@ -289,3 +289,40 @@ export interface BackendSystemSetting {
   description?: string;
   updatedAt?: string;
 }
+
+export type NewsletterSubscriberStatus = 'SUBSCRIBED' | 'UNSUBSCRIBED';
+export type NewsletterSource = 'HOMEPAGE_POPUP' | 'FOOTER' | 'MANUAL_ADMIN' | 'OTHER';
+
+export interface NewsletterSubscriber {
+  id?: string;
+  _id?: string;
+  email: string;
+  emailNormalized?: string;
+  status: NewsletterSubscriberStatus;
+  source: NewsletterSource;
+  user?: {
+    _id?: string;
+    id?: string;
+    username?: string;
+    fullName?: string;
+    email?: string;
+  } | null;
+  subscribedAt: string;
+  unsubscribedAt?: string | null;
+  lastSubscribedAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface NewsletterStats {
+  totalSubscribers: number;
+  activeSubscribers: number;
+  unsubscribedSubscribers: number;
+  subscribersToday: number;
+  subscribersThisMonth: number;
+}
+
+export interface SubscribeResponse {
+  subscribed: boolean;
+}
+
