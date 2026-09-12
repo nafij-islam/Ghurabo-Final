@@ -168,9 +168,20 @@ export default function DestinationDetailsPage() {
 
             {/* Shared Community Trips for this destination */}
             <div>
-              <h2 className="font-display text-3xl font-bold text-slate-900 uppercase mb-6">
-                Community Trip Reports ({trips.length})
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-display text-3xl font-bold text-slate-900 uppercase">
+                  Community Trip Reports ({trips.length})
+                </h2>
+                {trips.length > 0 && (
+                  <Link
+                    href={`/trips?destination=${destination.slug}`}
+                    className="inline-flex items-center space-x-1.5 text-brand-600 hover:text-brand-700 text-xs font-bold uppercase tracking-wider transition-colors"
+                  >
+                    <span>View All Trips</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
 
               {trips.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

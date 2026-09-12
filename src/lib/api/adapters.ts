@@ -138,11 +138,12 @@ export function adaptBackendDestinationToIDestination(dest: BackendDestination):
     avgDurationDays: 3,
     transportInfo: `${dest.name} is accessible by direct highway bus, scenic train routes, or regional flights to nearest hubs.`,
     safetyTips: dest.weather ? `Current conditions: ${dest.weather}. Always respect local wildlife and regional guides.` : 'Carry local identification and follow indigenous community guidelines.',
-    totalTrips: 1,
+    totalTrips: (dest as any).tripsCount ?? (dest as any).totalTrips ?? 0,
     avgRating: 4.9,
     isPopular: dest.isFeatured,
   };
 }
+
 
 const DEFAULT_TRIP_COVERS = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',

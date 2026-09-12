@@ -1,23 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip, TravelType } from '@/types';
-import { Search, Compass, SlidersHorizontal } from 'lucide-react';
+import { Search, Compass, SlidersHorizontal, MapPin, X } from 'lucide-react';
 import { tripsApi } from '@/lib/api';
 import { adaptBackendTripToITrip, toBackendTravelType } from '@/lib/api/adapters';
 
 export type TripSortOption = 'newest' | 'popular' | 'lowest_cost' | 'highest_rating';
 
-export default function AllTripsPage() {
+function AllTripsContent() {
+  const searchParams = useSearchParams();
+  const initialDestination = searchParams.get('destination') || '';
+
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [destinationFilter, setDestinationFilter] = useState(initialDestination);
   const [travelType, setTravelType] = useState<TravelType | 'All'>('All');
   const [maxBudget, setMaxBudget] = useState<number>(100000);
   const [sortBy, setSortBy] = useState<TripSortOption>('newest');
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Sync if URL query param changes
+  useEffect(() => {
+    const urlDest = searchParams.get('destination') || '';
+    setDestinationFilter(urlDest);
+  }, [searchParams]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,6 +53,7 @@ export default function AllTripsPage() {
         .getTrips(
           {
             search: searchQuery.trim() || undefined,
+            destination: destinationFilter.trim() || undefined,
             travelType: backendType,
             maxBudget: maxBudget < 100000 ? maxBudget : undefined,
             sort: backendSort,
@@ -63,10 +75,19 @@ export default function AllTripsPage() {
     return () => {
       clearTimeout(timer);
     };
-  }, [searchQuery, travelType, maxBudget, sortBy]);
+  }, [searchQuery, destinationFilter, travelType, maxBudget, sortBy]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+  };
+
+  const clearDestinationFilter = () => {
+    setDestinationFilter('');
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('destination');
+      window.history.replaceState(null, '', url.pathname + (url.search ? url.search : ''));
+    }
   };
 
   return (
@@ -108,6 +129,25 @@ export default function AllTripsPage() {
               Search Trips
             </button>
           </form>
+
+          {/* Active Destination Filter Chip */}
+          {destinationFilter && (
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Active Filter:</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold rounded-full">
+                <MapPin className="w-3.5 h-3.5 text-brand-500" />
+                <span>Destination: <span className="capitalize font-extrabold">{destinationFilter}</span></span>
+                <button
+                  type="button"
+                  onClick={clearDestinationFilter}
+                  className="hover:text-brand-900 ml-1 p-0.5 rounded-full hover:bg-brand-100 transition-colors"
+                  title="Remove destination filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            </div>
+          )}
 
           {/* Filter Controls Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
@@ -182,10 +222,40 @@ export default function AllTripsPage() {
           <div className="text-center py-16 bg-white rounded-3xl border border-slate-100">
             <SlidersHorizontal className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <h3 className="font-display text-2xl font-bold text-slate-800 uppercase">No Trips Match Filters</h3>
-            <p className="text-slate-500 text-xs mt-1">Try resetting budget limits or category selection.</p>
+            <p className="text-slate-500 text-xs mt-1">
+              {destinationFilter
+                ? `No approved trips found for "${destinationFilter}". Try clearing the filter or checking other categories.`
+                : 'Try resetting budget limits or category selection.'}
+            </p>
+            {destinationFilter && (
+              <button
+                type="button"
+                onClick={clearDestinationFilter}
+                className="mt-4 inline-flex items-center px-4 py-2 bg-brand-500 text-white rounded-full text-xs font-bold uppercase tracking-wider hover:bg-brand-600 shadow-sm transition-all"
+              >
+                Clear Destination Filter
+              </button>
+            )}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function AllTripsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full pt-36 pb-20 bg-slate-50 min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Loading Trips...</p>
+          </div>
+        </div>
+      }
+    >
+      <AllTripsContent />
+    </Suspense>
   );
 }

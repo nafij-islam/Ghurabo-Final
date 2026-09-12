@@ -11,7 +11,7 @@ import { destinationsApi } from '@/lib/api/destinations.api';
 import { TripStats } from '@/lib/api/api.types';
 import { adaptBackendTripToITrip, adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
 import CurrencyControlCard from '@/components/admin/CurrencyControlCard';
-import DestinationsModerationCard from '@/components/admin/DestinationsModerationCard';
+import DestinationsManager from '@/components/admin/DestinationsManager';
 import PendingTripsQueue from '@/components/admin/PendingTripsQueue';
 import PublishedTripsDirectory from '@/components/admin/PublishedTripsDirectory';
 import AllTripsManager from '@/components/admin/AllTripsManager';
@@ -240,9 +240,10 @@ export default function AdminPage() {
 
         <CurrencyControlCard />
 
-        {/* Popular Destinations Controls for Homepage */}
-        <DestinationsModerationCard
+        {/* Destinations Management (CRUD, Search, Community Trips, Homepage Popular) */}
+        <DestinationsManager
           destinations={destinations}
+          onDataChanged={fetchAdminData}
           onTogglePopular={handleTogglePopularDestination}
         />
 
