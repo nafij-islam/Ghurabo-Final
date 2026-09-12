@@ -17,7 +17,7 @@ const HERO_SLIDES = [
     slug: 'bangladesh',
   },
   {
-    image: '/banner-two.png',
+    image: '/banner-two.jpg',
     title: "COX'S BAZAR",
     subtitle: 'THE WORLD’S LONGEST SEA BEACH',
     description:
