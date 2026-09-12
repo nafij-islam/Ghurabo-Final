@@ -127,17 +127,18 @@ export default function SplitHero() {
               </svg>
             </div>
 
-            {/* Left Content Column with Smooth Cross-fade Transition */}
-            <div className="relative z-30 max-w-xl min-h-[440px] flex flex-col justify-center">
+            {/* Left Content Column with Pure Ultra-Smooth Fade Cross-transition */}
+            <div className="relative z-30 max-w-xl w-full h-[480px] lg:h-[520px] flex flex-col justify-center">
               {HERO_SLIDES.map((s, idx) => {
                 const isActive = idx === currentSlideIndex;
                 return (
                   <div
                     key={idx}
-                    className={`transition-all duration-500 ease-in-out flex flex-col justify-center ${isActive
-                      ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
-                      : 'opacity-0 -translate-y-4 pointer-events-none absolute inset-0 z-0'
-                      }`}
+                    className={`absolute inset-0 flex flex-col justify-center transition-opacity duration-700 ease-in-out will-change-[opacity] ${
+                      isActive
+                        ? 'opacity-100 pointer-events-auto z-10'
+                        : 'opacity-0 pointer-events-none z-0'
+                    }`}
                   >
                     {/* Tagline */}
                     <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-widest mb-4 w-fit">
@@ -187,23 +188,24 @@ export default function SplitHero() {
             </div>
           </div>
 
-          {/* Right Side: Cinematic Photograph Layered Cross-fade with Paint-Brush Mask */}
+          {/* Right Side: Cinematic Photograph Layered Pure Smooth Fade Cross-transition */}
           <div className="w-full lg:w-1/2 h-[450px] lg:h-full relative overflow-hidden">
             {HERO_SLIDES.map((s, idx) => {
               const isActive = idx === currentSlideIndex;
               return (
                 <div
                   key={idx}
-                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${isActive
-                    ? 'opacity-100 scale-100 pointer-events-auto z-10'
-                    : 'opacity-0 scale-105 pointer-events-none z-0'
-                    }`}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${
+                    isActive
+                      ? 'opacity-100 pointer-events-auto z-10'
+                      : 'opacity-0 pointer-events-none z-0'
+                  }`}
                 >
                   <Image
                     src={s.image}
                     alt={s.location}
                     fill
-                    priority={idx === 0}
+                    priority
                     className="object-cover object-center"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
