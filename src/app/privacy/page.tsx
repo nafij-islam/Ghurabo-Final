@@ -1,6 +1,22 @@
-'use client';
-
 import React from 'react';
+import { Metadata } from 'next';
+import { siteConfig } from '@/config/site';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | Ghurabo',
+  description:
+    'Privacy Policy for the Ghurabo travel community platform. Learn how your data and account information are safely protected.',
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy | Ghurabo',
+    description:
+      'Privacy Policy for the Ghurabo travel community platform. Learn how your data and account information are safely protected.',
+    url: `${siteConfig.siteUrl}/privacy`,
+    type: 'website',
+  },
+};
 
 export default function PrivacyPage() {
   return (
@@ -11,13 +27,13 @@ export default function PrivacyPage() {
           <p className="text-xs text-slate-500 font-light">Last updated: February 2026</p>
 
           <div className="space-y-4 text-xs text-slate-700 font-light leading-relaxed">
-            <h3 className="font-display text-lg font-bold text-slate-900 uppercase">1. Information We Collect</h3>
+            <h2 className="font-display text-lg font-bold text-slate-900 uppercase">1. Information We Collect</h2>
             <p>We collect account email, profile name, uploaded trip stories, photographs, and optional verification documents.</p>
 
-            <h3 className="font-display text-lg font-bold text-slate-900 uppercase">2. Use of Cookies</h3>
+            <h2 className="font-display text-lg font-bold text-slate-900 uppercase">2. Use of Cookies</h2>
             <p>We use HTTP-Only session cookies solely to maintain secure authentication and remember your preferences.</p>
 
-            <h3 className="font-display text-lg font-bold text-slate-900 uppercase">3. Data Protection</h3>
+            <h2 className="font-display text-lg font-bold text-slate-900 uppercase">3. Data Protection</h2>
             <p>Your data is stored securely and never sold to third-party advertisers.</p>
           </div>
         </div>

@@ -1,7 +1,28 @@
-'use client';
-
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
+import { Metadata } from 'next';
+import { siteConfig } from '@/config/site';
+
+export const metadata: Metadata = {
+  title: 'Ghurabo Travel Community FAQ',
+  description:
+    'Find answers about Ghurabo trips, travel sharing, accounts, community features and using the platform.',
+  alternates: {
+    canonical: '/faq',
+  },
+  openGraph: {
+    title: 'Ghurabo Travel Community FAQ',
+    description:
+      'Find answers about Ghurabo trips, travel sharing, accounts, community features and using the platform.',
+    url: `${siteConfig.siteUrl}/faq`,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ghurabo Travel Community FAQ',
+    description:
+      'Find answers about Ghurabo trips, travel sharing, accounts, community features and using the platform.',
+  },
+};
 
 export default function FAQPage() {
   const faqs = [
@@ -38,11 +59,12 @@ export default function FAQPage() {
         <div className="space-y-4">
           {faqs.map((faq, idx) => (
             <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-              <h3 className="font-display text-xl font-bold text-slate-900 mb-2 flex items-center space-x-2">
-                <HelpCircle className="w-5 h-5 text-brand-500" />
-                <span>{faq.q}</span>
+              <h3 className="font-display text-lg font-bold text-slate-900 uppercase mb-2">
+                {faq.q}
               </h3>
-              <p className="text-slate-600 text-xs font-light leading-relaxed pl-7">{faq.a}</p>
+              <p className="text-slate-600 text-xs sm:text-sm font-light leading-relaxed">
+                {faq.a}
+              </p>
             </div>
           ))}
         </div>

@@ -190,7 +190,7 @@ export default function GalleryPage() {
                 >
                   <Image
                     src={item.url}
-                    alt={item.caption || item.destinationName}
+                    alt={item.caption || `${item.destinationName} travel photo shared by ${item.photographerName}`}
                     fill
                     priority={index < 4}
                     sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 320px"

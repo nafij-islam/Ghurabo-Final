@@ -1,7 +1,29 @@
-'use client';
-
 import React from 'react';
-import { Compass, ShieldCheck, Heart, Users, MapPin } from 'lucide-react';
+import { Metadata } from 'next';
+import { Compass, ShieldCheck, Users } from 'lucide-react';
+import { siteConfig } from '@/config/site';
+
+export const metadata: Metadata = {
+  title: 'About Ghurabo | Bangladesh Travel Community',
+  description:
+    "Learn about Ghurabo, Bangladesh's authentic travel community where real explorers share verified trip itineraries, itemized budget breakdowns, and local travel tips.",
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Ghurabo | Bangladesh Travel Community',
+    description:
+      "Learn about Ghurabo, Bangladesh's authentic travel community where real explorers share verified trip itineraries, itemized budget breakdowns, and local travel tips.",
+    url: `${siteConfig.siteUrl}/about`,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About Ghurabo | Bangladesh Travel Community',
+    description:
+      "Learn about Ghurabo, Bangladesh's authentic travel community where real explorers share verified trip itineraries, itemized budget breakdowns, and local travel tips.",
+  },
+};
 
 export default function AboutPage() {
   return (

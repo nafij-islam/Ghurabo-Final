@@ -46,6 +46,7 @@ export default function NewsletterModal() {
       }, 100);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
 
   // Handle Escape key to close
@@ -175,7 +176,7 @@ export default function NewsletterModal() {
               Real Trips.<br />Real Costs.<br />Zero Fluff.
             </h3>
             <p className="text-[11px] sm:text-xs text-slate-300 font-light leading-relaxed hidden sm:block">
-              Join 10,000+ travelers discovering Bangladesh's hidden trails, transparent budgets, and local stories.
+              Join 10,000+ travelers discovering Bangladesh&apos;s hidden trails, transparent budgets, and local stories.
             </p>
           </div>
 

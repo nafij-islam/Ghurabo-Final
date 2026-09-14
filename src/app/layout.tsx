@@ -9,11 +9,11 @@ import { NewsletterModalProvider } from '@/context/NewsletterModalContext';
 import dynamic from 'next/dynamic';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 import FloatingShareTripCTA from '@/components/layout/FloatingShareTripCTA';
+import { siteConfig } from '@/config/site';
 
 const NewsletterModal = dynamic(() => import('@/components/newsletter/NewsletterModal'), {
   ssr: false,
 });
-
 
 const oswald = Oswald({
   subsets: ['latin'],
@@ -37,22 +37,69 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.ghurabo.com'),
-  title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
-  description: 'Share authentic travel stories, itemized budget breakdowns, day-by-day itineraries, and explore verified solo, couple, family, and group tours in Bangladesh.',
-  keywords: ['travel community', 'trip sharing', 'budget travel', 'travel itinerary', 'coxs bazar', 'sajek valley', 'st martin', 'bangladesh tourism'],
-  authors: [{ name: 'Ghurabo Community' }],
+  metadataBase: new URL(siteConfig.siteUrl),
+  title: {
+    default: siteConfig.title,
+    template: siteConfig.titleTemplate,
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  authors: [{ name: 'Ghurabo Travel Community', url: siteConfig.siteUrl }],
+  creator: 'Ghurabo',
+  publisher: 'Ghurabo',
+  category: 'travel',
+  keywords: siteConfig.keywords,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: siteConfig.title,
+    description: siteConfig.description,
+    url: siteConfig.siteUrl,
+    siteName: siteConfig.name,
+    locale: siteConfig.locale,
+    type: 'website',
+    images: [
+      {
+        url: `${siteConfig.siteUrl}${siteConfig.defaultOgImage}`,
+        width: 1200,
+        height: 630,
+        alt: 'Ghurabo - Bangladesh Travel Community & Trip Guides',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [`${siteConfig.siteUrl}${siteConfig.defaultOgImage}`],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
-  openGraph: {
-    title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
-    description: 'Explore verified community trips, cost breakdowns, and high-resolution photo galleries across Bangladesh.',
-    type: 'website',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.ghurabo.com',
-  },
+  ...(process.env.GOOGLE_SITE_VERIFICATION || process.env.BING_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.GOOGLE_SITE_VERIFICATION,
+          other: process.env.BING_SITE_VERIFICATION
+            ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION }
+            : undefined,
+        },
+      }
+    : {}),
 };
 
 export default function RootLayout({

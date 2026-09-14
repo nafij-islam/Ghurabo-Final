@@ -149,10 +149,16 @@ export default function SplitHero() {
                       <span>{s.subtitle}</span>
                     </div>
 
-                    {/* Huge Display Headline */}
-                    <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-none tracking-tight text-shadow-hero mb-6">
-                      {s.title}
-                    </h1>
+                    {/* Huge Display Headline: Semantic H1 on primary slide, H2 on subsequent slides */}
+                    {idx === 0 ? (
+                      <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-none tracking-tight text-shadow-hero mb-6">
+                        {s.title}
+                      </h1>
+                    ) : (
+                      <h2 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-none tracking-tight text-shadow-hero mb-6">
+                        {s.title}
+                      </h2>
+                    )}
 
                     {/* Supporting Description */}
                     <p className="text-white/90 text-sm sm:text-base leading-relaxed mb-8 max-w-lg font-light">
@@ -205,9 +211,9 @@ export default function SplitHero() {
                 >
                   <Image
                     src={s.image}
-                    alt={s.location}
+                    alt={`${s.title} - Bangladesh Travel Community`}
                     fill
-                    priority
+                    priority={idx === 0}
                     quality={90}
                     className="object-cover object-center"
                     sizes="(max-width: 1024px) 100vw, 50vw"
@@ -286,9 +292,9 @@ export default function SplitHero() {
               >
                 <Image
                   src={s.image}
-                  alt={s.location}
+                  alt={`${s.title} - Bangladesh Travel Community`}
                   fill
-                  priority
+                  priority={idx === 0}
                   quality={90}
                   className="object-cover object-center"
                   sizes="100vw"

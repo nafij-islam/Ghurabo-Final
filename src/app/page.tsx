@@ -13,6 +13,7 @@ import {
   adaptBackendGalleryToIGalleryItem,
 } from '@/lib/api/adapters';
 import CommunityGallerySpotlight from '@/components/home/CommunityGallerySpotlight';
+import { getOrganizationJsonLd, getWebSiteJsonLd, serializeJsonLd } from '@/lib/seo/jsonLd';
 
 export default function HomePage() {
   const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
@@ -23,6 +24,9 @@ export default function HomePage() {
   const [loadingPopularTrips, setLoadingPopularTrips] = useState(true);
   const [loadingTrips, setLoadingTrips] = useState(true);
   const [loadingGallery, setLoadingGallery] = useState(true);
+
+  const orgJsonLd = useMemo(() => getOrganizationJsonLd(), []);
+  const websiteJsonLd = useMemo(() => getWebSiteJsonLd(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -98,6 +102,16 @@ export default function HomePage() {
 
   return (
     <div className="w-full bg-slate-50">
+      {/* Search Engine Structured Data (JSON-LD) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(orgJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteJsonLd) }}
+      />
+
       {/* Hero Section */}
       <SplitHero />
 

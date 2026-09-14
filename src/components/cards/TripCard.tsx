@@ -174,7 +174,7 @@ export default function TripCard({ trip }: TripCardProps) {
             >
               <Image
                 src={getOptimizedImageUrl(trip.userAvatar, { width: 100, height: 100 })}
-                alt={trip.userName || 'Author avatar'}
+                alt={trip.userName ? `${trip.userName}'s profile photo` : 'Author profile photo'}
                 width={24}
                 height={24}
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
