@@ -30,7 +30,7 @@ export default function TripCard({ trip }: TripCardProps) {
       setLiked(trip.isLiked);
     }
   }, [trip.viewerState, trip.isLiked, trip.isSaved]);
-  const { formatCost, t } = usePreferences();
+  const { formatCost } = usePreferences();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -130,7 +130,7 @@ export default function TripCard({ trip }: TripCardProps) {
             {trip.isVerified && (
               <span className="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white text-xs font-semibold rounded-full shadow">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{t('trip.verified')}</span>
+                <span>Verified</span>
               </span>
             )}
           </div>
@@ -183,7 +183,7 @@ export default function TripCard({ trip }: TripCardProps) {
             </Link>
             <div className="flex items-center space-x-1 font-medium text-slate-500">
               <Clock className="w-3.5 h-3.5 text-brand-500" />
-              <span>{trip.durationDays} {t('trip.days')}</span>
+              <span>{trip.durationDays} Days</span>
             </div>
           </div>
 
@@ -203,7 +203,7 @@ export default function TripCard({ trip }: TripCardProps) {
         {/* Card Footer: Cost & Like */}
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">{t('trip.perPerson')}</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">per person</span>
             <div className="flex items-baseline text-slate-900 font-bold">
               <span className="text-lg text-brand-600 font-extrabold">{formatCost(perPersonCostBDT)}</span>
             </div>
@@ -226,7 +226,7 @@ export default function TripCard({ trip }: TripCardProps) {
               href={`/trips/${trip.slug || trip.id}`}
               className="text-xs font-bold text-brand-600 hover:text-brand-800 uppercase tracking-wider"
             >
-              {t('trip.viewDetails')} &rarr;
+              View Details &rarr;
             </Link>
           </div>
         </div>

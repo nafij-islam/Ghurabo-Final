@@ -38,7 +38,6 @@ function SignupForm() {
         email: cleanEmail,
         password,
         preferredCurrency: 'BDT',
-        preferredLanguage: 'EN',
       });
       router.push(redirectTarget);
     } catch (err) {

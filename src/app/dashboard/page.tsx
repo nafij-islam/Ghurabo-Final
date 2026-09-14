@@ -9,7 +9,7 @@ import DashboardTripCard from '@/components/trips/DashboardTripCard';
 
 const EditTripModal = dynamic(() => import('@/components/trips/EditTripModal'), { ssr: false });
 const EditProfileModal = dynamic(() => import('@/components/profile/EditProfileModal'), { ssr: false });
-import { ITrip, IUser } from '@/types';
+import { ITrip, IUser, CurrencyCode } from '@/types';
 import {
   Compass,
   User,
@@ -25,7 +25,10 @@ import {
   CheckCircle2,
   Loader2,
   X,
+  DollarSign,
+  Check,
 } from 'lucide-react';
+import { usePreferences } from '@/context/PreferencesContext';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -41,6 +44,47 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<IUser | null>(user || null);
   const [activeTab, setActiveTab] = useState<'published' | 'pending' | 'saved' | 'drafts'>('published');
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+
+  const { currency, setCurrency } = usePreferences();
+  const [currencySaving, setCurrencySaving] = useState(false);
+  const [currencyFeedback, setCurrencyFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (currencyFeedback) {
+      const timer = setTimeout(() => setCurrencyFeedback(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [currencyFeedback]);
+
+  const handleCurrencyChange = async (targetCurrency: CurrencyCode) => {
+    if (currencySaving) return;
+    const currentActive = currentUser?.preferredCurrency || currency;
+    if (currentActive === targetCurrency) return;
+
+    setCurrencySaving(true);
+    setCurrencyFeedback(null);
+
+    try {
+      await setCurrency(targetCurrency);
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          preferredCurrency: targetCurrency,
+        });
+      }
+      setCurrencyFeedback({
+        type: 'success',
+        message: `Preferred currency saved: ${targetCurrency === 'USD' ? 'USD ($)' : 'BDT (৳)'}. Trip prices now display accordingly.`,
+      });
+    } catch (err: any) {
+      setCurrencyFeedback({
+        type: 'error',
+        message: err?.message || 'Failed to save preferred currency. Please try again.',
+      });
+    } finally {
+      setCurrencySaving(false);
+    }
+  };
 
   useEffect(() => {
     if (user) setCurrentUser(user);
@@ -197,6 +241,83 @@ export default function DashboardPage() {
               <span>+ Share New Trip</span>
             </Link>
           </div>
+        </div>
+
+        {/* Profile Settings: Preferred Currency */}
+        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-100 mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center space-x-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-bold uppercase text-slate-900">
+                  Preferred Currency
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Choose your default currency for viewing trip costs and budgets across Ghurabo.
+                </p>
+              </div>
+            </div>
+
+            {/* Currency Option Toggle Buttons */}
+            <div className="flex items-center space-x-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80 shrink-0">
+              <button
+                type="button"
+                disabled={currencySaving}
+                onClick={() => handleCurrencyChange('BDT')}
+                className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  (currentUser?.preferredCurrency || currency) === 'BDT'
+                    ? 'bg-brand-500 text-white shadow-md'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                } ${currencySaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span>BDT (৳)</span>
+                {(currentUser?.preferredCurrency || currency) === 'BDT' && (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                disabled={currencySaving}
+                onClick={() => handleCurrencyChange('USD')}
+                className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  (currentUser?.preferredCurrency || currency) === 'USD'
+                    ? 'bg-brand-500 text-white shadow-md'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                } ${currencySaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span>USD ($)</span>
+                {(currentUser?.preferredCurrency || currency) === 'USD' && (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Inline Saving / Feedback Status */}
+          {currencySaving && (
+            <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center space-x-2 text-xs font-semibold text-brand-600">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Saving currency preference to your account...</span>
+            </div>
+          )}
+
+          {currencyFeedback && !currencySaving && (
+            <div
+              className={`mt-3.5 pt-3 border-t border-slate-100 flex items-center space-x-2 text-xs font-semibold ${
+                currencyFeedback.type === 'success' ? 'text-emerald-600' : 'text-rose-600'
+              }`}
+            >
+              {currencyFeedback.type === 'success' ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              )}
+              <span>{currencyFeedback.message}</span>
+            </div>
+          )}
         </div>
 
         {/* Dashboard Statistics */}
@@ -504,6 +625,20 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && currentUser && (
+        <EditProfileModal
+          user={currentUser}
+          onClose={() => setShowEditProfileModal(false)}
+          onSuccess={(updated) => {
+            setCurrentUser(updated);
+            if (updated.preferredCurrency) {
+              setCurrency(updated.preferredCurrency);
+            }
+          }}
+        />
       )}
     </div>
   );

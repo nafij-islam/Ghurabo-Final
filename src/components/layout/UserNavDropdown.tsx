@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { User, Compass, ShieldCheck, LogOut } from 'lucide-react';
 import { IUser } from '@/types';
 import { getOptimizedImageUrl } from '@/lib/utils/cloudinary';
-import { usePreferences } from '@/context/PreferencesContext';
 
 interface UserNavDropdownProps {
   user: IUser | null;
@@ -16,7 +15,6 @@ interface UserNavDropdownProps {
 export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { t } = usePreferences();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -36,7 +34,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
           className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-full font-medium text-sm transition-all shadow-md transform hover:scale-105"
         >
           <User className="w-3.5 h-3.5" />
-          <span>{t('nav.logIn')}</span>
+          <span>Log In</span>
         </Link>
       </div>
     );
@@ -80,7 +78,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
       {dropdownOpen && (
         <div className="hidden md:block absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl py-2 text-slate-800 border border-slate-100 z-50">
           <div className="px-4 py-2 border-b border-slate-100">
-            <p className="text-xs text-slate-500">{t('nav.signedInAs')}</p>
+            <p className="text-xs text-slate-500">Signed in as</p>
             <p className="font-semibold text-sm truncate">{user.email}</p>
             <span className="inline-block mt-1 px-2 py-0.5 bg-brand-100 text-brand-700 text-[10px] font-bold rounded-full uppercase">
               {user.role}
@@ -93,7 +91,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
             className="flex items-center space-x-2 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors"
           >
             <User className="w-4 h-4 text-slate-500" />
-            <span>{t('nav.profile')}</span>
+            <span>Profile</span>
           </Link>
           <Link
             href="/dashboard"
@@ -101,7 +99,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
             className="flex items-center space-x-2 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors"
           >
             <Compass className="w-4 h-4 text-slate-500" />
-            <span>{t('nav.dashboard')}</span>
+            <span>Dashboard</span>
           </Link>
 
           {user.role === 'admin' && (
@@ -111,7 +109,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
               className="flex items-center space-x-2 px-4 py-2.5 text-sm hover:bg-brand-50 text-brand-700 font-medium transition-colors"
             >
               <ShieldCheck className="w-4 h-4 text-brand-500" />
-              <span>{t('nav.admin')}</span>
+              <span>Admin</span>
             </Link>
           )}
 
@@ -123,7 +121,7 @@ export default function UserNavDropdown({ user, onLogout }: UserNavDropdownProps
             className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-slate-100 mt-1 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span>{t('nav.logOut')}</span>
+            <span>Log Out</span>
           </button>
         </div>
       )}

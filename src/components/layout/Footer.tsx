@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Compass, Send, Heart, MapPin, Mail, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
-import { usePreferences } from '@/context/PreferencesContext';
 import { useNewsletterModal } from '@/context/NewsletterModalContext';
 import { newsletterApi } from '@/lib/api/newsletter.api';
 
@@ -15,7 +14,6 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const { t } = usePreferences();
   const { openModal, markAsSubscribed } = useNewsletterModal();
 
   if (pathname?.startsWith('/admin')) {
@@ -66,7 +64,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-slate-400 text-sm font-light leading-relaxed max-w-sm">
-              {t('footer.aboutText')}
+              Ghurabo is Bangladesh&apos;s leading travel community platform for sharing authentic travel itineraries, transparent budget breakdowns, and community recommendations.
             </p>
 
             <div className="pt-2 flex items-center space-x-2 text-xs text-brand-300">
@@ -78,27 +76,27 @@ export default function Footer() {
           {/* Col 2: Quick Links */}
           <div>
             <h4 className="font-display text-lg font-bold text-white uppercase tracking-wider mb-4 border-b border-white/10 pb-2">
-              {t('footer.quickLinks')}
+              Quick Links
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
                 <Link href="/trips" className="hover:text-brand-300 transition-colors">
-                  {t('nav.trips')}
+                  All Trips
                 </Link>
               </li>
               <li>
                 <Link href="/gallery" className="hover:text-brand-300 transition-colors">
-                  {t('nav.gallery')}
+                  Gallery
                 </Link>
               </li>
               <li>
                 <Link href="/trips/share" className="hover:text-brand-300 transition-colors font-medium text-cyan-300">
-                  + {t('nav.shareTrip')}
+                  + Share Trip
                 </Link>
               </li>
               <li>
                 <Link href="/admin" className="hover:text-brand-300 transition-colors">
-                  {t('nav.admin')}
+                  Admin
                 </Link>
               </li>
             </ul>
@@ -201,10 +199,10 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 space-y-4 sm:space-y-0">
-          <p>© {new Date().getFullYear()} Ghurabo Travel Community. {t('footer.rights')}</p>
+          <p>© {new Date().getFullYear()} Ghurabo Travel Community. All rights reserved.</p>
           <div className="flex items-center space-x-6">
             <Link href="/about" className="hover:text-white transition-colors">
-              {t('nav.about')}
+              About Us
             </Link>
             <Link href="/privacy" className="hover:text-white transition-colors">
               Privacy Policy

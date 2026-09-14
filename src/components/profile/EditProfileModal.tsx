@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import NextImage from 'next/image';
 import { Camera, Image as ImageIcon, User, MapPin, Sparkles, Check, X, Upload } from 'lucide-react';
-import { IUser, TravelType } from '@/types';
+import { IUser, TravelType, CurrencyCode } from '@/types';
 
 import { usersApi } from '@/lib/api/users.api';
 import { mediaApi } from '@/lib/api/media.api';
@@ -23,6 +23,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
   const [bio, setBio] = useState(user.bio || '');
   const [location, setLocation] = useState(user.location || '');
   const [preferredStyle, setPreferredStyle] = useState<TravelType>((user.preferredStyle as TravelType) || 'Solo');
+  const [preferredCurrency, setPreferredCurrency] = useState<CurrencyCode>(user.preferredCurrency || 'BDT');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,6 +71,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
         bio: bio.trim(),
         location: location.trim(),
         travelStyle: toBackendTravelType(preferredStyle),
+        preferredCurrency,
         avatar: avatar ? { url: avatar } : undefined,
         coverImage: coverImage ? { url: coverImage } : undefined,
       });
@@ -214,31 +216,44 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* Home Location */}
-            <div>
-              <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Home Location</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Dhaka, Bangladesh"
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
-              />
-            </div>
+          {/* Home Location */}
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Home Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Dhaka, Bangladesh"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
+            />
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Travel Style */}
             <div>
               <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Preferred Travel Style</label>
               <select
                 value={preferredStyle}
                 onChange={(e) => setPreferredStyle(e.target.value as TravelType)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
               >
                 <option value="Solo">Solo Explorer</option>
                 <option value="Couple">Couple Traveller</option>
                 <option value="Family">Family Vacationer</option>
                 <option value="Group">Group Backpacker</option>
+              </select>
+            </div>
+
+            {/* Preferred Currency */}
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase block mb-1">Preferred Currency</label>
+              <select
+                value={preferredCurrency}
+                onChange={(e) => setPreferredCurrency(e.target.value as CurrencyCode)}
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+              >
+                <option value="BDT">BDT (৳) - Bangladeshi Taka</option>
+                <option value="USD">USD ($) - US Dollar</option>
               </select>
             </div>
           </div>

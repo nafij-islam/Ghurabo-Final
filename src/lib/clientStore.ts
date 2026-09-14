@@ -80,7 +80,6 @@ export async function signupUser(params: {
       email: cleanEmail,
       password: params.password,
       preferredCurrency: 'BDT',
-      preferredLanguage: 'EN',
     });
     const adapted = adaptBackendUserToIUser(backendUser);
     memoryCurrentUser = adapted;
@@ -104,7 +103,6 @@ export async function updateProfile(userId: string, data: Partial<IUser>): Promi
       bio: data.bio,
       travelStyle: data.preferredStyle,
       preferredCurrency: data.preferredCurrency,
-      preferredLanguage: data.preferredLanguage ? (data.preferredLanguage.toUpperCase() as 'EN' | 'BN') : undefined,
     });
     const adapted = adaptBackendUserToIUser(backendUser);
     if (adapted) {
@@ -132,7 +130,6 @@ export async function getUserProfile(username: string): Promise<IUser | null> {
       location: 'Bangladesh',
       preferredStyle: (profile.travelStyle as TravelType) || 'Solo',
       preferredCurrency: 'BDT',
-      preferredLanguage: 'en',
       visitedCount: 1,
       followersCount: 0,
       followingCount: 0,

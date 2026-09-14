@@ -3,7 +3,6 @@ export type TravelType = 'Solo' | 'Couple' | 'Family' | 'Group';
 export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended';
 export type CategoryType = 'Beach' | 'Mountain' | 'Resort' | 'Historical' | 'City' | 'Island' | 'Nature' | 'Wildlife';
 export type CurrencyCode = 'BDT' | 'USD';
-export type LanguageCode = 'en' | 'bn';
 
 export interface IUser {
   _id?: string;
@@ -19,7 +18,6 @@ export interface IUser {
   location?: string;
   preferredStyle?: TravelType;
   preferredCurrency?: CurrencyCode;
-  preferredLanguage?: LanguageCode;
   visitedCount?: number;
   followersCount?: number;
   followingCount?: number;

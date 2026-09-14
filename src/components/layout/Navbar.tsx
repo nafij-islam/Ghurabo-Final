@@ -5,9 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X, PlusCircle } from 'lucide-react';
-import { usePreferences } from '@/context/PreferencesContext';
 import { useAuth } from '@/hooks/useAuth';
-import PreferencesDropdown from './PreferencesDropdown';
 import UserNavDropdown from './UserNavDropdown';
 import MobileNavDrawer from './MobileNavDrawer';
 
@@ -17,7 +15,6 @@ export default function Navbar() {
   const [mobileMenuAnimate, setMobileMenuAnimate] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const { t } = usePreferences();
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
@@ -110,7 +107,7 @@ export default function Navbar() {
               pathname === '/' ? 'text-brand-300 font-semibold' : ''
             }`}
           >
-            {t('nav.home')}
+            Home
           </Link>
           <Link
             href="/trips"
@@ -118,7 +115,7 @@ export default function Navbar() {
               pathname === '/trips' ? 'text-brand-300 font-semibold' : ''
             }`}
           >
-            {t('nav.trips')}
+            All Trips
           </Link>
           <Link
             href="/gallery"
@@ -126,7 +123,7 @@ export default function Navbar() {
               pathname === '/gallery' ? 'text-brand-300 font-semibold' : ''
             }`}
           >
-            {t('nav.gallery')}
+            Gallery
           </Link>
           <Link
             href="/about"
@@ -134,22 +131,19 @@ export default function Navbar() {
               pathname === '/about' ? 'text-brand-300 font-semibold' : ''
             }`}
           >
-            {t('nav.about')}
+            About Us
           </Link>
         </nav>
 
         {/* Right Controls */}
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Preferences (Language & Currency) */}
-          <PreferencesDropdown />
-
           {/* Desktop Share a Trip CTA */}
           <Link
             href="/trips/share"
             className="hidden md:flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 px-3.5 py-2 rounded-full transition-all"
           >
             <PlusCircle className="w-4 h-4 text-brand-300" />
-            <span>{t('nav.shareTrip')}</span>
+            <span>Share Trip</span>
           </Link>
 
           {/* User Profile or Log In */}

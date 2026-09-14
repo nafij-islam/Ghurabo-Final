@@ -1,21 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CurrencyCode, LanguageCode } from '@/types';
-import en, { TranslationKey } from '@/locales/en';
-import bn from '@/locales/bn';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { CurrencyCode } from '@/types';
 import { formatCurrency, FormatCurrencyOptions, DEFAULT_BDT_PER_USD } from '@/lib/currency/formatCurrency';
 import { settingsApi } from '@/lib/api/settings.api';
 import { usersApi } from '@/lib/api/users.api';
+import { authApi } from '@/lib/api/auth.api';
 import { tokenStorage } from '@/lib/api/tokenStorage';
+import { notifyAuthChange } from '@/hooks/useAuth';
 
 interface PreferencesContextType {
   currency: CurrencyCode;
-  language: LanguageCode;
   exchangeRate: number;
-  setCurrency: (c: CurrencyCode) => void;
-  setLanguage: (l: LanguageCode) => void;
-  t: (key: TranslationKey, fallback?: string) => string;
+  setCurrency: (c: CurrencyCode) => Promise<void>;
   formatCost: (amountBDT: number, options?: Partial<FormatCurrencyOptions>) => string;
 }
 
@@ -33,25 +30,44 @@ function setCookie(name: string, value: string, days = 365) {
   if (typeof document === 'undefined') return;
   const d = new Date();
   d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()}`;
+  document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};SameSite=Lax`;
 }
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>('BDT');
-  const [language, setLanguageState] = useState<LanguageCode>('en');
   const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_BDT_PER_USD);
 
-  useEffect(() => {
-    // Read stored cookies / preferences
-    const savedCurrency = getCookie('ghurabo_currency') as CurrencyCode | null;
-    const savedLanguage = getCookie('ghurabo_lang') as LanguageCode | null;
+  const syncUserCurrency = useCallback(async () => {
+    if (tokenStorage.hasTokens()) {
+      try {
+        const backendUser = await authApi.getMe();
+        if (backendUser?.preferredCurrency) {
+          const pref = backendUser.preferredCurrency === 'USD' ? 'USD' : 'BDT';
+          setCurrencyState(pref);
+          setCookie('ghurabo_currency', pref);
+          return;
+        }
+      } catch {
+        // Fallback on cookie or BDT if getMe fails
+      }
+    } else {
+      // Logged out visitors strictly default to BDT
+      setCurrencyState('BDT');
+      setCookie('ghurabo_currency', 'BDT');
+      return;
+    }
 
-    if (savedCurrency && (savedCurrency === 'BDT' || savedCurrency === 'USD')) {
+    const savedCurrency = getCookie('ghurabo_currency') as CurrencyCode | null;
+    if (savedCurrency === 'BDT' || savedCurrency === 'USD') {
       setCurrencyState(savedCurrency);
+    } else {
+      setCurrencyState('BDT');
     }
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'bn')) {
-      setLanguageState(savedLanguage);
-    }
+  }, []);
+
+  useEffect(() => {
+    // Initial sync
+    syncUserCurrency();
 
     // Fetch dynamic exchange rate from backend settings
     settingsApi
@@ -67,33 +83,29 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       .catch((err) => {
         console.warn('Could not fetch USD_TO_BDT_RATE from backend, using default:', err);
       });
-  }, []);
 
-  const setCurrency = (c: CurrencyCode) => {
+    // Listen to login/logout/profile changes
+    const handleAuthChange = () => {
+      syncUserCurrency();
+    };
+
+    window.addEventListener('ghurabo-auth-state-change', handleAuthChange);
+    return () => window.removeEventListener('ghurabo-auth-state-change', handleAuthChange);
+  }, [syncUserCurrency]);
+
+  const setCurrency = async (c: CurrencyCode) => {
     setCurrencyState(c);
     setCookie('ghurabo_currency', c);
-    // Sync with backend profile if logged in
-    if (tokenStorage.getAccessToken()) {
-      usersApi.updateMe({ preferredCurrency: c }).catch(() => {
-        // Non-blocking preference sync
-      });
+    // Persist to backend if logged in
+    if (tokenStorage.hasTokens()) {
+      try {
+        await usersApi.updateMe({ preferredCurrency: c });
+        notifyAuthChange();
+      } catch (err) {
+        console.error('Failed to save preferredCurrency to backend:', err);
+        throw err;
+      }
     }
-  };
-
-  const setLanguage = (l: LanguageCode) => {
-    setLanguageState(l);
-    setCookie('ghurabo_lang', l);
-    // Sync with backend profile if logged in
-    if (tokenStorage.getAccessToken()) {
-      usersApi.updateMe({ preferredLanguage: l === 'bn' ? 'BN' : 'EN' }).catch(() => {
-        // Non-blocking preference sync
-      });
-    }
-  };
-
-  const t = (key: TranslationKey, fallback?: string): string => {
-    const dictionary = language === 'bn' ? bn : en;
-    return dictionary[key] || fallback || en[key] || String(key);
   };
 
   const formatCost = (amountBDT: number, options?: Partial<FormatCurrencyOptions>): string => {
@@ -101,7 +113,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       amountBDT,
       currency,
       exchangeRate,
-      locale: language,
       ...options,
     });
   };
@@ -110,11 +121,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     <PreferencesContext.Provider
       value={{
         currency,
-        language,
         exchangeRate,
         setCurrency,
-        setLanguage,
-        t,
         formatCost,
       }}
     >

@@ -18,7 +18,6 @@ export interface SignupPayload {
   email: string;
   password?: string;
   preferredCurrency?: string;
-  preferredLanguage?: string;
 }
 
 export interface GoogleLoginPayload {

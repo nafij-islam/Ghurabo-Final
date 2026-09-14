@@ -49,7 +49,6 @@ export interface BackendUser {
   location?: string;
   travelStyle?: string;
   preferredCurrency?: string;
-  preferredLanguage?: string;
   accountStatus?: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
   emailVerified?: boolean;
   createdAt?: string;
@@ -77,7 +76,6 @@ export interface BackendUserPublicProfile {
   bio?: string;
   location?: string;
   travelStyle?: string;
-  preferredLanguage?: string;
   createdAt?: string;
   stats?: UserProfileStats;
   viewerState?: UserViewerState;

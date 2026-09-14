@@ -20,7 +20,6 @@ export interface UpdateProfilePayload {
   location?: string;
   travelStyle?: string;
   preferredCurrency?: string;
-  preferredLanguage?: string;
   avatar?: {
     url: string;
     publicId?: string;
