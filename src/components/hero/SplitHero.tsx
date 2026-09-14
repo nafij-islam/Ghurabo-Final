@@ -207,10 +207,10 @@ export default function SplitHero() {
                     src={s.image}
                     alt={s.location}
                     fill
-                    priority={idx === 0}
-                    placeholder="blur"
+                    priority
+                    quality={90}
                     className="object-cover object-center"
-                    sizes="(max-width: 1024px) 100vw, 640px"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
               );
@@ -288,8 +288,8 @@ export default function SplitHero() {
                   src={s.image}
                   alt={s.location}
                   fill
-                  priority={idx === 0}
-                  placeholder="blur"
+                  priority
+                  quality={90}
                   className="object-cover object-center"
                   sizes="100vw"
                 />
