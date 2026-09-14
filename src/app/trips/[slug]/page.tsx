@@ -39,14 +39,16 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
   if (isLoading) {
     return (
       <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20 animate-pulse">
-        <div className="h-[360px] sm:h-[440px] md:h-[480px] w-full bg-slate-800 relative">
-          <div className="absolute bottom-6 sm:bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 space-y-3 sm:space-y-4">
-            <div className="h-6 w-32 bg-slate-700 rounded-full" />
-            <div className="h-8 sm:h-10 w-3/4 bg-slate-700 rounded-xl" />
-            <div className="h-4 w-1/2 bg-slate-700 rounded" />
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 pt-4 sm:pt-6">
+          <div className="h-[340px] sm:h-[400px] md:h-[440px] lg:h-[460px] w-full bg-slate-800 rounded-2xl sm:rounded-3xl relative overflow-hidden">
+            <div className="absolute bottom-6 sm:bottom-10 left-0 right-0 px-5 sm:px-8 space-y-3 sm:space-y-4">
+              <div className="h-6 w-32 bg-slate-700 rounded-full" />
+              <div className="h-8 sm:h-10 w-3/4 bg-slate-700 rounded-xl" />
+              <div className="h-4 w-1/2 bg-slate-700 rounded" />
+            </div>
           </div>
         </div>
-        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
           <div className="h-24 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100" />
           <div className="h-32 bg-slate-900 rounded-2xl sm:rounded-3xl shadow-xl" />
           <div className="h-64 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100" />
@@ -97,58 +99,61 @@ export default function TripDetailsPage({ params }: { params: { slug: string } }
 
   return (
     <div className="w-full bg-slate-50 min-h-screen pt-20 pb-20">
-      {/* Cover Image Header */}
-      <div className="relative h-[360px] sm:h-[440px] md:h-[480px] w-full overflow-hidden bg-slate-950">
-        <Image
-          src={getOptimizedImageUrl(trip.coverImage, { width: 1400, height: 800, quality: 'auto' })}
-          alt={trip.title}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-85"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+      {/* Cover Image Header inside page container */}
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-6 pt-4 sm:pt-6">
+        <div className="relative h-[340px] sm:h-[400px] md:h-[440px] lg:h-[460px] w-full overflow-hidden rounded-2xl sm:rounded-3xl shadow-xl bg-slate-950 border border-slate-200/40">
+          <Image
+            src={getOptimizedImageUrl(trip.coverImage, { width: 1920, height: 1080, quality: 'auto' })}
+            alt={trip.title}
+            fill
+            priority
+            quality={90}
+            sizes="(max-width: 1024px) 100vw, 1200px"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
-        <div className="absolute bottom-6 sm:bottom-10 left-0 right-0 max-w-5xl mx-auto px-4 sm:px-6 text-white z-10">
-          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-            <span className="px-3 py-1 bg-brand-500 text-white text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider">
-              {trip.travelType} Tour
-            </span>
-            {trip.isVerified && (
-              <span className="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500 text-white text-[10px] sm:text-xs font-semibold rounded-full shadow">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Verified Trip</span>
+          <div className="absolute bottom-6 sm:bottom-10 left-0 right-0 px-5 sm:px-8 md:px-10 text-white z-10">
+            <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+              <span className="px-3 py-1 bg-brand-500 text-white text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm">
+                {trip.travelType} Tour
               </span>
-            )}
-          </div>
+              {trip.isVerified && (
+                <span className="flex items-center space-x-1 px-2.5 py-1 bg-emerald-500 text-white text-[10px] sm:text-xs font-semibold rounded-full shadow">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Verified Trip</span>
+                </span>
+              )}
+            </div>
 
-          <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold uppercase leading-tight mb-3 sm:mb-4 text-shadow-hero break-words">
-            {trip.title}
-          </h1>
+            <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold uppercase leading-tight mb-3 sm:mb-4 text-shadow-hero break-words">
+              {trip.title}
+            </h1>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/90 font-medium">
-            <div className="flex items-center space-x-1.5">
-              <MapPin className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-              <span className="truncate max-w-[160px] sm:max-w-none">{trip.destinationName}</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <Clock className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-              <span>{trip.durationDays} Days</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <Calendar className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-              <span>{trip.travelDate}</span>
-            </div>
-            <div className="flex items-center space-x-1 text-amber-300 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full font-bold text-[11px] sm:text-xs">
-              <Star className="w-3.5 h-3.5 fill-current" />
-              <span>{trip.ratings?.overall || 4.9}</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/90 font-medium">
+              <div className="flex items-center space-x-1.5">
+                <MapPin className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                <span className="truncate max-w-[160px] sm:max-w-none">{trip.destinationName}</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                <span>{trip.durationDays} Days</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <Calendar className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                <span>{trip.travelDate}</span>
+              </div>
+              <div className="flex items-center space-x-1 text-amber-300 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full font-bold text-[11px] sm:text-xs">
+                <Star className="w-3.5 h-3.5 fill-current" />
+                <span>{trip.ratings?.overall || 4.9}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content Container */}
-      <div className="max-w-5xl mx-auto px-3.5 sm:px-6 py-6 sm:py-10 md:py-12">
+      <div className="max-w-5xl mx-auto px-3.5 sm:px-6 py-6 sm:py-8 md:py-10">
         {/* Author Bar & Interactive Action Buttons */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 mb-8 sm:mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
