@@ -21,10 +21,6 @@ export default function NewsletterModal() {
   const { isOpen, closeModal, markAsSubscribed } = useNewsletterModal();
   const { user } = useAuth();
 
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -72,7 +68,7 @@ export default function NewsletterModal() {
     }
   }, [isOpen, closeModal]);
 
-  if (!isOpen) return null;
+  if (!isOpen || pathname?.startsWith('/admin')) return null;
 
   const validateEmail = (val: string): boolean => {
     const trimmed = val.trim();
