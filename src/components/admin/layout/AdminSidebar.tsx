@@ -12,16 +12,18 @@ import {
   LogOut,
   Shield,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import AdminNavItem from './AdminNavItem';
 import { IUser } from '@/types';
 
-export type AdminTab = 'overview' | 'trips' | 'users' | 'newsletter' | 'settings';
+export type AdminTab = 'overview' | 'trips' | 'users' | 'newsletter' | 'messages' | 'settings';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
   onSelectTab: (tab: AdminTab) => void;
   pendingTripsCount?: number;
+  unreadMessagesCount?: number;
   user?: IUser | null;
   onLogout?: () => void;
 }
@@ -30,6 +32,7 @@ export default function AdminSidebar({
   activeTab,
   onSelectTab,
   pendingTripsCount = 0,
+  unreadMessagesCount = 0,
   user,
   onLogout,
 }: AdminSidebarProps) {
@@ -107,6 +110,14 @@ export default function AdminSidebar({
               label="Newsletter"
               active={activeTab === 'newsletter'}
               onClick={() => onSelectTab('newsletter')}
+            />
+            <AdminNavItem
+              icon={MessageSquare}
+              label="Messages"
+              active={activeTab === 'messages'}
+              badge={unreadMessagesCount > 0 ? unreadMessagesCount : undefined}
+              badgeColor="brand"
+              onClick={() => onSelectTab('messages')}
             />
           </div>
         </div>

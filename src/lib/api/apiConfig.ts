@@ -78,5 +78,17 @@ export const API_ENDPOINTS = {
     `${API_V1_PREFIX}/admin/newsletter/subscribers/${encodeURIComponent(id)}`,
   ADMIN_NEWSLETTER_STATUS: (id: string) =>
     `${API_V1_PREFIX}/admin/newsletter/subscribers/${encodeURIComponent(id)}/status`,
+
+  // Contact Messages
+  CONTACT_SUBMIT: `${API_V1_PREFIX}/contact`,
+  ADMIN_CONTACT_MESSAGES: `${API_V1_PREFIX}/admin/contact-messages`,
+  ADMIN_CONTACT_MESSAGES_STATS: `${API_V1_PREFIX}/admin/contact-messages/stats`,
+  ADMIN_CONTACT_MESSAGE_BY_ID: (id: string) =>
+    `${API_V1_PREFIX}/admin/contact-messages/${encodeURIComponent(id)}`,
+  ADMIN_CONTACT_MESSAGE_READ: (id: string) =>
+    `${API_V1_PREFIX}/admin/contact-messages/${encodeURIComponent(id)}/read`,
+  ADMIN_CONTACT_MESSAGE_DELETE: (id: string) =>
+    `${API_V1_PREFIX}/admin/contact-messages/${encodeURIComponent(id)}`,
 } as const;
+
 

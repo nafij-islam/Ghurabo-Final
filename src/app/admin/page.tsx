@@ -20,11 +20,13 @@ import {
   Sparkles,
   Server,
   Layers,
+  MessageSquare,
 } from 'lucide-react';
 import { ITrip } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { adminApi } from '@/lib/api/admin.api';
 import { tripsApi } from '@/lib/api/trips.api';
+import { contactApi } from '@/lib/api/contact.api';
 import { TripStats } from '@/lib/api/api.types';
 import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 import { AdminLayout, AdminPageHeader, AdminTab } from '@/components/admin/layout';
@@ -54,6 +56,9 @@ const AllUsersManager = dynamic(() => import('@/components/admin/AllUsersManager
 const NewsletterSubscribersManager = dynamic(() => import('@/components/admin/NewsletterSubscribersManager'), {
   loading: AdminPanelSkeleton,
 });
+const AdminMessagesManager = dynamic(() => import('@/components/admin/AdminMessagesManager'), {
+  loading: AdminPanelSkeleton,
+});
 
 type TripsSubTab = 'all' | 'pending' | 'published';
 
@@ -78,6 +83,7 @@ function AdminDashboardContent() {
     rejected: 0,
     draft: 0,
   });
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   // Sync tab with URL query parameter without full reload
   const handleTabChange = (tab: AdminTab) => {
@@ -90,10 +96,11 @@ function AdminDashboardContent() {
   const fetchAdminData = async () => {
     setIsRefreshing(true);
     try {
-      const [pendingRes, publishedRes, statsRes] = await Promise.allSettled([
+      const [pendingRes, publishedRes, statsRes, messagesStatsRes] = await Promise.allSettled([
         adminApi.getPendingTrips({ limit: 50 }),
         tripsApi.getTrips({ limit: 50 }),
         adminApi.getTripStats(),
+        contactApi.getStats(),
       ]);
 
       if (pendingRes.status === 'fulfilled' && pendingRes.value?.data) {
@@ -104,6 +111,9 @@ function AdminDashboardContent() {
       }
       if (statsRes.status === 'fulfilled' && statsRes.value) {
         setTripStats(statsRes.value);
+      }
+      if (messagesStatsRes.status === 'fulfilled' && messagesStatsRes.value) {
+        setUnreadMessagesCount(messagesStatsRes.value.unread || 0);
       }
     } catch (err) {
       console.error('Failed to fetch admin data:', err);
@@ -233,6 +243,7 @@ function AdminDashboardContent() {
       activeTab={activeTab}
       onSelectTab={handleTabChange}
       pendingTripsCount={pendingCount}
+      unreadMessagesCount={unreadMessagesCount}
       user={user}
       onLogout={logout}
       onRefresh={fetchAdminData}
@@ -362,6 +373,42 @@ function AdminDashboardContent() {
               </div>
               <p className="text-[11px] text-slate-500 mt-1 font-medium">
                 Moderated / suspended
+              </p>
+            </div>
+
+            {/* Unread Contact Messages */}
+            <div
+              onClick={() => handleTabChange('messages')}
+              className={`p-5 rounded-2xl shadow-xs border transition-all cursor-pointer group ${
+                unreadMessagesCount > 0
+                  ? 'bg-amber-50/60 border-amber-300 hover:border-amber-400'
+                  : 'bg-white border-slate-200/80 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Messages
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    unreadMessagesCount > 0
+                      ? 'bg-brand-500 text-white animate-pulse'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="font-display text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>{unreadMessagesCount}</span>
+                {unreadMessagesCount > 0 && (
+                  <span className="text-[10px] bg-brand-500 text-white font-sans font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Unread
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                {unreadMessagesCount > 0 ? 'Awaiting moderator review' : 'Inbox is all clear'}
               </p>
             </div>
           </div>
@@ -552,6 +599,20 @@ function AdminDashboardContent() {
           />
 
           <NewsletterSubscribersManager />
+        </div>
+      )}
+
+      {/* ======================= TAB: MESSAGES ======================= */}
+      {activeTab === 'messages' && (
+        <div className="space-y-6 animate-fadeIn">
+          <AdminPageHeader
+            title="Contact & Feedback Messages"
+            subtitle="View, search, and manage incoming inquiries from visitors and community members."
+            badge="INBOX & SUPPORT"
+            badgeColor="brand"
+          />
+
+          <AdminMessagesManager onUnreadCountChange={setUnreadMessagesCount} />
         </div>
       )}
 

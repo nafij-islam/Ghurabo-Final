@@ -13,4 +13,5 @@ export * from './media.api';
 export * from './settings.api';
 export * from './admin.api';
 export * from './newsletter.api';
+export * from './contact.api';
 

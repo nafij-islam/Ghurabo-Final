@@ -10,6 +10,7 @@ interface AdminLayoutProps {
   activeTab: AdminTab;
   onSelectTab: (tab: AdminTab) => void;
   pendingTripsCount?: number;
+  unreadMessagesCount?: number;
   user?: IUser | null;
   onLogout?: () => void;
   onRefresh?: () => void;
@@ -21,6 +22,7 @@ export default function AdminLayout({
   activeTab,
   onSelectTab,
   pendingTripsCount = 0,
+  unreadMessagesCount = 0,
   user,
   onLogout,
   onRefresh,
@@ -37,6 +39,7 @@ export default function AdminLayout({
           activeTab={activeTab}
           onSelectTab={onSelectTab}
           pendingTripsCount={pendingTripsCount}
+          unreadMessagesCount={unreadMessagesCount}
           user={user}
           onLogout={onLogout}
         />
@@ -49,6 +52,7 @@ export default function AdminLayout({
         activeTab={activeTab}
         onSelectTab={onSelectTab}
         pendingTripsCount={pendingTripsCount}
+        unreadMessagesCount={unreadMessagesCount}
         user={user}
         onLogout={onLogout}
       />

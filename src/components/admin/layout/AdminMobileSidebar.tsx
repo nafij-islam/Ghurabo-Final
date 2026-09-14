@@ -11,6 +11,7 @@ interface AdminMobileSidebarProps {
   activeTab: AdminTab;
   onSelectTab: (tab: AdminTab) => void;
   pendingTripsCount?: number;
+  unreadMessagesCount?: number;
   user?: IUser | null;
   onLogout?: () => void;
 }
@@ -21,6 +22,7 @@ export default function AdminMobileSidebar({
   activeTab,
   onSelectTab,
   pendingTripsCount = 0,
+  unreadMessagesCount = 0,
   user,
   onLogout,
 }: AdminMobileSidebarProps) {
@@ -70,6 +72,7 @@ export default function AdminMobileSidebar({
               onClose();
             }}
             pendingTripsCount={pendingTripsCount}
+            unreadMessagesCount={unreadMessagesCount}
             user={user}
             onLogout={onLogout}
           />

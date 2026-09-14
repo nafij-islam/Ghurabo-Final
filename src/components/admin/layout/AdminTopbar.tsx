@@ -18,6 +18,7 @@ const tabLabels: Record<AdminTab, { title: string; category: string }> = {
   trips: { title: 'Trips Directory', category: 'Content' },
   users: { title: 'Users Directory', category: 'Community' },
   newsletter: { title: 'Newsletter Subscribers', category: 'Community' },
+  messages: { title: 'Contact Messages', category: 'Community' },
   settings: { title: 'Currency & Settings', category: 'System' },
 };
 

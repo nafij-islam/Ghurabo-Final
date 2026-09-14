@@ -310,3 +310,30 @@ export interface SubscribeResponse {
   subscribed: boolean;
 }
 
+export type ContactMessageStatus = 'UNREAD' | 'READ';
+
+export interface ContactMessage {
+  id: string;
+  _id?: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: ContactMessageStatus;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ContactMessageInput {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export interface ContactMessageStats {
+  total: number;
+  unread: number;
+  read: number;
+}
+
