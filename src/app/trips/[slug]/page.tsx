@@ -2,7 +2,6 @@ import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import TripCard from '@/components/cards/TripCard';
 import { tripsApi } from '@/lib/api/trips.api';
@@ -27,15 +26,6 @@ import {
   Home,
 } from 'lucide-react';
 import { ITrip, IItineraryDay } from '@/types';
-
-const GoogleTripMap = dynamic(() => import('@/components/trips/GoogleTripMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-72 sm:h-80 rounded-2xl sm:rounded-3xl bg-slate-900 border border-white/10 animate-pulse flex items-center justify-center my-6 sm:my-8">
-      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Loading Interactive Map...</p>
-    </div>
-  ),
-});
 
 interface PageProps {
   params: { slug: string };
@@ -447,15 +437,6 @@ export default async function TripDetailsPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Google Maps Interactive Destination Location */}
-        <GoogleTripMap
-          tripTitle={trip.title}
-          destinationName={trip.destinationName}
-          latitude={trip.latitude}
-          longitude={trip.longitude}
-          locations={trip.mapLocations || []}
-          googlePlaceId={trip.googlePlaceId}
-        />
 
         {/* Photos Grid if present */}
         {trip.images && trip.images.length > 0 && (

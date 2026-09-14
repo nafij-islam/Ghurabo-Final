@@ -43,25 +43,8 @@ export default function EditTripModal({ trip, onClose, onSuccess }: EditTripModa
       setLatitude(foundPopular.lat);
       setLongitude(foundPopular.lng);
     } else {
-      // Clear previous coordinates to avoid leaving stale location
       setLatitude(undefined);
       setLongitude(undefined);
-
-      // Try geocoder if available in browser
-      if (typeof window !== 'undefined' && (window as any).google?.maps) {
-        try {
-          const geocoder = new (window as any).google.maps.Geocoder();
-          geocoder.geocode({ address: `${name}, Bangladesh` }, (results: any, status: any) => {
-            if (status === 'OK' && results && results[0]?.geometry?.location) {
-              const loc = results[0].geometry.location;
-              setLatitude(loc.lat());
-              setLongitude(loc.lng());
-            }
-          });
-        } catch {
-          // Ignore geocoding failure
-        }
-      }
     }
   };
 
