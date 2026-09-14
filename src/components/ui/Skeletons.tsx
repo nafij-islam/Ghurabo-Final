@@ -24,18 +24,6 @@ export function TripCardSkeleton() {
   );
 }
 
-export function DestinationCardSkeleton() {
-  return (
-    <div className="w-full bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-xl animate-pulse h-80 relative">
-      <div className="w-full h-full bg-white/10" />
-      <div className="absolute bottom-6 left-6 right-6 space-y-2">
-        <div className="w-32 h-6 bg-white/20 rounded-lg" />
-        <div className="w-48 h-4 bg-white/10 rounded-md" />
-      </div>
-    </div>
-  );
-}
-
 export function TripDetailsSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-28 space-y-8 animate-pulse">

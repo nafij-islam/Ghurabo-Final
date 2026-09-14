@@ -119,28 +119,14 @@ export interface AdminUserItem {
   followersCount?: number;
 }
 
-export interface BackendDestination {
-  _id: string;
+export interface BackendTripDestination {
   name: string;
-  slug: string;
-  country: string;
   city?: string;
-  category: 'BEACH' | 'MOUNTAIN' | 'ISLAND' | 'RESORT' | 'HISTORICAL' | 'CITY' | 'OTHER';
-  summary: string;
-  description: string;
-  bestTimeToVisit?: string;
-  weather?: string;
-  averageDailyCostBDT: number;
+  country?: string;
   coordinates?: {
     latitude: number;
     longitude: number;
   };
-  coverImage?: BackendImage;
-  gallery?: BackendImage[];
-  isFeatured: boolean;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface BackendTripCosts {
@@ -170,7 +156,7 @@ export interface BackendTrip {
   _id: string;
   title: string;
   slug: string;
-  destination: BackendDestination;
+  destination: BackendTripDestination | string;
   author: BackendUser;
   summary: string;
   story: string;
@@ -245,11 +231,9 @@ export interface BackendGalleryItem {
     avatar?: BackendImage;
   };
   destination?: {
-    _id: string;
-    name: string;
-    slug: string;
-    country: string;
+    name?: string;
     city?: string;
+    country?: string;
   };
   createdAt: string;
 }

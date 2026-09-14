@@ -16,7 +16,6 @@ interface AdminTopbarProps {
 const tabLabels: Record<AdminTab, { title: string; category: string }> = {
   overview: { title: 'Overview', category: 'Dashboard' },
   trips: { title: 'Trips Directory', category: 'Content' },
-  destinations: { title: 'Destinations', category: 'Content' },
   users: { title: 'Users Directory', category: 'Community' },
   newsletter: { title: 'Newsletter Subscribers', category: 'Community' },
   settings: { title: 'Currency & Settings', category: 'System' },

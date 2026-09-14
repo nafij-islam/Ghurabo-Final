@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  IDestination,
   ITrip,
   IUser,
   IGalleryItem,
@@ -11,7 +10,6 @@ import {
 import {
   authApi,
   usersApi,
-  destinationsApi,
   tripsApi,
   commentsApi,
   galleryApi,
@@ -20,7 +18,6 @@ import {
 } from '@/lib/api';
 import {
   adaptBackendUserToIUser,
-  adaptBackendDestinationToIDestination,
   adaptBackendTripToITrip,
   adaptBackendCommentToIComment,
   adaptBackendGalleryToIGalleryItem,
@@ -38,7 +35,6 @@ export function notifyAuthChange() {
 
 // Memory caches for synchronous fallbacks
 let memoryCurrentUser: IUser | null = null;
-let memoryDestinations: IDestination[] = [];
 let memoryTrips: ITrip[] = [];
 let memoryGallery: IGalleryItem[] = [];
 let memoryComments: Record<string, IComment[]> = {};
@@ -150,82 +146,6 @@ export async function getUserProfile(username: string): Promise<IUser | null> {
 }
 
 // ----------------------------------------------------
-// DESTINATIONS
-// ----------------------------------------------------
-
-export function getDestinations(): IDestination[] {
-  return memoryDestinations;
-}
-
-export async function fetchDestinations(params?: { search?: string; category?: string }): Promise<IDestination[]> {
-  try {
-    const res = await destinationsApi.getDestinations({
-      search: params?.search,
-      category: params?.category && params.category !== 'All' ? params.category.toUpperCase() : undefined,
-      limit: 50,
-    });
-    const adapted = res.data.map(adaptBackendDestinationToIDestination);
-    memoryDestinations = adapted;
-    return adapted;
-  } catch (err) {
-    console.error('Error fetching destinations:', err);
-    return memoryDestinations;
-  }
-}
-
-export async function getDestinationBySlugAsync(slug: string): Promise<{
-  destination: IDestination | null;
-  trips: ITrip[];
-  dynamicCostStats: { Solo: number; Couple: number; Family: number; Group: number };
-}> {
-  try {
-    const dest = await destinationsApi.getDestinationBySlug(slug);
-    const adaptedDest = adaptBackendDestinationToIDestination(dest);
-    const tripsRes = await tripsApi.getTrips({ destination: dest._id, limit: 20 });
-    const adaptedTrips = tripsRes.data.map(adaptBackendTripToITrip);
-
-    const solo = dest.averageDailyCostBDT || 3500;
-    return {
-      destination: adaptedDest,
-      trips: adaptedTrips,
-      dynamicCostStats: {
-        Solo: solo,
-        Couple: Math.round(solo * 1.8),
-        Family: Math.round(solo * 3.2),
-        Group: Math.round(solo * 4.5),
-      },
-    };
-  } catch (err) {
-    console.error('Error fetching destination by slug:', err);
-    return {
-      destination: null,
-      trips: [],
-      dynamicCostStats: { Solo: 3000, Couple: 5000, Family: 8000, Group: 10000 },
-    };
-  }
-}
-
-export function getDestinationBySlug(slug: string): {
-  destination: IDestination | null;
-  trips: ITrip[];
-  dynamicCostStats: { Solo: number; Couple: number; Family: number; Group: number };
-} {
-  const dest = memoryDestinations.find((d) => d.slug === slug || d.id === slug) || null;
-  const trips = memoryTrips.filter((t) => t.destinationId === dest?.id || t.destinationName === dest?.name);
-  const solo = dest?.avgCostSolo || 3500;
-  return {
-    destination: dest,
-    trips,
-    dynamicCostStats: {
-      Solo: solo,
-      Couple: Math.round(solo * 1.8),
-      Family: Math.round(solo * 3.2),
-      Group: Math.round(solo * 4.5),
-    },
-  };
-}
-
-// ----------------------------------------------------
 // TRIPS
 // ----------------------------------------------------
 
@@ -286,8 +206,9 @@ export async function getTripByIdOrSlugAsync(slug: string): Promise<{ trip: ITri
   try {
     const backendTrip = await tripsApi.getTripBySlug(slug);
     const adapted = adaptBackendTripToITrip(backendTrip);
+    const destName = typeof backendTrip.destination === 'string' ? backendTrip.destination : backendTrip.destination?.name;
     const relatedRes = await tripsApi.getTrips({
-      destination: backendTrip.destination?._id,
+      destination: destName,
       limit: 4,
     });
     const relatedTrips = relatedRes.data
@@ -319,7 +240,7 @@ export async function createTrip(tripData: Partial<ITrip> & { destination?: stri
 
   const created = await tripsApi.createTrip({
     title: tripData.title || 'Untitled Journey',
-    destination: tripData.destinationId || tripData.destination || '6aa3ab9def763afbf0ec7ca5',
+    destination: tripData.destinationName || tripData.destination || 'Bangladesh',
     summary: tripData.summary || tripData.title || '',
     story: tripData.story || '',
     travelType: backendTravelType,
@@ -509,11 +430,6 @@ export async function adminTogglePopularTrip(tripId: string, isPopular: boolean)
 export async function adminToggleVerifyTrip(tripId: string, isVerified: boolean): Promise<boolean> {
   const updated = await adminApi.toggleTripVerified(tripId, isVerified);
   return updated.isVerified;
-}
-
-export async function adminTogglePopularDestination(destId: string, isPopular: boolean): Promise<boolean> {
-  const updated = await adminApi.toggleDestinationFeatured(destId, isPopular);
-  return updated.isFeatured;
 }
 
 export function getCurrencyRate(): number {

@@ -82,11 +82,6 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
-                <Link href="/destinations" className="hover:text-brand-300 transition-colors">
-                  {t('nav.destinations')}
-                </Link>
-              </li>
-              <li>
                 <Link href="/trips" className="hover:text-brand-300 transition-colors">
                   {t('nav.trips')}
                 </Link>
@@ -136,7 +131,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/destinations?category=Beach" className="hover:text-brand-300 transition-colors">
+                <Link href="/trips?search=Beach" className="hover:text-brand-300 transition-colors">
                   Beach & Islands
                 </Link>
               </li>

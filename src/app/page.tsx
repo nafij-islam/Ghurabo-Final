@@ -7,7 +7,7 @@ import TripCard from '@/components/cards/TripCard';
 import { TripCardSkeleton } from '@/components/ui/Skeletons';
 import { ITrip, IGalleryItem } from '@/types';
 import { Compass, Camera, DollarSign, ArrowRight } from 'lucide-react';
-import { destinationsApi, tripsApi, galleryApi } from '@/lib/api';
+import { tripsApi, galleryApi } from '@/lib/api';
 import {
   adaptBackendTripToITrip,
   adaptBackendGalleryToIGalleryItem,
@@ -15,7 +15,6 @@ import {
 import CommunityGallerySpotlight from '@/components/home/CommunityGallerySpotlight';
 
 export default function HomePage() {
-  const [totalDestinations, setTotalDestinations] = useState<number>(0);
   const [popularTrips, setPopularTrips] = useState<ITrip[]>([]);
   const [trips, setTrips] = useState<ITrip[]>([]);
   const [galleryItems, setGalleryItems] = useState<IGalleryItem[]>([]);
@@ -27,16 +26,6 @@ export default function HomePage() {
 
   useEffect(() => {
     let mounted = true;
-
-    // Fetch total destinations for stats
-    destinationsApi
-      .getDestinations({ limit: 1 })
-      .then((res) => {
-        if (mounted) {
-          setTotalDestinations(res.meta?.total || (res.data ? res.data.length : 0));
-        }
-      })
-      .catch(() => {});
 
     // Fetch popular trips (Admin-selected featured trips ONLY)
     tripsApi
@@ -86,12 +75,18 @@ export default function HomePage() {
 
   const stats = useMemo(() => {
     const totalHelpful = trips.reduce((sum: number, t: ITrip) => sum + (t.helpfulVotesCount || 0), 0);
+    const uniqueLocations = new Set(
+      trips
+        .map((t) => t.destinationName)
+        .filter(Boolean)
+    ).size;
+
     return {
-      totalDestinations: totalDestinations || 6,
+      totalLocations: uniqueLocations || 12,
       totalTrips: trips.length,
       totalHelpfulVotes: totalHelpful,
     };
-  }, [totalDestinations, trips]);
+  }, [trips]);
 
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
@@ -272,8 +267,8 @@ export default function HomePage() {
             <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Shared Trips</div>
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
-            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalDestinations}</div>
-            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Destinations</div>
+            <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalLocations}</div>
+            <div className="text-xs uppercase tracking-wider text-slate-300 font-medium">Locations Explored</div>
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
             <div className="font-display text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-2">{stats.totalHelpfulVotes}</div>

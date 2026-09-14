@@ -6,14 +6,12 @@
 import {
   BackendUser,
   BackendUserPublicProfile,
-  BackendDestination,
   BackendTrip,
   BackendComment,
   BackendGalleryItem,
 } from './api.types';
 import {
   IUser,
-  IDestination,
   ITrip,
   IComment,
   IGalleryItem,
@@ -112,39 +110,6 @@ export function adaptBackendPublicProfileToIUser(profile: BackendUserPublicProfi
   };
 }
 
-export function adaptBackendDestinationToIDestination(dest: BackendDestination): IDestination {
-  const imageUrl =
-    dest.coverImage?.url ||
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80';
-
-  const dailyCost = dest.averageDailyCostBDT || 3500;
-
-  return {
-    _id: dest._id,
-    id: dest._id,
-    name: dest.name,
-    slug: dest.slug,
-    country: dest.country,
-    division: dest.city || 'Chittagong',
-    category: normalizeCategory(dest.category),
-    image: imageUrl,
-    heroImage: imageUrl,
-    description: dest.description || dest.summary,
-    bestVisitingTime: dest.bestTimeToVisit || 'October to March',
-    avgCostSolo: dailyCost,
-    avgCostCouple: Math.round(dailyCost * 1.8),
-    avgCostFamily: Math.round(dailyCost * 3.2),
-    avgCostGroup: Math.round(dailyCost * 4.5),
-    avgDurationDays: 3,
-    transportInfo: `${dest.name} is accessible by direct highway bus, scenic train routes, or regional flights to nearest hubs.`,
-    safetyTips: dest.weather ? `Current conditions: ${dest.weather}. Always respect local wildlife and regional guides.` : 'Carry local identification and follow indigenous community guidelines.',
-    totalTrips: (dest as any).tripsCount ?? (dest as any).totalTrips ?? 0,
-    avgRating: 4.9,
-    isPopular: dest.isFeatured,
-  };
-}
-
-
 const DEFAULT_TRIP_COVERS = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200',
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1200',
@@ -169,7 +134,8 @@ function resolveValidCoverImage(trip: BackendTrip): string {
       return validPhoto.url;
     }
   }
-  const key = trip.title || trip.destination?.name || 'Ghurabo';
+  const destName = typeof trip.destination === 'string' ? trip.destination : trip.destination?.name;
+  const key = trip.title || destName || 'Ghurabo';
   let hash = 0;
   for (let i = 0; i < key.length; i++) hash = (hash + key.charCodeAt(i)) % DEFAULT_TRIP_COVERS.length;
   return DEFAULT_TRIP_COVERS[hash];
@@ -219,15 +185,19 @@ export function adaptBackendTripToITrip(trip: BackendTrip): ITrip {
     estimatedCost: Math.round(totalCost / Math.max(1, trip.days || 1)),
   }));
 
-  const destinationName = trip.destination?.name || 'Bangladesh';
-  const destinationId = trip.destination?._id || '';
+  const destinationName =
+    typeof trip.destination === 'string'
+      ? trip.destination
+      : trip.destination?.name || 'Bangladesh';
+  const destinationId = trip._id;
 
   const status: TripStatus = (trip.status ? trip.status.toLowerCase() : 'approved') as TripStatus;
 
   // Extract coordinates from itinerary or destination
   const firstLocation = trip.itinerary?.[0]?.locations?.[0];
-  const latitude = firstLocation?.latitude || trip.destination?.coordinates?.latitude || 23.3822;
-  const longitude = firstLocation?.longitude || trip.destination?.coordinates?.longitude || 92.2938;
+  const destCoords = typeof trip.destination === 'object' ? trip.destination?.coordinates : undefined;
+  const latitude = firstLocation?.latitude || destCoords?.latitude || 23.3822;
+  const longitude = firstLocation?.longitude || destCoords?.longitude || 92.2938;
 
   return {
     _id: trip._id,

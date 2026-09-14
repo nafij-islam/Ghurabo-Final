@@ -113,14 +113,6 @@ export default function Navbar() {
             {t('nav.home')}
           </Link>
           <Link
-            href="/destinations"
-            className={`transition-colors hover:text-brand-300 ${
-              pathname.startsWith('/destinations') ? 'text-brand-300 font-semibold' : ''
-            }`}
-          >
-            {t('nav.destinations')}
-          </Link>
-          <Link
             href="/trips"
             className={`transition-colors hover:text-brand-300 ${
               pathname === '/trips' ? 'text-brand-300 font-semibold' : ''

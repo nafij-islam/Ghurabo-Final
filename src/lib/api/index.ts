@@ -6,7 +6,6 @@ export * from './adapters';
 export * from './apiClient';
 export * from './auth.api';
 export * from './users.api';
-export * from './destinations.api';
 export * from './trips.api';
 export * from './comments.api';
 export * from './gallery.api';

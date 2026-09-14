@@ -9,13 +9,10 @@ import useSWR, { SWRConfiguration } from 'swr';
 import {
   tripsApi,
   TripFilterParams,
-  destinationsApi,
-  DestinationFilterParams,
   galleryApi,
   GalleryFilterParams,
   usersApi,
   adaptBackendTripToITrip,
-  adaptBackendDestinationToIDestination,
   adaptBackendGalleryToIGalleryItem,
   PaginationMeta,
 } from '../api';
@@ -77,62 +74,6 @@ export function useTrip(slug: string | null, options?: SWRConfiguration) {
 
   return {
     trip: data || null,
-    isLoading: isLoading && !data,
-    isValidating,
-    error,
-    mutate,
-  };
-}
-
-/**
- * Hook to fetch and cache destination directory
- */
-export function useDestinations(
-  params?: DestinationFilterParams,
-  options?: SWRConfiguration
-) {
-  const key = ['/destinations', JSON.stringify(params || {})];
-
-  const { data, error, isLoading, isValidating, mutate } = useSWR(
-    key,
-    async () => {
-      const res = await destinationsApi.getDestinations(params);
-      return (res.data || []).map(adaptBackendDestinationToIDestination);
-    },
-    { ...DEFAULT_SWR_OPTIONS, ...options }
-  );
-
-  return {
-    destinations: data || [],
-    isLoading: isLoading && !data,
-    isValidating,
-    error,
-    mutate,
-  };
-}
-
-/**
- * Hook to fetch and cache a single destination by slug
- */
-export function useDestination(slug: string | null, options?: SWRConfiguration) {
-  const key = slug ? ['/destination', slug] : null;
-
-  const { data, error, isLoading, isValidating, mutate } = useSWR(
-    key,
-    async () => {
-      if (!slug) return null;
-      const res = await destinationsApi.getDestinationBySlug(slug);
-      return {
-        destination: adaptBackendDestinationToIDestination(res),
-        associatedTrips: ((res as any).trips || []).map(adaptBackendTripToITrip),
-      };
-    },
-    { ...DEFAULT_SWR_OPTIONS, ...options }
-  );
-
-  return {
-    destination: data?.destination || null,
-    associatedTrips: data?.associatedTrips || [],
     isLoading: isLoading && !data,
     isValidating,
     error,

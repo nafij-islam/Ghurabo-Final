@@ -25,7 +25,7 @@ export interface TripFilterParams {
 
 export interface CreateTripPayload {
   title: string;
-  destination: string; // Destination ID
+  destination: string | { name: string; city?: string; country?: string };
   summary: string;
   story: string;
   travelType: 'SOLO' | 'COUPLE' | 'FAMILY' | 'GROUP';

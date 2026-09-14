@@ -28,30 +28,6 @@ export interface IUser {
   createdAt: string;
 }
 
-export interface IDestination {
-  _id?: string;
-  id: string;
-  name: string;
-  slug: string;
-  country: string;
-  division?: string;
-  category: CategoryType;
-  image: string;
-  heroImage?: string;
-  description: string;
-  bestVisitingTime: string;
-  avgCostSolo: number;
-  avgCostCouple: number;
-  avgCostFamily: number;
-  avgCostGroup: number;
-  avgDurationDays: number;
-  transportInfo: string;
-  safetyTips: string;
-  totalTrips: number;
-  avgRating: number;
-  isPopular?: boolean;
-}
-
 export interface IItineraryDay {
   dayNumber: number;
   title: string;
@@ -87,7 +63,7 @@ export interface ITrip {
   userId: string;
   userName: string;
   userAvatar: string;
-  destinationId: string;
+  destinationId?: string;
   destinationName: string;
   travelDate: string;
   travelType: TravelType;
@@ -139,7 +115,7 @@ export interface IReview {
   _id?: string;
   id: string;
   tripId: string;
-  destinationId: string;
+  destinationId?: string;
   userId: string;
   userName: string;
   userAvatar: string;

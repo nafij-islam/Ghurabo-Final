@@ -8,10 +8,8 @@ import { ITrip, ITripCost, ITripImage, TravelType } from '@/types';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useAuth } from '@/hooks/useAuth';
 import { tripsApi } from '@/lib/api/trips.api';
-import { destinationsApi } from '@/lib/api/destinations.api';
 import { mediaApi } from '@/lib/api/media.api';
 import { adaptBackendTripToITrip, toBackendTravelType } from '@/lib/api/adapters';
-import { BackendDestination } from '@/lib/api/api.types';
 import StepBasics, { POPULAR_DESTINATIONS } from '@/components/trips/share/StepBasics';
 import StepCosts from '@/components/trips/share/StepCosts';
 import StepPhotosPublish from '@/components/trips/share/StepPhotosPublish';
@@ -25,7 +23,6 @@ export default function ShareTripPage() {
   const [validationError, setValidationError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [createdTrip, setCreatedTrip] = useState<ITrip | null>(null);
-  const [availableDestinations, setAvailableDestinations] = useState<BackendDestination[]>([]);
 
   // Authentication guard
   useEffect(() => {
@@ -33,16 +30,6 @@ export default function ShareTripPage() {
       router.push('/auth/login?redirect=/trips/share');
     }
   }, [authLoading, isAuthenticated, router]);
-
-  // Fetch available destinations from backend for ID resolution
-  useEffect(() => {
-    destinationsApi
-      .getDestinations({ limit: 50 })
-      .then((res) => {
-        if (res.data) setAvailableDestinations(res.data);
-      })
-      .catch((err) => console.error('Failed to load destinations for wizard:', err));
-  }, []);
 
   // STEP 1 STATE
   const [title, setTitle] = useState('');
@@ -85,14 +72,6 @@ export default function ShareTripPage() {
       setLatitude(foundPopular.lat);
       setLongitude(foundPopular.lng);
       setGooglePlaceId(foundPopular.placeId);
-    } else {
-      const backendMatch = availableDestinations.find((d) =>
-        d.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(d.name.toLowerCase())
-      );
-      if (backendMatch && backendMatch.coordinates) {
-        setLatitude(backendMatch.coordinates.latitude);
-        setLongitude(backendMatch.coordinates.longitude);
-      }
     }
   };
 
@@ -186,39 +165,6 @@ export default function ShareTripPage() {
 
     const rate = inputCurrency === 'USD' ? exchangeRate : 1;
 
-    // Resolve destination ID from backend
-    let currentDests = availableDestinations;
-    if (currentDests.length === 0) {
-      try {
-        const destRes = await destinationsApi.getDestinations({ limit: 50 });
-        if (destRes.data && destRes.data.length > 0) {
-          currentDests = destRes.data;
-          setAvailableDestinations(destRes.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch destinations on submit:', err);
-      }
-    }
-
-    if (currentDests.length === 0) {
-      setValidationError('No destinations available on the server. Please check your connection.');
-      setSubmitting(false);
-      return;
-    }
-
-    const cleanInput = destinationName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
-    const inputWords = cleanInput.split(/\s+/).filter((w) => w.length > 2);
-
-    const matchedDest = currentDests.find((d) => {
-      const dName = d.name.toLowerCase();
-      const dSlug = d.slug.toLowerCase();
-      if (dName.includes(destinationName.toLowerCase()) || destinationName.toLowerCase().includes(dName)) return true;
-      if (dSlug.includes(cleanInput.replace(/\s+/g, '-')) || cleanInput.replace(/\s+/g, '-').includes(dSlug)) return true;
-      return inputWords.some((word) => dName.includes(word) || dSlug.includes(word));
-    });
-
-    const destinationId = matchedDest ? matchedDest._id : currentDests[0]._id;
-
     const defaultCover = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200';
     const selectedPhoto = images[coverImageIndex] || images[0];
     const isBlobUrl = (u?: string) => !u || u.startsWith('blob:') || u.startsWith('data:');
@@ -244,7 +190,11 @@ export default function ShareTripPage() {
     try {
       const backendTrip = await tripsApi.createTrip({
         title: title.trim(),
-        destination: destinationId,
+        destination: {
+          name: destinationName.trim(),
+          city: destinationName.trim(),
+          country: 'Bangladesh',
+        },
         summary: summary.trim() || title.trim(),
         story: story.trim(),
         travelType: toBackendTravelType(travelType),

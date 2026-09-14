@@ -6,7 +6,6 @@ import { api } from './apiClient';
 import { API_ENDPOINTS } from './apiConfig';
 import {
   BackendTrip,
-  BackendDestination,
   PaginatedResponse,
   StandardResponse,
   TripStats,
@@ -72,42 +71,6 @@ export const adminApi = {
 
   async deleteTrip(id: string): Promise<void> {
     await api.delete(API_ENDPOINTS.ADMIN_TRIP_DELETE(id));
-  },
-
-  async convertTripToDestination(
-    id: string,
-    data?: Partial<BackendDestination>
-  ): Promise<BackendDestination> {
-    const res = await api.post<StandardResponse<BackendDestination>>(
-      API_ENDPOINTS.ADMIN_TRIP_CONVERT_DESTINATION(id),
-      data || {}
-    );
-    return res.data;
-  },
-
-  async createDestination(data: Partial<BackendDestination>): Promise<BackendDestination> {
-    const res = await api.post<StandardResponse<BackendDestination>>(API_ENDPOINTS.ADMIN_DESTINATIONS, data);
-    return res.data;
-  },
-
-  async updateDestination(id: string, data: Partial<BackendDestination>): Promise<BackendDestination> {
-    const res = await api.patch<StandardResponse<BackendDestination>>(
-      API_ENDPOINTS.ADMIN_DESTINATION_BY_ID(id),
-      data
-    );
-    return res.data;
-  },
-
-  async deleteDestination(id: string): Promise<void> {
-    await api.delete(API_ENDPOINTS.ADMIN_DESTINATION_BY_ID(id));
-  },
-
-  async toggleDestinationFeatured(id: string, isFeatured: boolean): Promise<BackendDestination> {
-    const res = await api.patch<StandardResponse<BackendDestination>>(
-      API_ENDPOINTS.ADMIN_DESTINATION_FEATURED(id),
-      { isFeatured }
-    );
-    return res.data;
   },
 
   async getUsers(params?: {

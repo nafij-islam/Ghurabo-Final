@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   Compass,
-  MapPin,
   Users,
   Mail,
   Coins,
@@ -17,7 +16,7 @@ import {
 import AdminNavItem from './AdminNavItem';
 import { IUser } from '@/types';
 
-export type AdminTab = 'overview' | 'trips' | 'destinations' | 'users' | 'newsletter' | 'settings';
+export type AdminTab = 'overview' | 'trips' | 'users' | 'newsletter' | 'settings';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -87,12 +86,6 @@ export default function AdminSidebar({
               badge={pendingTripsCount > 0 ? pendingTripsCount : undefined}
               badgeColor="amber"
               onClick={() => onSelectTab('trips')}
-            />
-            <AdminNavItem
-              icon={MapPin}
-              label="Destinations"
-              active={activeTab === 'destinations'}
-              onClick={() => onSelectTab('destinations')}
             />
           </div>
         </div>

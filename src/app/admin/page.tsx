@@ -21,13 +21,12 @@ import {
   Server,
   Layers,
 } from 'lucide-react';
-import { ITrip, IDestination } from '@/types';
+import { ITrip } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { adminApi } from '@/lib/api/admin.api';
 import { tripsApi } from '@/lib/api/trips.api';
-import { destinationsApi } from '@/lib/api/destinations.api';
 import { TripStats } from '@/lib/api/api.types';
-import { adaptBackendTripToITrip, adaptBackendDestinationToIDestination } from '@/lib/api/adapters';
+import { adaptBackendTripToITrip } from '@/lib/api/adapters';
 import { AdminLayout, AdminPageHeader, AdminTab } from '@/components/admin/layout';
 
 const AdminPanelSkeleton = () => (
@@ -38,9 +37,6 @@ const AdminPanelSkeleton = () => (
 );
 
 const CurrencyControlCard = dynamic(() => import('@/components/admin/CurrencyControlCard'), {
-  loading: AdminPanelSkeleton,
-});
-const DestinationsManager = dynamic(() => import('@/components/admin/DestinationsManager'), {
   loading: AdminPanelSkeleton,
 });
 const PendingTripsQueue = dynamic(() => import('@/components/admin/PendingTripsQueue'), {
@@ -74,7 +70,6 @@ function AdminDashboardContent() {
 
   const [pendingTrips, setPendingTrips] = useState<ITrip[]>([]);
   const [publishedTrips, setPublishedTrips] = useState<ITrip[]>([]);
-  const [destinations, setDestinations] = useState<IDestination[]>([]);
   const [tripStats, setTripStats] = useState<TripStats>({
     total: 0,
     approved: 0,
@@ -95,10 +90,9 @@ function AdminDashboardContent() {
   const fetchAdminData = async () => {
     setIsRefreshing(true);
     try {
-      const [pendingRes, publishedRes, destRes, statsRes] = await Promise.allSettled([
+      const [pendingRes, publishedRes, statsRes] = await Promise.allSettled([
         adminApi.getPendingTrips({ limit: 50 }),
         tripsApi.getTrips({ limit: 50 }),
-        destinationsApi.getDestinations({ limit: 50 }),
         adminApi.getTripStats(),
       ]);
 
@@ -107,9 +101,6 @@ function AdminDashboardContent() {
       }
       if (publishedRes.status === 'fulfilled' && publishedRes.value?.data) {
         setPublishedTrips(publishedRes.value.data.map(adaptBackendTripToITrip));
-      }
-      if (destRes.status === 'fulfilled' && destRes.value?.data) {
-        setDestinations(destRes.value.data.map(adaptBackendDestinationToIDestination));
       }
       if (statsRes.status === 'fulfilled' && statsRes.value) {
         setTripStats(statsRes.value);
@@ -143,16 +134,6 @@ function AdminDashboardContent() {
       await fetchAdminData();
     } catch (err) {
       console.error(`Admin action ${action} failed:`, err);
-    }
-  };
-
-  const handleTogglePopularDestination = async (destinationId: string) => {
-    try {
-      const dest = destinations.find((d) => d.id === destinationId);
-      await adminApi.toggleDestinationFeatured(destinationId, !dest?.isPopular);
-      await fetchAdminData();
-    } catch (err) {
-      console.error('Failed to toggle destination popularity:', err);
     }
   };
 
@@ -278,7 +259,7 @@ function AdminDashboardContent() {
           />
 
           {/* Metric Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Trips */}
             <div
               onClick={() => handleTabChange('trips')}
@@ -381,27 +362,6 @@ function AdminDashboardContent() {
               </div>
               <p className="text-[11px] text-slate-500 mt-1 font-medium">
                 Moderated / suspended
-              </p>
-            </div>
-
-            {/* Destinations */}
-            <div
-              onClick={() => handleTabChange('destinations')}
-              className="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80 hover:border-brand-500/40 transition-all cursor-pointer group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Destinations
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
-                  <MapPin className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="font-display text-3xl font-extrabold text-brand-600 tracking-tight">
-                {destinations.length}
-              </div>
-              <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                Travel destinations active
               </p>
             </div>
           </div>
@@ -564,24 +524,6 @@ function AdminDashboardContent() {
               onAction={handleAction}
             />
           )}
-        </div>
-      )}
-
-      {/* ======================= TAB: DESTINATIONS ======================= */}
-      {activeTab === 'destinations' && (
-        <div className="space-y-6 animate-fadeIn">
-          <AdminPageHeader
-            title="Destinations Management"
-            subtitle="Create and moderate featured destinations, hero imagery, and homepage highlights."
-            badge="EXPLORE DESTINATIONS"
-            badgeColor="brand"
-          />
-
-          <DestinationsManager
-            destinations={destinations}
-            onDataChanged={fetchAdminData}
-            onTogglePopular={handleTogglePopularDestination}
-          />
         </div>
       )}
 

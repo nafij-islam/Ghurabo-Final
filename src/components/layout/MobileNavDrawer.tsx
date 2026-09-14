@@ -130,15 +130,6 @@ export default function MobileNavDrawer({
               <span>{t('nav.home')}</span>
             </Link>
             <Link
-              href="/destinations"
-              onClick={onClose}
-              className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
-                pathname.startsWith('/destinations') ? 'bg-brand-500/20 text-brand-300 font-bold border border-brand-500/30' : 'text-slate-200 hover:bg-white/5'
-              }`}
-            >
-              <span>{t('nav.destinations')}</span>
-            </Link>
-            <Link
               href="/trips"
               onClick={onClose}
               className={`min-h-[44px] flex items-center space-x-3 px-3.5 py-3 rounded-xl transition-all text-sm font-medium ${
