@@ -27,6 +27,7 @@ import {
   X,
   DollarSign,
   Check,
+  MapPin,
 } from 'lucide-react';
 import { usePreferences } from '@/context/PreferencesContext';
 
@@ -161,12 +162,12 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="w-full pt-28 pb-20 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full pt-24 sm:pt-28 pb-16 sm:pb-20 bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
         {/* Feedback Alert */}
         {feedback && (
           <div
-            className={`mb-6 p-4 rounded-2xl flex items-center justify-between border shadow-sm transition-all ${
+            className={`mb-4 sm:mb-6 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between border shadow-sm transition-all ${
               feedback.type === 'success'
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                 : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -182,7 +183,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => setFeedback(null)}
-              className="text-slate-400 hover:text-slate-600 p-1"
+              className="text-slate-400 hover:text-slate-600 p-1 shrink-0 ml-2"
             >
               <X className="w-4 h-4" />
             </button>
@@ -190,43 +191,46 @@ export default function DashboardPage() {
         )}
 
         {/* User Profile Header Card */}
-        <div className="bg-darkslate-900 text-white p-8 rounded-3xl shadow-xl mb-10 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center space-x-6">
+        <div className="bg-darkslate-900 text-white p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl shadow-xl mb-6 sm:mb-10 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6 w-full md:w-auto">
             <Image
               src={currentUser?.avatar || 'https://i.pravatar.cc/150'}
               alt={currentUser?.name || 'User Avatar'}
               width={80}
               height={80}
               priority
-              className="w-20 h-20 rounded-full object-cover border-4 border-brand-500 shadow-lg bg-slate-800"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-brand-500 shadow-lg bg-slate-800 shrink-0"
             />
-            <div>
-              <div className="flex items-center space-x-3">
-                <h1 className="font-display text-3xl font-bold uppercase text-white">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-bold uppercase text-white truncate max-w-full">
                   {currentUser?.name || 'Traveller Account'}
                 </h1>
-                <span className="px-3 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase">
+                <span className="px-2.5 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shrink-0">
                   {currentUser?.role || 'Traveller'}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-1 font-light">
+              <p className="text-xs text-slate-300 mt-1.5 font-light max-w-xl line-clamp-3 sm:line-clamp-none">
                 {currentUser?.bio || 'No bio added yet.'}
               </p>
-              <div className="flex items-center space-x-4 text-xs text-cyan-300 mt-3 font-semibold">
-                <span>{currentUser?.location || 'Location not specified'}</span>
-                <span>•</span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5 text-xs text-cyan-300 mt-3 font-semibold">
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                  <span>{currentUser?.location || 'Location not specified'}</span>
+                </span>
+                <span className="text-white/30 hidden sm:inline">•</span>
                 <span>{(currentUser?.followersCount || 0).toLocaleString()} Followers</span>
-                <span>•</span>
+                <span className="text-white/30 hidden sm:inline">•</span>
                 <span>{(currentUser?.totalHelpfulVotes || 0).toLocaleString()} Helpful Votes</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto shrink-0">
             {currentUser && (
               <button
                 onClick={() => setShowEditProfileModal(true)}
-                className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase px-5 py-3 rounded-full border border-slate-700 shadow transition-all"
+                className="flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase px-5 py-2.5 sm:py-3 rounded-full border border-slate-700 shadow transition-all w-full sm:w-auto cursor-pointer"
               >
                 <Edit3 className="w-4 h-4 text-brand-400" />
                 <span>Edit Profile</span>
@@ -235,7 +239,7 @@ export default function DashboardPage() {
 
             <Link
               href="/trips/share"
-              className="flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
+              className="flex items-center justify-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-2.5 sm:py-3 rounded-full shadow-lg transition-all w-full sm:w-auto text-center"
             >
               <PlusCircle className="w-4 h-4" />
               <span>+ Share New Trip</span>
@@ -244,29 +248,29 @@ export default function DashboardPage() {
         </div>
 
         {/* Profile Settings: Preferred Currency */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-100 mb-10">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-7 shadow-sm border border-slate-100 mb-6 sm:mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center space-x-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
-                <DollarSign className="w-6 h-6" />
+            <div className="flex items-start sm:items-center space-x-3 sm:space-x-3.5">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h2 className="font-display text-lg font-bold uppercase text-slate-900">
+                <h2 className="font-display text-base sm:text-lg font-bold uppercase text-slate-900">
                   Preferred Currency
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Choose your default currency for viewing trip costs and budgets across Ghurabo.
                 </p>
               </div>
             </div>
 
             {/* Currency Option Toggle Buttons */}
-            <div className="flex items-center space-x-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80 shrink-0">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2 bg-slate-100/80 p-1.5 rounded-xl sm:rounded-2xl border border-slate-200/80 w-full sm:w-auto shrink-0">
               <button
                 type="button"
                 disabled={currencySaving}
                 onClick={() => handleCurrencyChange('BDT')}
-                className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                className={`flex items-center justify-center space-x-1.5 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   (currentUser?.preferredCurrency || currency) === 'BDT'
                     ? 'bg-brand-500 text-white shadow-md'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -282,7 +286,7 @@ export default function DashboardPage() {
                 type="button"
                 disabled={currencySaving}
                 onClick={() => handleCurrencyChange('USD')}
-                className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                className={`flex items-center justify-center space-x-1.5 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   (currentUser?.preferredCurrency || currency) === 'USD'
                     ? 'bg-brand-500 text-white shadow-md'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -321,55 +325,55 @@ export default function DashboardPage() {
         </div>
 
         {/* Dashboard Statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider block font-semibold">
                 Published Trips
               </span>
-              <span className="font-display text-3xl font-extrabold text-slate-900">
+              <span className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
                 {publishedTrips.length}
               </span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
-              <Compass className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+              <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider block font-semibold">
                 Pending Approvals
               </span>
-              <span className="font-display text-3xl font-extrabold text-amber-600">
+              <span className="font-display text-2xl sm:text-3xl font-extrabold text-amber-600">
                 {pendingTrips.length}
               </span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider block font-semibold">
                 Saved Drafts
               </span>
-              <span className="font-display text-3xl font-extrabold text-slate-700">
+              <span className="font-display text-2xl sm:text-3xl font-extrabold text-slate-700">
                 {drafts.length}
               </span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
-              <FileText className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-3 mb-8 border-b border-slate-200 pb-4 overflow-x-auto">
+        <div className="-mx-3.5 px-3.5 sm:mx-0 sm:px-0 flex items-center space-x-2 sm:space-x-3 mb-6 sm:mb-8 border-b border-slate-200 pb-3 sm:pb-4 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('published')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === 'published'
                 ? 'bg-brand-500 text-white shadow'
                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -379,7 +383,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === 'pending'
                 ? 'bg-amber-500 text-white shadow'
                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -389,7 +393,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('saved')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === 'saved'
                 ? 'bg-emerald-600 text-white shadow'
                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -399,7 +403,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('drafts')}
-            className={`px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold uppercase transition-all whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === 'drafts'
                 ? 'bg-slate-800 text-white shadow'
                 : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -411,13 +415,13 @@ export default function DashboardPage() {
 
         {/* Loading Skeletons */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 animate-pulse">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-3xl overflow-hidden border border-slate-200 h-96 p-5 flex flex-col justify-between"
+                className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 h-96 p-4 sm:p-5 flex flex-col justify-between"
               >
-                <div className="h-44 bg-slate-200 rounded-2xl mb-4" />
+                <div className="h-44 bg-slate-200 rounded-xl sm:rounded-2xl mb-4" />
                 <div className="space-y-2">
                   <div className="h-4 bg-slate-200 rounded w-3/4" />
                   <div className="h-3 bg-slate-100 rounded w-full" />
@@ -431,7 +435,7 @@ export default function DashboardPage() {
           <>
             {/* Published Trips Tab */}
             {activeTab === 'published' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {publishedTrips.length > 0 ? (
                   publishedTrips.map((t) => (
                     <DashboardTripCard
@@ -442,19 +446,19 @@ export default function DashboardPage() {
                     />
                   ))
                 ) : (
-                  <div className="col-span-full py-16 px-6 text-center bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                      <Compass className="w-8 h-8" />
+                  <div className="col-span-full py-12 sm:py-16 px-4 sm:px-6 text-center bg-white rounded-2xl sm:rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                      <Compass className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <h3 className="font-display text-xl font-bold text-slate-800">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-slate-800">
                       No Published Trips Yet
                     </h3>
-                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-6">
+                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-5 sm:mb-6">
                       Share your unique travel itinerary, budgets, and experiences with the Ghurabo community!
                     </p>
                     <Link
                       href="/trips/share"
-                      className="inline-flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
+                      className="inline-flex items-center justify-center space-x-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all w-full sm:w-auto"
                     >
                       <PlusCircle className="w-4 h-4" />
                       <span>+ Share Your First Trip</span>
@@ -466,7 +470,7 @@ export default function DashboardPage() {
 
             {/* Pending Trips Tab */}
             {activeTab === 'pending' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {pendingTrips.length > 0 ? (
                   pendingTrips.map((t) => (
                     <DashboardTripCard
@@ -477,11 +481,11 @@ export default function DashboardPage() {
                     />
                   ))
                 ) : (
-                  <div className="col-span-full py-16 px-6 text-center bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
-                      <Clock className="w-8 h-8" />
+                  <div className="col-span-full py-12 sm:py-16 px-4 sm:px-6 text-center bg-white rounded-2xl sm:rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                      <Clock className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <h3 className="font-display text-xl font-bold text-slate-800">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-slate-800">
                       No Pending Trips
                     </h3>
                     <p className="text-xs text-slate-500 max-w-md mt-1">
@@ -494,25 +498,25 @@ export default function DashboardPage() {
 
             {/* Saved Trips Tab */}
             {activeTab === 'saved' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {savedTrips.length > 0 ? (
                   savedTrips.map((t) => (
                     <TripCard key={t.id} trip={t} />
                   ))
                 ) : (
-                  <div className="col-span-full py-16 px-6 text-center bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                      <Bookmark className="w-8 h-8" />
+                  <div className="col-span-full py-12 sm:py-16 px-4 sm:px-6 text-center bg-white rounded-2xl sm:rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                      <Bookmark className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <h3 className="font-display text-xl font-bold text-slate-800">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-slate-800">
                       No Saved Trips
                     </h3>
-                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-6">
+                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-5 sm:mb-6">
                       Browse stories and itineraries from other travelers, and bookmark them for your next journey.
                     </p>
                     <Link
                       href="/trips"
-                      className="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
+                      className="inline-flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all w-full sm:w-auto"
                     >
                       <Compass className="w-4 h-4" />
                       <span>Explore Trips</span>
@@ -524,7 +528,7 @@ export default function DashboardPage() {
 
             {/* Drafts Tab */}
             {activeTab === 'drafts' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {drafts.length > 0 ? (
                   drafts.map((t) => (
                     <DashboardTripCard
@@ -535,19 +539,19 @@ export default function DashboardPage() {
                     />
                   ))
                 ) : (
-                  <div className="col-span-full py-16 px-6 text-center bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4">
-                      <FileText className="w-8 h-8" />
+                  <div className="col-span-full py-12 sm:py-16 px-4 sm:px-6 text-center bg-white rounded-2xl sm:rounded-3xl border border-dashed border-slate-200 shadow-sm flex flex-col items-center">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4">
+                      <FileText className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
-                    <h3 className="font-display text-xl font-bold text-slate-800">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-slate-800">
                       No Drafts Saved
                     </h3>
-                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-6">
+                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-5 sm:mb-6">
                       When you start creating a trip and save it as a draft, it will appear here.
                     </p>
                     <Link
                       href="/trips/share"
-                      className="inline-flex items-center space-x-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all"
+                      className="inline-flex items-center justify-center space-x-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase px-6 py-3 rounded-full shadow-lg transition-all w-full sm:w-auto"
                     >
                       <PlusCircle className="w-4 h-4" />
                       <span>Start a New Trip</span>
@@ -567,6 +571,9 @@ export default function DashboardPage() {
           onClose={() => setShowEditProfileModal(false)}
           onSuccess={(updated) => {
             setCurrentUser(updated);
+            if (updated.preferredCurrency) {
+              setCurrency(updated.preferredCurrency);
+            }
             refreshAuth();
           }}
         />
@@ -583,33 +590,33 @@ export default function DashboardPage() {
 
       {/* Delete Trip Confirmation Modal */}
       {tripToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 sm:space-y-5">
             <div className="flex items-center space-x-3 text-rose-600">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl sm:rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-bold text-slate-900">
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
                   Delete Trip Itinerary?
                 </h3>
                 <p className="text-xs text-slate-500">This action cannot be undone.</p>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
+            <div className="p-3.5 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1">
               <p className="font-semibold text-slate-900 line-clamp-1">{tripToDelete.title}</p>
-              <p className="text-slate-500">
+              <p className="text-slate-500 leading-relaxed">
                 Deleting this trip will permanently remove it from Ghurabo, along with all associated comments and community likes.
               </p>
             </div>
 
-            <div className="flex items-center justify-end space-x-3 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setTripToDelete(null)}
                 disabled={deletingTrip}
-                className="px-5 py-2.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all disabled:opacity-50"
+                className="px-5 py-2.5 rounded-full text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all disabled:opacity-50 w-full sm:w-auto text-center cursor-pointer"
               >
                 Cancel
               </button>
@@ -617,7 +624,7 @@ export default function DashboardPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={deletingTrip}
-                className="flex items-center space-x-2 px-5 py-2.5 rounded-full text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg transition-all disabled:opacity-50"
+                className="flex items-center justify-center space-x-2 px-5 py-2.5 rounded-full text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg transition-all disabled:opacity-50 w-full sm:w-auto cursor-pointer"
               >
                 {deletingTrip && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>{deletingTrip ? 'Deleting...' : 'Confirm Delete'}</span>
@@ -625,20 +632,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Edit Profile Modal */}
-      {showEditProfileModal && currentUser && (
-        <EditProfileModal
-          user={currentUser}
-          onClose={() => setShowEditProfileModal(false)}
-          onSuccess={(updated) => {
-            setCurrentUser(updated);
-            if (updated.preferredCurrency) {
-              setCurrency(updated.preferredCurrency);
-            }
-          }}
-        />
       )}
     </div>
   );

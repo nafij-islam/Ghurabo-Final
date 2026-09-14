@@ -70,7 +70,7 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
   const perPersonCost = trip.costBreakdown?.perPersonCost || trip.costBreakdown?.totalCost || 0;
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
+    <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
       {/* Cover Image & Badges */}
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
         <Image
@@ -107,7 +107,7 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
       </div>
 
       {/* Card Body */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
         <div>
           <div className="flex items-center space-x-3 text-[11px] text-slate-400 mb-2">
             <span className="flex items-center space-x-1">
@@ -118,7 +118,7 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
             <span>{trip.travelDate || 'Recent'}</span>
           </div>
 
-          <h3 className="font-display font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-brand-600 transition-colors">
+          <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 line-clamp-1 group-hover:text-brand-600 transition-colors">
             {trip.title}
           </h3>
 
@@ -128,7 +128,7 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
         </div>
 
         {/* Stats Row */}
-        <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center space-x-4">
             <span className="flex items-center space-x-1 text-slate-600">
               <Heart className="w-3.5 h-3.5 text-rose-500" />
@@ -146,33 +146,33 @@ export default function DashboardTripCard({ trip, onEdit, onDelete }: DashboardT
         </div>
 
         {/* Action Buttons Toolbar */}
-        <div className="pt-4 mt-3 border-t border-slate-100 grid grid-cols-3 gap-2">
+        <div className="pt-3 sm:pt-4 mt-3 border-t border-slate-100 grid grid-cols-3 gap-1.5 sm:gap-2">
           <Link
             href={`/trips/${trip.slug || trip.id}`}
-            className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl transition-all"
+            className="flex items-center justify-center space-x-1 sm:space-x-1.5 py-2 px-1.5 sm:px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-bold text-[11px] sm:text-xs rounded-xl transition-all cursor-pointer"
             title="View Public Trip Page"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3.5 h-3.5 shrink-0" />
             <span>View</span>
           </Link>
 
           <button
             type="button"
             onClick={() => onEdit(trip)}
-            className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-xl transition-all"
+            className="flex items-center justify-center space-x-1 sm:space-x-1.5 py-2 px-1.5 sm:px-3 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-[11px] sm:text-xs rounded-xl transition-all cursor-pointer"
             title="Edit Trip Details"
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit3 className="w-3.5 h-3.5 shrink-0" />
             <span>Edit</span>
           </button>
 
           <button
             type="button"
             onClick={() => onDelete(trip)}
-            className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-xs rounded-xl transition-all"
+            className="flex items-center justify-center space-x-1 sm:space-x-1.5 py-2 px-1.5 sm:px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-[11px] sm:text-xs rounded-xl transition-all cursor-pointer"
             title="Delete Trip"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
             <span>Delete</span>
           </button>
         </div>

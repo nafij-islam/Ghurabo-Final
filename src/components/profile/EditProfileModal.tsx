@@ -94,35 +94,35 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="max-w-xl w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 relative my-8">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="max-w-xl w-full bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 md:p-8 shadow-2xl border border-slate-100 space-y-4 sm:space-y-6 relative my-4 sm:my-8">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-6 h-6 text-brand-500" />
-            <h2 className="font-display text-2xl font-bold uppercase text-slate-900">Edit Profile Details</h2>
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-brand-500" />
+            <h2 className="font-display text-lg sm:text-2xl font-bold uppercase text-slate-900">Edit Profile Details</h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1 rounded-full">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1 rounded-full cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs font-semibold text-center">
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl sm:rounded-2xl text-rose-600 text-xs font-semibold text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           {/* Avatar Upload Preview */}
-          <div className="flex items-center space-x-4">
-            <div className="relative group">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5 sm:gap-4">
+            <div className="relative group shrink-0">
               <NextImage
                 src={avatar || 'https://i.pravatar.cc/150'}
                 alt="Avatar Preview"
                 width={80}
                 height={80}
                 unoptimized={avatar?.startsWith('data:') || avatar?.startsWith('blob:')}
-                className="w-20 h-20 rounded-full object-cover border-2 border-brand-500 shadow"
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-brand-500 shadow"
               />
               <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                 <Camera className="w-6 h-6 text-white" />
@@ -138,17 +138,17 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
               </label>
             </div>
 
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 w-full space-y-1">
               <label className="text-xs font-bold text-slate-700 uppercase block">Profile Photo (Avatar)</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  placeholder="Paste photo URL or click upload"
+                  placeholder="Paste photo URL or upload"
                   value={avatar}
                   onChange={(e) => setAvatar(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
-                <label className="px-3 py-2.5 bg-brand-50 hover:bg-brand-100 text-brand-600 font-bold text-xs rounded-xl cursor-pointer flex items-center space-x-1 whitespace-nowrap">
+                <label className="px-3.5 py-2.5 bg-brand-50 hover:bg-brand-100 text-brand-600 font-bold text-xs rounded-xl cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap shrink-0">
                   <Upload className="w-3.5 h-3.5" />
                   <span>{uploadingAvatar ? 'Uploading...' : 'Upload'}</span>
                   <input
@@ -168,15 +168,15 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
           {/* Cover Image Upload */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-700 uppercase block">Cover Banner Image</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 placeholder="Paste cover banner image URL"
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
-              <label className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer flex items-center space-x-1 whitespace-nowrap">
+              <label className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap shrink-0">
                 <ImageIcon className="w-3.5 h-3.5" />
                 <span>{uploadingCover ? 'Uploading...' : 'Upload Banner'}</span>
                 <input
@@ -224,7 +224,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g. Dhaka, Bangladesh"
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
@@ -235,7 +235,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
               <select
                 value={preferredStyle}
                 onChange={(e) => setPreferredStyle(e.target.value as TravelType)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium cursor-pointer"
               >
                 <option value="Solo">Solo Explorer</option>
                 <option value="Couple">Couple Traveller</option>
@@ -250,7 +250,7 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
               <select
                 value={preferredCurrency}
                 onChange={(e) => setPreferredCurrency(e.target.value as CurrencyCode)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium cursor-pointer"
               >
                 <option value="BDT">BDT (৳) - Bangladeshi Taka</option>
                 <option value="USD">USD ($) - US Dollar</option>
@@ -259,18 +259,18 @@ export default function EditProfileModal({ user, onClose, onSuccess }: EditProfi
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase rounded-full transition-all"
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase rounded-full transition-all w-full sm:w-auto text-center cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-7 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
+              className="px-7 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-lg transition-all disabled:opacity-60 w-full sm:w-auto text-center cursor-pointer"
             >
               {saving ? 'Saving Changes...' : 'Save Profile'}
             </button>

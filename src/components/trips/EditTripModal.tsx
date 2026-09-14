@@ -162,11 +162,11 @@ export default function EditTripModal({ trip, onClose, onSuccess }: EditTripModa
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="font-display text-xl font-bold text-slate-900 uppercase">
+            <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 uppercase">
               Edit Trip Itinerary
             </h2>
             <p className="text-xs text-slate-500">Update your shared travel experience details</p>
@@ -174,13 +174,13 @@ export default function EditTripModal({ trip, onClose, onSuccess }: EditTripModa
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="p-6 max-h-[80vh] overflow-y-auto space-y-6">
+        <form onSubmit={handleSave} className="p-4 sm:p-6 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto space-y-4 sm:space-y-6">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -370,18 +370,18 @@ export default function EditTripModal({ trip, onClose, onSuccess }: EditTripModa
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end space-x-3">
+          <div className="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-full text-xs font-bold uppercase text-slate-600 hover:bg-slate-100 transition-all"
+              className="px-5 py-2.5 rounded-full text-xs font-bold uppercase text-slate-600 hover:bg-slate-100 transition-all w-full sm:w-auto text-center cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-xs font-bold uppercase shadow transition-all flex items-center space-x-2 disabled:opacity-60"
+              className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-xs font-bold uppercase shadow transition-all flex items-center justify-center space-x-2 disabled:opacity-60 w-full sm:w-auto text-center cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Saving...' : 'Save Changes'}</span>
