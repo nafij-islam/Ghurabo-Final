@@ -37,7 +37,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ghurabo-final.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.ghurabo.com'),
   title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
   description: 'Share authentic travel stories, itemized budget breakdowns, day-by-day itineraries, and explore verified solo, couple, family, and group tours in Bangladesh.',
   keywords: ['travel community', 'trip sharing', 'budget travel', 'travel itinerary', 'coxs bazar', 'sajek valley', 'st martin', 'bangladesh tourism'],
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: 'Ghurabo | Real Travel Community & Trip Sharing Platform',
     description: 'Explore verified community trips, cost breakdowns, and high-resolution photo galleries across Bangladesh.',
     type: 'website',
-    url: 'https://ghurabo-final.vercel.app',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.ghurabo.com',
   },
 };
 
