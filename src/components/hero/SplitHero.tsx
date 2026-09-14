@@ -21,21 +21,22 @@ const HERO_SLIDES = [
   },
   {
     image: bannerTwo,
-    title: "COX'S BAZAR",
-    subtitle: 'THE WORLD’S LONGEST SEA BEACH',
+    title: 'EXPLORE TRAVEL BD',
+    subtitle: 'DISCOVER THE BEAUTY OF BANGLADESH',
     description:
-      'Explore the stunning coastline of Cox’s Bazar, enjoy beautiful sunsets, discover local seafood, and find real travel costs, itineraries, and tips shared by fellow travellers.',
-    location: "Cox's Bazar, Bangladesh",
-    slug: 'cox-bazar',
+      'Discover amazing destinations across Bangladesh, from beaches and hills to rivers, forests, tea gardens, and cultural landmarks. Find real travel stories, budgets, itineraries, local tips, and experiences shared by fellow travellers.',
+    location: 'Bangladesh',
+    slug: 'explore-travel-bd',
   },
+
   {
     image: bannerThree,
-    title: 'SREEMANGAL GRAND SULTAN',
-    subtitle: 'TEA GARDENS & NATURE ESCAPES',
+    title: 'TRAVEL BANGLADESH',
+    subtitle: 'ADVENTURES, EXPERIENCES & DISCOVERIES',
     description:
-      'Experience the peaceful tea gardens, lush green landscapes, scenic trails, and relaxing stays of Sreemangal with authentic travel guides, budgets, and local experiences.',
-    location: 'Sreemangal, Moulvibazar, Bangladesh',
-    slug: 'sreemangal',
+      'Explore Bangladesh like never before with inspiring travel stories, hidden destinations, practical travel guides, estimated costs, day-by-day itineraries, and useful tips to help you plan your next adventure.',
+    location: 'Bangladesh',
+    slug: 'travel-bangladesh',
   },
 ];
 
@@ -137,11 +138,10 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`absolute inset-0 flex flex-col justify-center transition-opacity duration-700 ease-in-out will-change-[opacity] ${
-                      isActive
+                    className={`absolute inset-0 flex flex-col justify-center transition-opacity duration-700 ease-in-out will-change-[opacity] ${isActive
                         ? 'opacity-100 pointer-events-auto z-10'
                         : 'opacity-0 pointer-events-none z-0'
-                    }`}
+                      }`}
                   >
                     {/* Tagline */}
                     <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-widest mb-4 w-fit">
@@ -198,11 +198,10 @@ export default function SplitHero() {
               return (
                 <div
                   key={idx}
-                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${
-                    isActive
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${isActive
                       ? 'opacity-100 pointer-events-auto z-10'
                       : 'opacity-0 pointer-events-none z-0'
-                  }`}
+                    }`}
                 >
                   <Image
                     src={s.image}
@@ -280,11 +279,10 @@ export default function SplitHero() {
             return (
               <div
                 key={idx}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${
-                  isActive
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${isActive
                     ? 'opacity-100 pointer-events-auto z-10'
                     : 'opacity-0 pointer-events-none z-0'
-                }`}
+                  }`}
               >
                 <Image
                   src={s.image}
@@ -328,11 +326,10 @@ export default function SplitHero() {
                 return (
                   <div
                     key={idx}
-                    className={`absolute inset-0 flex flex-col items-start justify-end space-y-2 transition-opacity duration-700 ease-in-out will-change-[opacity] ${
-                      isActive
+                    className={`absolute inset-0 flex flex-col items-start justify-end space-y-2 transition-opacity duration-700 ease-in-out will-change-[opacity] ${isActive
                         ? 'opacity-100 pointer-events-auto z-10'
                         : 'opacity-0 pointer-events-none z-0'
-                    }`}
+                      }`}
                   >
                     {/* Small Eyebrow Tag */}
                     <span className="px-3 py-0.5 bg-brand-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
@@ -377,11 +374,10 @@ export default function SplitHero() {
                   key={idx}
                   onClick={() => setCurrentSlideIndex(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
-                  className={`transition-all duration-500 rounded-full cursor-pointer ${
-                    currentSlideIndex === idx
+                  className={`transition-all duration-500 rounded-full cursor-pointer ${currentSlideIndex === idx
                       ? 'w-6 h-2 bg-cyan-300 shadow'
                       : 'w-2 h-2 bg-white/40 hover:bg-white/70'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
