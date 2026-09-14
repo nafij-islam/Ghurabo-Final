@@ -133,6 +133,16 @@ export default function GoogleTripMap({
     if (!apiKey) return;
     let isMounted = true;
 
+    // Listen for Google Maps auth or referrer failure to immediately trigger fallback
+    if (typeof window !== 'undefined') {
+      (window as any).gm_authFailure = () => {
+        console.warn('[GoogleTripMap] Google Maps authentication/referrer failure detected, activating fallback embed.');
+        if (isMounted) {
+          setScriptError(true);
+        }
+      };
+    }
+
     loadGoogleMapsScript(apiKey)
       .then(() => {
         if (isMounted) {
