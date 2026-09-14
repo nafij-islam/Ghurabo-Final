@@ -16,12 +16,21 @@ export const metadata: Metadata = {
       'Discover real Bangladesh trip guides, travel stories, budgets, itineraries and tips shared by the Ghurabo travel community.',
     url: `${siteConfig.siteUrl}/trips`,
     type: 'website',
+    images: [
+      {
+        url: `${siteConfig.siteUrl}${siteConfig.defaultOgImage}`,
+        width: 1200,
+        height: 630,
+        alt: 'Bangladesh Trip Guides, Tours & Travel Stories - Ghurabo',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Bangladesh Trip Guides, Tours & Travel Stories | Ghurabo',
     description:
       'Discover real Bangladesh trip guides, travel stories, budgets, itineraries and tips shared by the Ghurabo travel community.',
+    images: [`${siteConfig.siteUrl}${siteConfig.defaultOgImage}`],
   },
 };
 
