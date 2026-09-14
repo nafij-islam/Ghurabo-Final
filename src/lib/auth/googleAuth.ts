@@ -108,9 +108,11 @@ export async function triggerGoogleSignIn(): Promise<GoogleAuthResult> {
     throw new Error('Google Identity Services is not available');
   }
 
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '1047717467645-default.apps.googleusercontent.com';
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!clientId || clientId.includes('default.apps.googleusercontent.com')) {
+    throw new Error('Google Sign-In is not configured yet. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment variables.');
+  }
 
   return new Promise<GoogleAuthResult>((resolve, reject) => {
     let resolved = false;
