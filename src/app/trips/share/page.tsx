@@ -34,9 +34,9 @@ export default function ShareTripPage() {
   // STEP 1 STATE
   const [title, setTitle] = useState('');
   const [destinationName, setDestinationName] = useState("Cox's Bazar Beach");
-  const [latitude, setLatitude] = useState<number>(21.4272);
-  const [longitude, setLongitude] = useState<number>(92.0058);
-  const [googlePlaceId, setGooglePlaceId] = useState<string>('ChIJjT0bX66SVDcRLB2a89Ww30s');
+  const [latitude, setLatitude] = useState<number | undefined>(21.4272);
+  const [longitude, setLongitude] = useState<number | undefined>(92.0058);
+  const [googlePlaceId, setGooglePlaceId] = useState<string | undefined>('ChIJjT0bX66SVDcRLB2a89Ww30s');
   const [travelDate, setTravelDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [travelType, setTravelType] = useState<TravelType>('Solo');
   const [travellersCount, setTravellersCount] = useState(1);
@@ -72,6 +72,30 @@ export default function ShareTripPage() {
       setLatitude(foundPopular.lat);
       setLongitude(foundPopular.lng);
       setGooglePlaceId(foundPopular.placeId);
+    } else {
+      // Clear previous coordinates for new custom destination
+      setLatitude(undefined);
+      setLongitude(undefined);
+      setGooglePlaceId(undefined);
+
+      // Attempt Google Geocoder if available in window
+      if (typeof window !== 'undefined' && (window as any).google?.maps) {
+        try {
+          const geocoder = new (window as any).google.maps.Geocoder();
+          geocoder.geocode({ address: `${name}, Bangladesh` }, (results: any, status: any) => {
+            if (status === 'OK' && results && results[0]?.geometry?.location) {
+              const loc = results[0].geometry.location;
+              setLatitude(loc.lat());
+              setLongitude(loc.lng());
+              if (results[0].place_id) {
+                setGooglePlaceId(results[0].place_id);
+              }
+            }
+          });
+        } catch {
+          // Ignore geocoding errors silently
+        }
+      }
     }
   };
 
@@ -187,6 +211,18 @@ export default function ShareTripPage() {
       caption: img.caption || `Photo ${idx + 1}`,
     }));
 
+    const isValidCoord =
+      typeof latitude === 'number' &&
+      typeof longitude === 'number' &&
+      !isNaN(latitude) &&
+      !isNaN(longitude) &&
+      isFinite(latitude) &&
+      isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180;
+
     try {
       const backendTrip = await tripsApi.createTrip({
         title: title.trim(),
@@ -194,6 +230,8 @@ export default function ShareTripPage() {
           name: destinationName.trim(),
           city: destinationName.trim(),
           country: 'Bangladesh',
+          latitude: isValidCoord ? latitude : undefined,
+          longitude: isValidCoord ? longitude : undefined,
         },
         summary: summary.trim() || title.trim(),
         story: story.trim(),
@@ -216,8 +254,8 @@ export default function ShareTripPage() {
             locations: [
               {
                 name: destinationName,
-                latitude,
-                longitude,
+                latitude: isValidCoord ? latitude : undefined,
+                longitude: isValidCoord ? longitude : undefined,
               },
             ],
           },

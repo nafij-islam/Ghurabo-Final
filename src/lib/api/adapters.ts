@@ -22,6 +22,8 @@ import {
   CurrencyCode,
   LanguageCode,
   IItineraryDay,
+  IItineraryLocation,
+  ITripMapLocation,
   ITripCost,
 } from '@/types';
 
@@ -177,27 +179,137 @@ export function adaptBackendTripToITrip(trip: BackendTrip): ITrip {
     perPersonCost,
   };
 
-  const itinerary: IItineraryDay[] = (trip.itinerary || []).map((day, idx) => ({
-    dayNumber: day.day || idx + 1,
-    title: day.title || `Day ${day.day}`,
-    activities: [day.description || 'Day exploration'],
-    locations: (day.locations || []).map((loc) => loc.name),
-    estimatedCost: Math.round(totalCost / Math.max(1, trip.days || 1)),
-  }));
+  const mapLocations: ITripMapLocation[] = [];
 
-  const destinationName =
+  const itinerary: IItineraryDay[] = (trip.itinerary || []).map((day, idx) => {
+    const dayNum = day.day || idx + 1;
+    const rawLocs = (day.locations || []) as any[];
+
+    const locNames: string[] = [];
+    const locDetails: IItineraryLocation[] = [];
+
+    rawLocs.forEach((loc) => {
+      if (typeof loc === 'string') {
+        const name = loc.trim();
+        if (name) {
+          locNames.push(name);
+          locDetails.push({ name });
+        }
+      } else if (loc && typeof loc === 'object') {
+        const name = (loc.name || '').trim();
+        if (name) {
+          locNames.push(name);
+          const hasValidCoord =
+            typeof loc.latitude === 'number' &&
+            typeof loc.longitude === 'number' &&
+            !isNaN(loc.latitude) &&
+            !isNaN(loc.longitude) &&
+            isFinite(loc.latitude) &&
+            isFinite(loc.longitude) &&
+            loc.latitude >= -90 &&
+            loc.latitude <= 90 &&
+            loc.longitude >= -180 &&
+            loc.longitude <= 180;
+
+          locDetails.push({
+            name,
+            latitude: hasValidCoord ? loc.latitude : undefined,
+            longitude: hasValidCoord ? loc.longitude : undefined,
+          });
+
+          if (hasValidCoord) {
+            mapLocations.push({
+              name,
+              latitude: loc.latitude!,
+              longitude: loc.longitude!,
+              dayNumber: dayNum,
+            });
+          }
+        }
+      }
+    });
+
+    return {
+      dayNumber: dayNum,
+      title: day.title || `Day ${dayNum}`,
+      activities: [day.description || 'Day exploration'],
+      locations: locNames,
+      locationDetails: locDetails,
+      estimatedCost: Math.round(totalCost / Math.max(1, trip.days || 1)),
+    };
+  });
+
+  let destinationName =
     typeof trip.destination === 'string'
       ? trip.destination
-      : trip.destination?.name || 'Bangladesh';
+      : trip.destination?.name || '';
+  if ((!destinationName || destinationName.toLowerCase() === 'bangladesh') && mapLocations.length > 0) {
+    destinationName = mapLocations[0].name;
+  }
+  if (!destinationName) {
+    destinationName = 'Bangladesh';
+  }
   const destinationId = trip._id;
 
   const status: TripStatus = (trip.status ? trip.status.toLowerCase() : 'approved') as TripStatus;
 
-  // Extract coordinates from itinerary or destination
-  const firstLocation = trip.itinerary?.[0]?.locations?.[0];
-  const destCoords = typeof trip.destination === 'object' ? trip.destination?.coordinates : undefined;
-  const latitude = firstLocation?.latitude || destCoords?.latitude || 23.3822;
-  const longitude = firstLocation?.longitude || destCoords?.longitude || 92.2938;
+  // PRIORITY 2: Check destination object coordinates
+  let latitude: number | undefined = undefined;
+  let longitude: number | undefined = undefined;
+
+  if (typeof trip.destination === 'object' && trip.destination !== null) {
+    const dest = trip.destination as {
+      latitude?: number;
+      longitude?: number;
+      coordinates?: { latitude: number; longitude: number };
+    };
+    if (
+      typeof dest.latitude === 'number' &&
+      typeof dest.longitude === 'number' &&
+      !isNaN(dest.latitude) &&
+      !isNaN(dest.longitude) &&
+      isFinite(dest.latitude) &&
+      isFinite(dest.longitude) &&
+      dest.latitude >= -90 &&
+      dest.latitude <= 90 &&
+      dest.longitude >= -180 &&
+      dest.longitude <= 180
+    ) {
+      latitude = dest.latitude;
+      longitude = dest.longitude;
+    } else if (
+      dest.coordinates &&
+      typeof dest.coordinates.latitude === 'number' &&
+      typeof dest.coordinates.longitude === 'number' &&
+      !isNaN(dest.coordinates.latitude) &&
+      !isNaN(dest.coordinates.longitude) &&
+      isFinite(dest.coordinates.latitude) &&
+      isFinite(dest.coordinates.longitude) &&
+      dest.coordinates.latitude >= -90 &&
+      dest.coordinates.latitude <= 90 &&
+      dest.coordinates.longitude >= -180 &&
+      dest.coordinates.longitude <= 180
+    ) {
+      latitude = dest.coordinates.latitude;
+      longitude = dest.coordinates.longitude;
+    }
+  }
+
+  // PRIORITY 1 Fallback for primary coords: If destination coords absent, use first valid itinerary location
+  if ((latitude === undefined || longitude === undefined) && mapLocations.length > 0) {
+    latitude = mapLocations[0].latitude;
+    longitude = mapLocations[0].longitude;
+  }
+
+  // If destination has valid coords but mapLocations was empty, push the destination as the primary map location
+  if (latitude !== undefined && longitude !== undefined && mapLocations.length === 0) {
+    mapLocations.push({
+      name: destinationName,
+      latitude,
+      longitude,
+      dayNumber: 1,
+    });
+  }
 
   return {
     _id: trip._id,
@@ -240,6 +352,7 @@ export function adaptBackendTripToITrip(trip: BackendTrip): ITrip {
     isHelpful: trip.isHelpful ?? trip.viewerState?.hasHelpful ?? false,
     latitude,
     longitude,
+    mapLocations,
     ratings: {
       overall: 4.9,
       safety: 4.8,

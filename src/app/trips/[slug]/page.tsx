@@ -449,9 +449,11 @@ export default async function TripDetailsPage({ params }: PageProps) {
 
         {/* Google Maps Interactive Destination Location */}
         <GoogleTripMap
+          tripTitle={trip.title}
           destinationName={trip.destinationName}
-          latitude={trip.latitude || 21.4272}
-          longitude={trip.longitude || 92.0058}
+          latitude={trip.latitude}
+          longitude={trip.longitude}
+          locations={trip.mapLocations || []}
           googlePlaceId={trip.googlePlaceId}
         />
 

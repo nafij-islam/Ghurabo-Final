@@ -28,11 +28,25 @@ export interface IUser {
   createdAt: string;
 }
 
+export interface IItineraryLocation {
+  name: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface ITripMapLocation {
+  name: string;
+  latitude: number;
+  longitude: number;
+  dayNumber?: number;
+}
+
 export interface IItineraryDay {
   dayNumber: number;
   title: string;
   activities: string[];
   locations: string[];
+  locationDetails?: IItineraryLocation[];
   estimatedCost: number;
 }
 
@@ -98,6 +112,7 @@ export interface ITrip {
   latitude?: number;
   longitude?: number;
   googlePlaceId?: string;
+  mapLocations?: ITripMapLocation[];
   ratings: {
     overall: number;
     safety: number;
