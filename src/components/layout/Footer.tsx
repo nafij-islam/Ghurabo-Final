@@ -3,18 +3,24 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Compass, Send, Heart, MapPin, Mail, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useNewsletterModal } from '@/context/NewsletterModalContext';
 import { newsletterApi } from '@/lib/api/newsletter.api';
 
 export default function Footer() {
+  const pathname = usePathname();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { t } = usePreferences();
   const { openModal, markAsSubscribed } = useNewsletterModal();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();

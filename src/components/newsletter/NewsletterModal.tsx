@@ -14,10 +14,16 @@ import {
 import { useNewsletterModal } from '@/context/NewsletterModalContext';
 import { useAuth } from '@/hooks/useAuth';
 import { newsletterApi } from '@/lib/api/newsletter.api';
+import { usePathname } from 'next/navigation';
 
 export default function NewsletterModal() {
+  const pathname = usePathname();
   const { isOpen, closeModal, markAsSubscribed } = useNewsletterModal();
   const { user } = useAuth();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
